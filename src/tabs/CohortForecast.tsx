@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useAppContext } from '../context/AppContext'
-import { calcMonthlyKPI, calcRetentionRate } from '../utils/calculations'
+import { calcMonthlyKPI } from '../utils/calculations'
 
 export function CohortForecast() {
   const { data, updateCohortParams, updateSimulatorParams } = useAppContext()
@@ -22,9 +22,12 @@ export function CohortForecast() {
       const secondCount = month >= 2 ? Math.floor(kpi.payingUsers * cp.retentionRate) : 0
       const secondSales = secondCount * cp.secondMonthArppu
 
-      const continuousCount = month >= 3
-        ? Math.floor(calcRetentionRate(kpi.payingUsers, cp.retentionRate, month - 1))
-        : 0
+      let continuousCount = 0
+      if (month >= 3) {
+        for (let k = 2; k < month; k++) {
+          continuousCount += Math.floor(kpi.payingUsers * Math.pow(cp.retentionRate, k))
+        }
+      }
       const continuousSales = continuousCount * cp.continuousArppu
 
       const totalSales = newSales + secondSales + continuousSales

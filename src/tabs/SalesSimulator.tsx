@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { useAppContext } from '../context/AppContext'
 import { KPICard } from '../components/KPICard'
-import { calcMonthlyKPI, calcPerformerIncome, calcRetentionRate } from '../utils/calculations'
+import { calcMonthlyKPI, calcPerformerIncome } from '../utils/calculations'
 
 export function SalesSimulator() {
   const { data, updateSimulatorParams } = useAppContext()
@@ -40,16 +40,17 @@ export function SalesSimulator() {
   const chartData = useMemo(() => {
     return Array.from({ length: 12 }, (_, i) => {
       const month = i + 1
-      const newUsers = kpi.payingUsers
-      const continuousUsers = i === 0 ? 0 : Math.floor(calcRetentionRate(kpi.payingUsers, p.retentionRate, i + 1))
-      const totalUsers = newUsers + continuousUsers
+      const retentionMultiplier = p.retentionRate === 1
+        ? month
+        : (1 - Math.pow(p.retentionRate, month)) / (1 - p.retentionRate)
+      const totalUsers = Math.floor(kpi.payingUsers * retentionMultiplier)
       const sales = totalUsers * p.arppu
       const grossProfit = Math.floor(sales * p.grossMarginRate)
       return {
         month: `${month}月`,
         売上: sales,
         粗利: grossProfit,
-        パフォーマー報酬: Math.floor(performerMonthlyIncome * (totalUsers / (kpi.payingUsers || 1))),
+        パフォーマー報酬: Math.floor(performerMonthlyIncome * retentionMultiplier),
       }
     })
   }, [kpi, p, performerMonthlyIncome])
