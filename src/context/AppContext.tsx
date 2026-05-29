@@ -21,22 +21,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useLocalStorage<AppData>('campaign-simulator-data', initialData)
 
   const updatePointConfig: AppContextType['updatePointConfig'] = (config) =>
-    setData({ ...data, pointConfig: { ...data.pointConfig, ...config } })
+    setData(prev => ({ ...prev, pointConfig: { ...prev.pointConfig, ...config } }))
 
   const updatePurchasePlans: AppContextType['updatePurchasePlans'] = (payment, plans) =>
-    setData({ ...data, purchasePlans: { ...data.purchasePlans, [payment]: plans } })
+    setData(prev => ({ ...prev, purchasePlans: { ...prev.purchasePlans, [payment]: plans } }))
 
   const updatePerformerRanks: AppContextType['updatePerformerRanks'] = (ranks) =>
-    setData({ ...data, performerRanks: ranks })
+    setData(prev => ({ ...prev, performerRanks: ranks }))
 
   const updateSimulatorParams: AppContextType['updateSimulatorParams'] = (params) =>
-    setData({ ...data, simulatorParams: { ...data.simulatorParams, ...params } })
+    setData(prev => ({ ...prev, simulatorParams: { ...prev.simulatorParams, ...params } }))
 
   const updateCohortParams: AppContextType['updateCohortParams'] = (params) =>
-    setData({ ...data, cohortParams: { ...data.cohortParams, ...params } })
+    setData(prev => ({ ...prev, cohortParams: { ...prev.cohortParams, ...params } }))
 
   const updateAgencies: AppContextType['updateAgencies'] = (agencies) =>
-    setData({ ...data, agencies })
+    setData(prev => ({ ...prev, agencies }))
 
   const resetToInitial = () => setData(initialData)
 
