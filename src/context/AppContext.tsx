@@ -19,7 +19,13 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useLocalStorage<AppData>('campaign-simulator-data', initialData)
+  const [rawData, setData] = useLocalStorage<AppData>('campaign-simulator-data', initialData)
+
+  // LocalStorageの古いデータに新フィールドが欠けていても安全に扱うための移行処理
+  const data: AppData = {
+    ...rawData,
+    reports: rawData.reports ?? [],
+  }
 
   const updatePointConfig: AppContextType['updatePointConfig'] = (config) =>
     setData(prev => ({ ...prev, pointConfig: { ...prev.pointConfig, ...config } }))
