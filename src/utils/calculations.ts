@@ -109,3 +109,66 @@ export function calcRequiredActivity(params: {
     dailyVoiceMinutes: Math.ceil(voiceMinutesNeeded / 30),
   }
 }
+
+/**
+ * LTV（顧客生涯価値）
+ * LTV = ARPPU ÷ (1 - 継続率)
+ */
+export function calcLTV(arppu: number, retentionRate: number): number {
+  if (retentionRate >= 1) return arppu * 120 // 上限10年
+  return arppu / (1 - retentionRate)
+}
+
+/**
+ * CPAペイバック期間（月数）
+ * ペイバック = CPI ÷ (ARPPU × 課金率 × 粗利率)
+ */
+export function calcPaybackMonths(
+  cpi: number,
+  arppu: number,
+  conversionRate: number,
+  grossMarginRate: number,
+): number {
+  const monthlyGrossProfit = arppu * conversionRate * grossMarginRate
+  if (monthlyGrossProfit <= 0) return 999
+  return cpi / monthlyGrossProfit
+}
+
+/**
+ * ストア手数料コスト
+ */
+export function calcStoreFee(sales: number, storeRate: number): number {
+  return sales * storeRate
+}
+
+/**
+ * 有料開封率
+ */
+export function calcPaidOpenRate(paidMessages: number, totalMessages: number): number {
+  if (totalMessages <= 0) return 0
+  return paidMessages / totalMessages
+}
+
+/**
+ * DAP報酬分布・稼働率
+ */
+export function calcDapDistribution(params: {
+  totalReward: number
+  top10Reward: number
+  top50Reward: number
+  totalDap: number
+  activeDap: number
+}): {
+  top10Share: number
+  top50Share: number
+  bottomShare: number
+  activeRate: number
+} {
+  const { totalReward, top10Reward, top50Reward, totalDap, activeDap } = params
+  return {
+    top10Share:  totalReward > 0 ? top10Reward / totalReward : 0,
+    top50Share:  totalReward > 0 ? top50Reward / totalReward : 0,
+    bottomShare: totalReward > 0 ? (totalReward - top50Reward) / totalReward : 0,
+    activeRate:  totalDap > 0 ? activeDap / totalDap : 0,
+  }
+}

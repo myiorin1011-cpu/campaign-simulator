@@ -6,6 +6,11 @@ import {
   calcMonthlyKPI,
   calcAgencyROI,
   calcRequiredActivity,
+  calcLTV,
+  calcPaybackMonths,
+  calcStoreFee,
+  calcPaidOpenRate,
+  calcDapDistribution,
 } from './calculations'
 
 describe('calcTotalPt', () => {
@@ -78,5 +83,57 @@ describe('calcRequiredActivity', () => {
       pattern: 'message',
     })
     expect(result.messagesNeeded).toBeGreaterThan(0)
+  })
+})
+
+describe('calcLTV', () => {
+  it('LTV = ARPPU ÷ (1 - 継続率)', () => {
+    // ARPPU=10000, 継続率=0.6 → 10000 / 0.4 = 25000
+    expect(calcLTV(10000, 0.6)).toBe(25000)
+  })
+  it('継続率0のときARPPUと等しい', () => {
+    expect(calcLTV(15000, 0)).toBe(15000)
+  })
+})
+
+describe('calcPaybackMonths', () => {
+  it('ペイバック期間を月数で返す', () => {
+    // CPI=500, ARPPU=10000, 課金率=0.05, 粗利率=0.62
+    // 月次粗利 = 10000 * 0.05 * 0.62 = 310
+    // ペイバック = 500 / 310 ≈ 1.61
+    const result = calcPaybackMonths(500, 10000, 0.05, 0.62)
+    expect(result).toBeCloseTo(1.61, 1)
+  })
+})
+
+describe('calcStoreFee', () => {
+  it('売上 × 手数料率を返す', () => {
+    expect(calcStoreFee(100000, 0.30)).toBe(30000)
+    expect(calcStoreFee(100000, 0)).toBe(0)
+  })
+})
+
+describe('calcPaidOpenRate', () => {
+  it('有料メッセージ ÷ 全メッセージを返す', () => {
+    expect(calcPaidOpenRate(200, 1000)).toBeCloseTo(0.2)
+  })
+  it('全メッセージ0のとき0を返す', () => {
+    expect(calcPaidOpenRate(0, 0)).toBe(0)
+  })
+})
+
+describe('calcDapDistribution', () => {
+  it('報酬シェアと稼働率を計算する', () => {
+    const result = calcDapDistribution({
+      totalReward: 10000000,
+      top10Reward: 6000000,
+      top50Reward: 9000000,
+      totalDap: 100,
+      activeDap: 70,
+    })
+    expect(result.top10Share).toBeCloseTo(0.6)
+    expect(result.top50Share).toBeCloseTo(0.9)
+    expect(result.bottomShare).toBeCloseTo(0.1)
+    expect(result.activeRate).toBeCloseTo(0.7)
   })
 })
