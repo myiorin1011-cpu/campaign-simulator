@@ -65,10 +65,8 @@ export function calcAgencyROI(months: {
   const cumulativeSales = months.reduce((s, m) => s + m.sales, 0)
   const cumulativeDebuts = months.reduce((s, m) => s + m.debuts, 0)
   const cumulativeROI = cumulativeAdBudget > 0 ? cumulativeSales / cumulativeAdBudget : 0
-  // debutCpa uses the first month's figures as the base acquisition cost
-  const firstMonth = months[0]
-  const debutCpa = firstMonth && firstMonth.debuts > 0
-    ? Math.floor(firstMonth.adBudget / firstMonth.debuts)
+  const debutCpa = cumulativeDebuts > 0
+    ? Math.floor(cumulativeAdBudget / cumulativeDebuts)
     : 0
   return { cumulativeROI, debutCpa, cumulativeAdBudget, cumulativeSales, cumulativeDebuts }
 }

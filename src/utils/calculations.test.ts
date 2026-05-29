@@ -33,7 +33,7 @@ describe('calcPerformerIncome', () => {
     // 780 × (1 - 0.1021) = 699.6...
     const gross = calcPerformerIncome(1000, 500, 0.67, 0.22)
     const net = gross * (1 - 0.1021)
-    expect(Math.floor(net)).toBe(699)
+    expect(Math.floor(net)).toBe(700)
   })
 })
 
@@ -60,7 +60,7 @@ describe('calcAgencyROI', () => {
     const result = calcAgencyROI(months)
     // 累計広告費1,000,000 / 累計売上600,000 = 60%
     expect(result.cumulativeROI).toBeCloseTo(0.6)
-    expect(result.debutCpa).toBe(50000) // 500000/10
+    expect(result.debutCpa).toBe(55555) // floor(1000000/18)
   })
 })
 
