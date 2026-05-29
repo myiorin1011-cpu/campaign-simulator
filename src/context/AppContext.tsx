@@ -12,6 +12,7 @@ interface AppContextType {
   updateSimulatorParams: (params: Partial<AppData['simulatorParams']>) => void
   updateCohortParams: (params: Partial<AppData['cohortParams']>) => void
   updateAgencies: (agencies: AppData['agencies']) => void
+  updateReports: (reports: AppData['reports']) => void
   resetToInitial: () => void
 }
 
@@ -38,13 +39,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updateAgencies: AppContextType['updateAgencies'] = (agencies) =>
     setData(prev => ({ ...prev, agencies }))
 
+  const updateReports: AppContextType['updateReports'] = (reports) =>
+    setData(prev => ({ ...prev, reports }))
+
   const resetToInitial = () => setData(initialData)
 
   return (
     <AppContext.Provider value={{
       data, setData,
       updatePointConfig, updatePurchasePlans, updatePerformerRanks,
-      updateSimulatorParams, updateCohortParams, updateAgencies,
+      updateSimulatorParams, updateCohortParams, updateAgencies, updateReports,
       resetToInitial,
     }}>
       {children}
