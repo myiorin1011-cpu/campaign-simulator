@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://PLACEHOLDER.github.io/campaign-simulator",
+  "homepage": "https://myiorin1011-cpu.github.io/campaign-simulator",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
