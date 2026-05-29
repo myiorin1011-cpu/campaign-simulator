@@ -106,4 +106,5 @@ export const initialData: AppData = {
   },
 
   agencies: [],
+  reports: [],
 }

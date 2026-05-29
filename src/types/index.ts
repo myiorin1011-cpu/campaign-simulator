@@ -97,6 +97,76 @@ export interface AgencyMonthData {
   sales: number
 }
 
+// ─── 報告書関連の型 ───────────────────────────────────────────
+
+export interface SectionFlags {
+  showInInternal: boolean
+  showInPerformer: boolean
+}
+
+export interface ReportSectionSales extends SectionFlags {
+  target: number
+  actual: number
+  memo: string
+}
+
+export interface ReportSectionUser extends SectionFlags {
+  arppu: number
+  dau: number
+  installCount: number
+  conversionRate: number
+  newSales: number
+  continuousSales: number
+  memo: string
+}
+
+export interface ReportSectionAd extends SectionFlags {
+  agencies: {
+    name: string
+    adBudget: number
+    sales: number
+    roas: number
+  }[]
+  totalRoas: number
+  memo: string
+}
+
+export interface ReportSectionDap extends SectionFlags {
+  activeCount: number
+  totalReward: number
+  avgRewardPerDap: number
+  memo: string
+}
+
+export interface ReportSectionConsult extends SectionFlags {
+  entries: {
+    managerName: string
+    comment: string
+  }[]
+}
+
+export interface ReportSectionRecruit extends SectionFlags {
+  debutCount: number
+  memo: string
+}
+
+export interface ReportData {
+  id: string
+  meta: {
+    serviceName: string
+    month: string
+    createdAt: string
+  }
+  sections: {
+    sales:   ReportSectionSales
+    user:    ReportSectionUser
+    ad:      ReportSectionAd
+    dap:     ReportSectionDap
+    consult: ReportSectionConsult
+    recruit: ReportSectionRecruit
+  }
+}
+
 // アプリ全体データ
 export interface AppData {
   pointConfig: PointConfig
@@ -105,4 +175,5 @@ export interface AppData {
   simulatorParams: SimulatorParams
   cohortParams: CohortParams
   agencies: Agency[]
+  reports: ReportData[]
 }
