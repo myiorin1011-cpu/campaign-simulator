@@ -54,17 +54,18 @@ export function PerformerSettings() {
         <table className="text-xs border-collapse whitespace-nowrap">
           <thead>
             <tr className="bg-indigo-700 text-white">
-              <th className="px-3 py-2 text-left sticky left-0 bg-indigo-700 z-10">アクション</th>
-              {performerRanks.map((r) => (
-                <th key={r.stage} className="px-2 py-2 text-center" colSpan={3}>
-                  {r.nameEn}
+              {/* 縦=ランク、横=アクション（スプレッドシートと同じ並び） */}
+              <th className="px-3 py-2 text-left sticky left-0 bg-indigo-700 z-10">ランク</th>
+              {actionTypes.map((actionType) => (
+                <th key={actionType} className="px-2 py-2 text-center" colSpan={3}>
+                  {ACTION_LABELS[actionType]}
                 </th>
               ))}
             </tr>
             <tr className="bg-indigo-100 text-gray-700">
               <th className="px-3 py-1 sticky left-0 bg-indigo-100 z-10"></th>
-              {performerRanks.map((r) => (
-                <React.Fragment key={r.stage}>
+              {actionTypes.map((actionType) => (
+                <React.Fragment key={actionType}>
                   <th className="px-2 py-1 text-center text-indigo-700">U消費</th>
                   <th className="px-2 py-1 text-center text-green-700">P通常</th>
                   <th className="px-2 py-1 text-center text-orange-600">Pボーナス</th>
@@ -73,30 +74,27 @@ export function PerformerSettings() {
             </tr>
           </thead>
           <tbody>
-            {actionTypes.map((actionType, actionIdx) => (
-              <tr key={actionType} className="border-b border-gray-100 hover:bg-gray-50">
+            {performerRanks.map((rank, rankIdx) => (
+              <tr key={rank.stage} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="px-3 py-1 font-medium text-gray-700 sticky left-0 bg-white z-10 border-r border-gray-200">
-                  {ACTION_LABELS[actionType]}
+                  {rank.name}
                 </td>
-                {performerRanks.map((rank, rankIdx) => {
-                  const action = rank.actions[actionIdx]
-                  return (
-                    <React.Fragment key={rank.stage}>
-                      <td className="px-2 py-1 text-center">
-                        <EditableCell value={action.userConsume} suffix="pt"
-                          onChange={(v) => updateActionPt(rankIdx, actionIdx, 'userConsume', v)} />
-                      </td>
-                      <td className="px-2 py-1 text-center">
-                        <EditableCell value={action.performerNormal} suffix="pt"
-                          onChange={(v) => updateActionPt(rankIdx, actionIdx, 'performerNormal', v)} />
-                      </td>
-                      <td className="px-2 py-1 text-center">
-                        <EditableCell value={action.performerBonus} suffix="pt"
-                          onChange={(v) => updateActionPt(rankIdx, actionIdx, 'performerBonus', v)} />
-                      </td>
-                    </React.Fragment>
-                  )
-                })}
+                {rank.actions.map((action, actionIdx) => (
+                  <React.Fragment key={action.type}>
+                    <td className="px-2 py-1 text-center">
+                      <EditableCell value={action.userConsume} suffix="pt"
+                        onChange={(v) => updateActionPt(rankIdx, actionIdx, 'userConsume', v)} />
+                    </td>
+                    <td className="px-2 py-1 text-center">
+                      <EditableCell value={action.performerNormal} suffix="pt"
+                        onChange={(v) => updateActionPt(rankIdx, actionIdx, 'performerNormal', v)} />
+                    </td>
+                    <td className="px-2 py-1 text-center">
+                      <EditableCell value={action.performerBonus} suffix="pt"
+                        onChange={(v) => updateActionPt(rankIdx, actionIdx, 'performerBonus', v)} />
+                    </td>
+                  </React.Fragment>
+                ))}
               </tr>
             ))}
           </tbody>
