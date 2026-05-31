@@ -25,7 +25,7 @@ export interface PurchasePlan {
 }
 
 // 決済種別
-export type PaymentMethod = 'bank' | 'apple' | 'google'
+export type PaymentMethod = 'bank' | 'credix' | 'amazonpay' | 'apple' | 'google'
 
 // パフォーマーランク
 export interface PerformerRank {

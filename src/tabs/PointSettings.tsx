@@ -4,6 +4,8 @@ import type { PaymentMethod, PurchasePlan } from '../types'
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   bank: '銀行振込',
+  credix: 'Credix決済',
+  amazonpay: 'Amazon Pay',
   apple: 'Apple',
   google: 'Google',
 }
@@ -111,7 +113,7 @@ export function PointSettings() {
       {/* 決済種別コスト比較表 */}
       <section className="bg-white rounded-lg shadow p-6">
         <h3 className="font-semibold text-gray-700 mb-4">決済種別コスト比較</h3>
-        <p className="text-xs text-gray-400 mb-4">※ ストア手数料率は業界標準値（Apple/Google: 30%、銀行振込: 0%）。実際の契約によって異なります。</p>
+        <p className="text-xs text-gray-400 mb-4">※ Apple/Googleのストア手数料は10%で計算。銀行振込・Credix・Amazon Payは非ストア決済のため手数料0%。</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
@@ -128,8 +130,10 @@ export function PointSettings() {
               {(
                 [
                   { method: '銀行振込', rate: 0, plans: purchasePlans.bank },
-                  { method: 'Apple', rate: 0.30, plans: purchasePlans.apple },
-                  { method: 'Google', rate: 0.30, plans: purchasePlans.google },
+                  { method: 'Credix決済', rate: 0, plans: purchasePlans.credix },
+                  { method: 'Amazon Pay', rate: 0, plans: purchasePlans.amazonpay },
+                  { method: 'Apple', rate: 0.10, plans: purchasePlans.apple },
+                  { method: 'Google', rate: 0.10, plans: purchasePlans.google },
                 ] as { method: string; rate: number; plans: typeof purchasePlans.bank }[]
               ).map(({ method, rate, plans }) => {
                 // 代表プランとして中間のものを使用
@@ -156,7 +160,7 @@ export function PointSettings() {
           </table>
         </div>
         <div className="mt-4 p-3 bg-amber-50 rounded text-xs text-amber-700">
-          💡 Apple/Google のストア決済は手数料30%が差し引かれるため、同じ販売価格でも実質粗利率が銀行振込より約{(0.30 * (1 - pointConfig.normalPtCost * 0.5) * 100).toFixed(0)}%程度低下します。
+          💡 Apple/Google のストア決済は手数料10%が差し引かれるため、同じ販売価格でも実質粗利率が銀行振込・Credix・Amazon Payより低下します。非ストア決済（銀行振込/Credix/Amazon Pay）への誘導が粗利改善に有効です。
         </div>
       </section>
     </div>

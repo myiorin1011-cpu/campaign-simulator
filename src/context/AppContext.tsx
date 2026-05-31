@@ -25,6 +25,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const data: AppData = {
     ...rawData,
     reports: rawData.reports ?? [],
+    purchasePlans: {
+      ...rawData.purchasePlans,
+      // 旧LocalStorageに新決済種別が無い場合は初期値で補完
+      credix: rawData.purchasePlans?.credix ?? initialData.purchasePlans.credix,
+      amazonpay: rawData.purchasePlans?.amazonpay ?? initialData.purchasePlans.amazonpay,
+    },
   }
 
   const updatePointConfig: AppContextType['updatePointConfig'] = (config) =>
