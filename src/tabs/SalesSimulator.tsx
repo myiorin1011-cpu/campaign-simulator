@@ -8,15 +8,13 @@ export function SalesSimulator() {
   const { data, updateSimulatorParams } = useAppContext()
   const { simulatorParams: p, performerRanks, pointConfig } = data
 
-  // 稼働パターン別の月間獲得pt推定（任意ランク）
-  // バランス型: メッセージ200通 + 通話60分 程度の月間稼働想定
+  // 月間メッセージ受信数・有料メッセージ開封数からの獲得pt推定（任意ランク）
+  // ※通話は売上予測に含めない
   const estimatePtForRank = (r: typeof performerRanks[number]) => {
-    const msgAction = r.actions.find((a) => a.type === 'message')
-    const voiceAction = r.actions.find((a) => a.type === 'voice_call')
-    const msgMult   = p.activityPattern === 'call' ? 50 : 200
-    const voiceMult = p.activityPattern === 'message' ? 10 : 60
-    const normalPt = (msgAction?.performerNormal ?? 0) * msgMult + (voiceAction?.performerNormal ?? 0) * voiceMult
-    const bonusPt  = (msgAction?.performerBonus  ?? 0) * msgMult + (voiceAction?.performerBonus  ?? 0) * voiceMult
+    const msgAction  = r.actions.find((a) => a.type === 'message')        // メッセージ受信
+    const paidAction = r.actions.find((a) => a.type === 'fortune_char')   // 有料鑑定＝有料メッセージ開封
+    const normalPt = (msgAction?.performerNormal ?? 0) * p.monthlyMessages + (paidAction?.performerNormal ?? 0) * p.monthlyPaidOpens
+    const bonusPt  = (msgAction?.performerBonus  ?? 0) * p.monthlyMessages + (paidAction?.performerBonus  ?? 0) * p.monthlyPaidOpens
     return { normalPt, bonusPt }
   }
 
@@ -28,7 +26,7 @@ export function SalesSimulator() {
       const afterTax = income * (1 - pointConfig.withholdingIndividual) - pointConfig.transferFee
       return { rank: r, ...pt, income, afterTax }
     }),
-    [performerRanks, p.activityPattern, pointConfig],
+    [performerRanks, p.monthlyMessages, p.monthlyPaidOpens, pointConfig],
   )
 
   // 代表ランク（ゴールド）をKPI・グラフ用に使用
@@ -121,16 +119,28 @@ export function SalesSimulator() {
         </div>
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-gray-600 mb-1">稼働パターン</label>
-            <select
-              value={p.activityPattern}
-              onChange={(e) => updateSimulatorParams({ activityPattern: e.target.value as 'message'|'call'|'balanced' })}
-              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-            >
-              <option value="balanced">バランス型（メッセージ200通＋通話60分/月）</option>
-              <option value="message">メッセージ中心（メッセージ200通＋通話10分/月）</option>
-              <option value="call">通話中心（メッセージ50通＋通話60分/月）</option>
-            </select>
+            <label className="block text-sm text-gray-600 mb-1">
+              月間メッセージ受信数（1人あたり）: <strong>{p.monthlyMessages.toLocaleString()}通</strong>
+            </label>
+            <input
+              type="number" min={0} step={100}
+              value={p.monthlyMessages}
+              onChange={(e) => updateSimulatorParams({ monthlyMessages: parseInt(e.target.value) || 0 })}
+              className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-right"
+            />
+            <p className="text-[10px] text-gray-400 mt-1">例: 1日200通 × 30日 = 6,000通</p>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">
+              月間 有料メッセージ開封数（1人あたり）: <strong>{p.monthlyPaidOpens.toLocaleString()}回</strong>
+            </label>
+            <input
+              type="number" min={0} step={10}
+              value={p.monthlyPaidOpens}
+              onChange={(e) => updateSimulatorParams({ monthlyPaidOpens: parseInt(e.target.value) || 0 })}
+              className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-right"
+            />
+            <p className="text-[10px] text-gray-400 mt-1">有料鑑定（有料メッセージ）の開封想定数。通話は売上に含めません。</p>
           </div>
         </div>
       </section>
@@ -139,7 +149,7 @@ export function SalesSimulator() {
       <section className="bg-white rounded-lg shadow p-6">
         <h3 className="font-semibold text-gray-700 mb-1">ランク別 想定月収一覧</h3>
         <p className="text-xs text-gray-500 mb-4">
-          選択中の稼働パターンでの各ランクの想定月収です。代表値（ゴールド）を下部KPI・グラフに使用しています。
+          上記のメッセージ受信数・有料メッセージ開封数での各ランクの想定月収です。代表値（ゴールド）を下部KPI・グラフに使用しています。
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">

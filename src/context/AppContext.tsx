@@ -13,6 +13,7 @@ interface AppContextType {
   updateCohortParams: (params: Partial<AppData['cohortParams']>) => void
   updateAgencies: (agencies: AppData['agencies']) => void
   updateReports: (reports: AppData['reports']) => void
+  updatePaymentOrder: (order: AppData['paymentOrder']) => void
   resetToInitial: () => void
 }
 
@@ -22,14 +23,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [rawData, setData] = useLocalStorage<AppData>('campaign-simulator-data', initialData)
 
   // LocalStorageの古いデータに新フィールドが欠けていても安全に扱うための移行処理
+  const mergedPlans = {
+    ...rawData.purchasePlans,
+    // 旧LocalStorageに新決済種別が無い場合は初期値で補完
+    credix: rawData.purchasePlans?.credix ?? initialData.purchasePlans.credix,
+    amazonpay: rawData.purchasePlans?.amazonpay ?? initialData.purchasePlans.amazonpay,
+  }
+  // 並び順: 旧データを尊重しつつ、初期順の未登録決済を末尾に追加
+  const rawOrder = rawData.paymentOrder ?? []
+  const mergedOrder = [
+    ...rawOrder.filter((m) => m in mergedPlans),
+    ...initialData.paymentOrder.filter((m) => !rawOrder.includes(m)),
+  ]
+
   const data: AppData = {
     ...rawData,
     reports: rawData.reports ?? [],
-    purchasePlans: {
-      ...rawData.purchasePlans,
-      // 旧LocalStorageに新決済種別が無い場合は初期値で補完
-      credix: rawData.purchasePlans?.credix ?? initialData.purchasePlans.credix,
-      amazonpay: rawData.purchasePlans?.amazonpay ?? initialData.purchasePlans.amazonpay,
+    purchasePlans: mergedPlans,
+    paymentOrder: mergedOrder,
+    simulatorParams: {
+      ...initialData.simulatorParams,
+      ...rawData.simulatorParams,
+      // 旧データに新フィールドが無い場合は初期値で補完
+      monthlyMessages: rawData.simulatorParams?.monthlyMessages ?? initialData.simulatorParams.monthlyMessages,
+      monthlyPaidOpens: rawData.simulatorParams?.monthlyPaidOpens ?? initialData.simulatorParams.monthlyPaidOpens,
     },
   }
 
@@ -54,6 +71,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updateReports: AppContextType['updateReports'] = (reports) =>
     setData(prev => ({ ...prev, reports }))
 
+  const updatePaymentOrder: AppContextType['updatePaymentOrder'] = (order) =>
+    setData(prev => ({ ...prev, paymentOrder: order }))
+
   const resetToInitial = () => setData(initialData)
 
   return (
@@ -61,6 +81,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       data, setData,
       updatePointConfig, updatePurchasePlans, updatePerformerRanks,
       updateSimulatorParams, updateCohortParams, updateAgencies, updateReports,
+      updatePaymentOrder,
       resetToInitial,
     }}>
       {children}

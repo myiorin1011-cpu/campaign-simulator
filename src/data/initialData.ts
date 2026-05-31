@@ -45,6 +45,8 @@ export const initialData: AppData = {
     minSettlementPt: 5550,
   },
 
+  paymentOrder: ['bank', 'credix', 'amazonpay', 'apple', 'google'],
+
   purchasePlans: {
     bank: [
       { id:1, priceWithTax:3300,  priceWithoutTax:3000,  normalPt:1650,  bonusPt:0,    firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
@@ -113,6 +115,8 @@ export const initialData: AppData = {
     grossMarginRate: 0.62,
     selectedRank: 3,
     activityPattern: 'balanced',
+    monthlyMessages: 6000,    // 月間メッセージ受信数（例: 1日200通 × 30日）
+    monthlyPaidOpens: 300,    // 月間 有料メッセージ開封数
   },
 
   cohortParams: {

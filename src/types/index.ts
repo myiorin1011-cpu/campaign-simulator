@@ -67,8 +67,10 @@ export interface SimulatorParams {
   arppu: number              // 課金ユーザー平均購入額
   retentionRate: number      // 継続率 (0〜1)
   grossMarginRate: number    // 粗利率 (0〜1)
-  selectedRank: number       // 想定ランク（stage番号）
-  activityPattern: ActivityPattern
+  selectedRank: number       // 想定ランク（stage番号）※後方互換のため保持
+  activityPattern: ActivityPattern  // ※後方互換のため保持（未使用）
+  monthlyMessages: number    // パフォーマー1人あたり月間メッセージ受信数
+  monthlyPaidOpens: number   // パフォーマー1人あたり月間 有料メッセージ開封数
 }
 
 export type ActivityPattern = 'message' | 'call' | 'balanced'
@@ -171,6 +173,7 @@ export interface ReportData {
 export interface AppData {
   pointConfig: PointConfig
   purchasePlans: Record<PaymentMethod, PurchasePlan[]>
+  paymentOrder: PaymentMethod[]   // 決済別プラン表の表示順
   performerRanks: PerformerRank[]
   simulatorParams: SimulatorParams
   cohortParams: CohortParams

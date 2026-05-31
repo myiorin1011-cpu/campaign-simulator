@@ -11,8 +11,16 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
 }
 
 export function PointSettings() {
-  const { data, updatePointConfig, updatePurchasePlans } = useAppContext()
-  const { pointConfig, purchasePlans } = data
+  const { data, updatePointConfig, updatePurchasePlans, updatePaymentOrder } = useAppContext()
+  const { pointConfig, purchasePlans, paymentOrder } = data
+
+  const movePayment = (index: number, dir: -1 | 1) => {
+    const target = index + dir
+    if (target < 0 || target >= paymentOrder.length) return
+    const next = [...paymentOrder]
+    ;[next[index], next[target]] = [next[target], next[index]]
+    updatePaymentOrder(next)
+  }
 
   const calcReturnRate = (plan: PurchasePlan) => {
     const totalPt = plan.normalPt + plan.bonusPt + plan.firstTimeBonusPt
@@ -65,10 +73,28 @@ export function PointSettings() {
         </div>
       </section>
 
-      {/* 決済別購入プラン */}
-      {(Object.keys(purchasePlans) as PaymentMethod[]).map((payment) => (
+      {/* 決済別購入プラン（並び替え可能） */}
+      {paymentOrder.map((payment, orderIdx) => (
         <section key={payment} className="bg-white rounded-lg shadow p-6 overflow-x-auto">
-          <h3 className="font-semibold text-gray-700 mb-4">{PAYMENT_LABELS[payment]} 購入プラン</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-700">
+              <span className="text-gray-400 mr-2">{orderIdx + 1}.</span>{PAYMENT_LABELS[payment]} 購入プラン
+            </h3>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => movePayment(orderIdx, -1)}
+                disabled={orderIdx === 0}
+                className="px-2 py-1 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                title="上へ移動"
+              >▲ 上へ</button>
+              <button
+                onClick={() => movePayment(orderIdx, 1)}
+                disabled={orderIdx === paymentOrder.length - 1}
+                className="px-2 py-1 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                title="下へ移動"
+              >▼ 下へ</button>
+            </div>
+          </div>
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="bg-gray-50 text-gray-600 text-xs">
