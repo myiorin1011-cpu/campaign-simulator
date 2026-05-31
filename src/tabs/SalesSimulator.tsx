@@ -8,26 +8,32 @@ export function SalesSimulator() {
   const { data, updateSimulatorParams } = useAppContext()
   const { simulatorParams: p, performerRanks, pointConfig } = data
 
-  const rank = performerRanks.find((r) => r.stage === p.selectedRank) ?? performerRanks[2]
+  // 稼働パターン別の月間獲得pt推定（任意ランク）
+  // バランス型: メッセージ200通 + 通話60分 程度の月間稼働想定
+  const estimatePtForRank = (r: typeof performerRanks[number]) => {
+    const msgAction = r.actions.find((a) => a.type === 'message')
+    const voiceAction = r.actions.find((a) => a.type === 'voice_call')
+    const msgMult   = p.activityPattern === 'call' ? 50 : 200
+    const voiceMult = p.activityPattern === 'message' ? 10 : 60
+    const normalPt = (msgAction?.performerNormal ?? 0) * msgMult + (voiceAction?.performerNormal ?? 0) * voiceMult
+    const bonusPt  = (msgAction?.performerBonus  ?? 0) * msgMult + (voiceAction?.performerBonus  ?? 0) * voiceMult
+    return { normalPt, bonusPt }
+  }
 
-  // 選択ランクのアクションから稼働パターン別の獲得pt推定
-  const estimatedMonthlyPt = useMemo(() => {
-    const msgAction = rank.actions.find((a) => a.type === 'message')
-    const voiceAction = rank.actions.find((a) => a.type === 'voice_call')
-    // バランス型: メッセージ200通 + 通話60分 + 画像10枚 程度の月間稼働想定
-    const msgNormal  = (msgAction?.performerNormal ?? 0) * (p.activityPattern === 'call' ? 50 : 200)
-    const msgBonus   = (msgAction?.performerBonus  ?? 0) * (p.activityPattern === 'call' ? 50 : 200)
-    const voiceNormal = (voiceAction?.performerNormal ?? 0) * (p.activityPattern === 'message' ? 10 : 60)
-    const voiceBonus  = (voiceAction?.performerBonus  ?? 0) * (p.activityPattern === 'message' ? 10 : 60)
-    return { normalPt: msgNormal + voiceNormal, bonusPt: msgBonus + voiceBonus }
-  }, [rank, p.activityPattern])
-
-  const performerMonthlyIncome = calcPerformerIncome(
-    estimatedMonthlyPt.normalPt,
-    estimatedMonthlyPt.bonusPt,
-    pointConfig.normalPtCost,
-    pointConfig.bonusPtCost,
+  // 全ランクの想定月収一覧
+  const rankIncomeRows = useMemo(() =>
+    performerRanks.map((r) => {
+      const pt = estimatePtForRank(r)
+      const income = calcPerformerIncome(pt.normalPt, pt.bonusPt, pointConfig.normalPtCost, pointConfig.bonusPtCost)
+      const afterTax = income * (1 - pointConfig.withholdingIndividual) - pointConfig.transferFee
+      return { rank: r, ...pt, income, afterTax }
+    }),
+    [performerRanks, p.activityPattern, pointConfig],
   )
+
+  // 代表ランク（ゴールド）をKPI・グラフ用に使用
+  const repRow = rankIncomeRows.find((row) => row.rank.stage === 3) ?? rankIncomeRows[2]
+  const performerMonthlyIncome = repRow?.income ?? 0
 
   const kpi = calcMonthlyKPI({
     adBudget: p.adBudget,
@@ -113,19 +119,7 @@ export function SalesSimulator() {
             </div>
           ))}
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">想定ランク</label>
-            <select
-              value={p.selectedRank}
-              onChange={(e) => updateSimulatorParams({ selectedRank: parseInt(e.target.value) })}
-              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-            >
-              {performerRanks.map((r) => (
-                <option key={r.stage} value={r.stage}>{r.name}</option>
-              ))}
-            </select>
-          </div>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm text-gray-600 mb-1">稼働パターン</label>
             <select
@@ -133,11 +127,52 @@ export function SalesSimulator() {
               onChange={(e) => updateSimulatorParams({ activityPattern: e.target.value as 'message'|'call'|'balanced' })}
               className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
             >
-              <option value="balanced">バランス型</option>
-              <option value="message">メッセージ中心</option>
-              <option value="call">通話中心</option>
+              <option value="balanced">バランス型（メッセージ200通＋通話60分/月）</option>
+              <option value="message">メッセージ中心（メッセージ200通＋通話10分/月）</option>
+              <option value="call">通話中心（メッセージ50通＋通話60分/月）</option>
             </select>
           </div>
+        </div>
+      </section>
+
+      {/* 全ランク想定月収一覧 */}
+      <section className="bg-white rounded-lg shadow p-6">
+        <h3 className="font-semibold text-gray-700 mb-1">ランク別 想定月収一覧</h3>
+        <p className="text-xs text-gray-500 mb-4">
+          選択中の稼働パターンでの各ランクの想定月収です。代表値（ゴールド）を下部KPI・グラフに使用しています。
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="bg-indigo-100 text-gray-700 text-xs">
+                <th className="px-3 py-2 text-left border border-gray-200">ランク</th>
+                <th className="px-3 py-2 text-right border border-gray-200">通常pt/月</th>
+                <th className="px-3 py-2 text-right border border-gray-200">ボーナスpt/月</th>
+                <th className="px-3 py-2 text-right border border-gray-200">想定月収(税引前)</th>
+                <th className="px-3 py-2 text-right border border-gray-200">税引後</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rankIncomeRows.map((row, i) => {
+                const isRep = row.rank.stage === 3
+                const isZero = row.income <= 0
+                return (
+                  <tr
+                    key={row.rank.stage}
+                    className={`${isRep ? 'bg-amber-50 font-semibold' : i % 2 === 1 ? 'bg-gray-50' : 'bg-white'} ${isZero ? 'text-gray-300' : ''} hover:bg-indigo-50/60`}
+                  >
+                    <td className="px-3 py-1.5 text-left border border-gray-200">
+                      {row.rank.name}{isRep && <span className="ml-1 text-[10px] text-amber-600">(代表)</span>}
+                    </td>
+                    <td className="px-3 py-1.5 text-right border border-gray-200">{row.normalPt.toLocaleString()}</td>
+                    <td className="px-3 py-1.5 text-right border border-gray-200">{row.bonusPt.toLocaleString()}</td>
+                    <td className="px-3 py-1.5 text-right border border-gray-200 text-green-700 font-medium">{fmt(row.income)}</td>
+                    <td className="px-3 py-1.5 text-right border border-gray-200 text-gray-600">{fmt(row.afterTax)}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       </section>
 
@@ -147,7 +182,7 @@ export function SalesSimulator() {
         <KPICard label="月間課金ユーザー数" value={`${kpi.payingUsers.toLocaleString()}人`} color="purple" />
         <KPICard label="月間売上" value={fmt(kpi.sales)} color="green" />
         <KPICard
-          label="パフォーマー想定月収"
+          label="パフォーマー想定月収(ゴールド)"
           value={fmt(performerMonthlyIncome)}
           sub={`税引後: ${fmt(performerMonthlyIncome * (1 - pointConfig.withholdingIndividual) - pointConfig.transferFee)}`}
           color="orange"
