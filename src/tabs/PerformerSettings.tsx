@@ -77,7 +77,7 @@ export function PerformerSettings() {
               {/* 縦=ランク、横=アクション（スプレッドシートと同じ並び） */}
               <th className="px-3 py-2 text-left sticky left-0 bg-indigo-700 z-10">ランク</th>
               {actionTypes.map((actionType) => (
-                <th key={actionType} className="px-2 py-2 text-center" colSpan={3}>
+                <th key={actionType} className="px-2 py-2 text-center border-l border-indigo-500" colSpan={3}>
                   {ACTION_LABELS[actionType]}
                 </th>
               ))}
@@ -86,7 +86,7 @@ export function PerformerSettings() {
               <th className="px-3 py-1 sticky left-0 bg-indigo-100 z-10"></th>
               {actionTypes.map((actionType) => (
                 <React.Fragment key={actionType}>
-                  <th className="px-2 py-1 text-center text-indigo-700">U消費</th>
+                  <th className="px-2 py-1 text-center text-indigo-700 border-l border-indigo-300">U消費</th>
                   <th className="px-2 py-1 text-center text-green-700">P通常</th>
                   <th className="px-2 py-1 text-center text-orange-600">Pボーナス</th>
                 </React.Fragment>
@@ -95,13 +95,13 @@ export function PerformerSettings() {
           </thead>
           <tbody>
             {performerRanks.map((rank, rankIdx) => (
-              <tr key={rank.stage} className="border-b border-gray-100 hover:bg-gray-50">
-                <td className="px-3 py-1 font-medium text-gray-700 sticky left-0 bg-white z-10 border-r border-gray-200">
+              <tr key={rank.stage} className={`border-b border-gray-100 hover:bg-indigo-50/60 ${rankIdx % 2 === 1 ? 'bg-gray-50' : 'bg-white'}`}>
+                <td className={`px-3 py-1 font-medium text-gray-700 sticky left-0 z-10 border-r border-gray-300 ${rankIdx % 2 === 1 ? 'bg-gray-50' : 'bg-white'}`}>
                   {rank.name}
                 </td>
                 {rank.actions.map((action, actionIdx) => (
                   <React.Fragment key={action.type}>
-                    <td className="px-2 py-1 text-center">
+                    <td className="px-2 py-1 text-center border-l border-gray-200">
                       <EditableCell value={action.userConsume} suffix="pt"
                         onChange={(v) => updateActionPt(rankIdx, actionIdx, 'userConsume', v)} />
                     </td>
