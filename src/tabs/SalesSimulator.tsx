@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { useAppContext } from '../context/AppContext'
 import { KPICard } from '../components/KPICard'
-import { calcMonthlyKPI, calcPerformerIncome } from '../utils/calculations'
+import { calcMonthlyKPI, calcPerformerIncome, calcLTV, calcPaybackMonths } from '../utils/calculations'
 
 export function SalesSimulator() {
   const { data, updateSimulatorParams } = useAppContext()
@@ -54,6 +54,33 @@ export function SalesSimulator() {
       }
     })
   }, [kpi, p, performerMonthlyIncome])
+
+  // LTV・ペイバック
+  const ltv = calcLTV(p.arppu, p.retentionRate)
+  const paybackMonths = calcPaybackMonths(p.cpi, p.arppu, p.conversionRate, p.grossMarginRate)
+  // LTV ÷ CPA(=1課金あたり獲得コスト) ユニットエコノミクス
+  const cpaPerPayer = p.conversionRate > 0 ? p.cpi / p.conversionRate : 0
+  const ltvCacRatio = cpaPerPayer > 0 ? ltv / cpaPerPayer : 0
+
+  // LTV早見表（継続率 × ARPPU）
+  const ltvRetentionRows = [0.5, 0.6, 0.7, 0.8, 0.9]
+  const ltvArppuCols = [p.arppu * 0.5, p.arppu * 0.75, p.arppu, p.arppu * 1.25, p.arppu * 1.5].map(Math.round)
+
+  // 損益分岐グラフ：1課金ユーザーあたり累積粗利 vs 獲得コスト(CPA)
+  const breakevenData = useMemo(() => {
+    const monthlyGP = p.arppu * p.grossMarginRate
+    return Array.from({ length: 12 }, (_, i) => {
+      const month = i + 1
+      const mult = p.retentionRate === 1
+        ? month
+        : (1 - Math.pow(p.retentionRate, month)) / (1 - p.retentionRate)
+      return {
+        month: `${month}月`,
+        累積粗利: Math.floor(monthlyGP * mult),
+        獲得コストCPA: Math.floor(cpaPerPayer),
+      }
+    })
+  }, [p.arppu, p.grossMarginRate, p.retentionRate, cpaPerPayer])
 
   const fmt = (n: number) => `¥${Math.floor(n).toLocaleString()}`
 
@@ -126,6 +153,70 @@ export function SalesSimulator() {
           color="orange"
         />
       </div>
+
+      {/* LTV・ユニットエコノミクスKPI */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KPICard label="LTV (顧客生涯価値)" value={fmt(ltv)} sub="ARPPU÷(1-継続率)" color="green" />
+        <KPICard label="CPAペイバック期間" value={`${paybackMonths >= 999 ? '—' : paybackMonths.toFixed(1)}ヶ月`} sub="回収にかかる月数" color="orange" />
+        <KPICard label="課金あたり獲得コスト" value={fmt(cpaPerPayer)} sub="CPI÷課金率" color="blue" />
+        <KPICard
+          label="LTV / CAC 比率"
+          value={`${ltvCacRatio.toFixed(1)}倍`}
+          sub={ltvCacRatio >= 3 ? '健全(3倍以上)' : '要改善'}
+          color={ltvCacRatio >= 3 ? 'green' : 'purple'}
+        />
+      </div>
+
+      {/* LTV早見表 */}
+      <section className="bg-white rounded-lg shadow p-6">
+        <h3 className="font-semibold text-gray-700 mb-1">LTV早見表（継続率 × ARPPU）</h3>
+        <p className="text-xs text-gray-500 mb-4">現在のARPPU ¥{p.arppu.toLocaleString()} を中心に算出。色が濃いほど高LTV。</p>
+        <div className="overflow-x-auto">
+          <table className="text-xs border-collapse">
+            <thead>
+              <tr className="bg-indigo-100 text-gray-700">
+                <th className="px-3 py-2 border border-gray-200">継続率＼ARPPU</th>
+                {ltvArppuCols.map((a) => (
+                  <th key={a} className="px-3 py-2 border border-gray-200 text-right">¥{a.toLocaleString()}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {ltvRetentionRows.map((ret) => (
+                <tr key={ret}>
+                  <td className="px-3 py-2 border border-gray-200 font-medium bg-gray-50">{(ret * 100).toFixed(0)}%</td>
+                  {ltvArppuCols.map((a) => {
+                    const v = calcLTV(a, ret)
+                    const isCurrent = Math.abs(ret - p.retentionRate) < 0.05 && a === p.arppu
+                    return (
+                      <td key={a} className={`px-3 py-2 border border-gray-200 text-right ${isCurrent ? 'bg-indigo-200 font-bold' : ''}`}>
+                        ¥{Math.floor(v).toLocaleString()}
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* 損益分岐グラフ */}
+      <section className="bg-white rounded-lg shadow p-6">
+        <h3 className="font-semibold text-gray-700 mb-1">損益分岐グラフ（1課金ユーザーあたり）</h3>
+        <p className="text-xs text-gray-500 mb-4">累積粗利が獲得コスト(CPA)ラインを超える月が回収完了の目安です。</p>
+        <ResponsiveContainer width="100%" height={280}>
+          <LineChart data={breakevenData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+            <YAxis tickFormatter={(v) => `${(v/10000).toFixed(1)}万`} tick={{ fontSize: 11 }} />
+            <Tooltip formatter={(v) => v != null ? `¥${Number(v).toLocaleString()}` : ''} />
+            <Legend />
+            <Line type="monotone" dataKey="累積粗利" stroke="#22c55e" strokeWidth={2} dot={false} />
+            <Line type="monotone" dataKey="獲得コストCPA" stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+          </LineChart>
+        </ResponsiveContainer>
+      </section>
 
       {/* 12ヶ月グラフ */}
       <section className="bg-white rounded-lg shadow p-6">

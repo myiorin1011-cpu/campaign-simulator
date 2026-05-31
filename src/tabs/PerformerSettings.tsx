@@ -1,6 +1,7 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { EditableCell } from '../components/EditableCell'
+import { calcDapDistribution } from '../utils/calculations'
 import type { ActionType } from '../types'
 
 const ACTION_LABELS: Record<ActionType, string> = {
@@ -42,6 +43,25 @@ export function PerformerSettings() {
   }
 
   const actionTypes = performerRanks[0]?.actions.map((a) => a.type) ?? []
+
+  // ─── DAP稼働分布（分析用・入力はこの画面のみで保持）───
+  const [dap, setDap] = useState({
+    totalReward: 5000000,
+    top10Reward: 2500000,
+    top50Reward: 4000000,
+    totalDap: 200,
+    activeDap: 120,
+  })
+  const dist = calcDapDistribution(dap)
+  const pct = (n: number) => `${(n * 100).toFixed(1)}%`
+  const yen = (n: number) => `¥${Math.floor(n).toLocaleString()}`
+  const dapFields: { key: keyof typeof dap; label: string; money: boolean }[] = [
+    { key: 'totalReward', label: '全DAP報酬総額', money: true },
+    { key: 'top10Reward', label: '上位10%の報酬合計', money: true },
+    { key: 'top50Reward', label: '上位50%の報酬合計', money: true },
+    { key: 'totalDap', label: '総DAP数', money: false },
+    { key: 'activeDap', label: '稼働DAP数', money: false },
+  ]
 
   return (
     <div className="max-w-full">
@@ -100,6 +120,50 @@ export function PerformerSettings() {
           </tbody>
         </table>
       </div>
+
+      {/* DAP稼働分布表 */}
+      <section className="bg-white rounded-lg shadow p-6 mt-8 max-w-3xl">
+        <h3 className="font-semibold text-gray-700 mb-1">DAP稼働分布・報酬集中度</h3>
+        <p className="text-xs text-gray-500 mb-4">
+          上位パフォーマーへの報酬集中度と稼働率を分析します（数値はこの画面のみで保持）。
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+          {dapFields.map(({ key, label, money }) => (
+            <div key={key}>
+              <label className="block text-xs text-gray-600 mb-1">{label}</label>
+              <input
+                type="number"
+                value={dap[key]}
+                onChange={(e) => setDap((d) => ({ ...d, [key]: parseFloat(e.target.value) || 0 }))}
+                className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-right"
+              />
+              <span className="text-[10px] text-gray-400">{money ? '円' : '人'}</span>
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-indigo-50 rounded-lg p-4 text-center">
+            <div className="text-xs text-gray-500">上位10%の報酬占有率</div>
+            <div className="text-2xl font-bold text-indigo-700">{pct(dist.top10Share)}</div>
+          </div>
+          <div className="bg-green-50 rounded-lg p-4 text-center">
+            <div className="text-xs text-gray-500">上位50%の報酬占有率</div>
+            <div className="text-2xl font-bold text-green-700">{pct(dist.top50Share)}</div>
+          </div>
+          <div className="bg-orange-50 rounded-lg p-4 text-center">
+            <div className="text-xs text-gray-500">下位50%の報酬占有率</div>
+            <div className="text-2xl font-bold text-orange-600">{pct(dist.bottomShare)}</div>
+          </div>
+          <div className="bg-purple-50 rounded-lg p-4 text-center">
+            <div className="text-xs text-gray-500">DAP稼働率</div>
+            <div className="text-2xl font-bold text-purple-700">{pct(dist.activeRate)}</div>
+            <div className="text-[10px] text-gray-400">{dap.activeDap}/{dap.totalDap}人</div>
+          </div>
+        </div>
+        <p className="text-xs text-gray-500 mt-4">
+          ※ 稼働DAP1人あたり平均報酬: <strong>{yen(dap.activeDap > 0 ? dap.totalReward / dap.activeDap : 0)}</strong>
+        </p>
+      </section>
     </div>
   )
 }
