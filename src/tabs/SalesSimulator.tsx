@@ -8,13 +8,17 @@ export function SalesSimulator() {
   const { data, updateSimulatorParams } = useAppContext()
   const { simulatorParams: p, performerRanks, pointConfig } = data
 
+  // 有料メッセージ1開封あたりの平均文字数（有料鑑定は1文字単価のため換算が必要）
+  const CHARS_PER_PAID_OPEN = 400
+
   // 月間メッセージ受信数・有料メッセージ開封数からの獲得pt推定（任意ランク）
   // ※通話は売上予測に含めない
   const estimatePtForRank = (r: typeof performerRanks[number]) => {
-    const msgAction  = r.actions.find((a) => a.type === 'message')        // メッセージ受信
-    const paidAction = r.actions.find((a) => a.type === 'fortune_char')   // 有料鑑定＝有料メッセージ開封
-    const normalPt = (msgAction?.performerNormal ?? 0) * p.monthlyMessages + (paidAction?.performerNormal ?? 0) * p.monthlyPaidOpens
-    const bonusPt  = (msgAction?.performerBonus  ?? 0) * p.monthlyMessages + (paidAction?.performerBonus  ?? 0) * p.monthlyPaidOpens
+    const msgAction  = r.actions.find((a) => a.type === 'message')        // メッセージ受信（1通単価）
+    const paidAction = r.actions.find((a) => a.type === 'fortune_char')   // 有料鑑定＝有料メッセージ開封（1文字単価）
+    const paidChars  = p.monthlyPaidOpens * CHARS_PER_PAID_OPEN           // 開封数 × 平均文字数
+    const normalPt = (msgAction?.performerNormal ?? 0) * p.monthlyMessages + (paidAction?.performerNormal ?? 0) * paidChars
+    const bonusPt  = (msgAction?.performerBonus  ?? 0) * p.monthlyMessages + (paidAction?.performerBonus  ?? 0) * paidChars
     return { normalPt, bonusPt }
   }
 
@@ -140,7 +144,7 @@ export function SalesSimulator() {
               onChange={(e) => updateSimulatorParams({ monthlyPaidOpens: parseInt(e.target.value) || 0 })}
               className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-right"
             />
-            <p className="text-[10px] text-gray-400 mt-1">有料鑑定（有料メッセージ）の開封想定数。通話は売上に含めません。</p>
+            <p className="text-[10px] text-gray-400 mt-1">1開封＝平均400文字で換算（有料鑑定の1文字単価×400）。通話は売上に含めません。</p>
           </div>
         </div>
       </section>
