@@ -36,12 +36,14 @@ export function EditableCell({ value, onChange, prefix, suffix, className = '' }
     )
   }
 
+  // 単位ptは数字との間に半角スペースを入れて右揃え表示
+  const isPt = suffix === 'pt'
   return (
     <span
-      className={`cursor-pointer hover:bg-indigo-50 rounded px-1 text-sm ${className}`}
+      className={`cursor-pointer hover:bg-indigo-50 rounded px-1 text-sm tabular-nums ${isPt ? 'inline-block text-right' : ''} ${className}`}
       onClick={() => { setDraft(String(value)); setEditing(true) }}
     >
-      {prefix}{value.toLocaleString()}{suffix}
+      {prefix}{value.toLocaleString()}{suffix ? `${isPt ? ' ' : ''}${suffix}` : ''}
     </span>
   )
 }

@@ -1,1 +1,7 @@
 @import "tailwindcss";
+
+/* 全体フォントをメイリオに統一 */
+html,
+body {
+  font-family: "Meiryo", "メイリオ", "Hiragino Kaku Gothic ProN", sans-serif;
+}

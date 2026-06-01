@@ -101,15 +101,15 @@ export function PerformerSettings() {
                 </td>
                 {rank.actions.map((action, actionIdx) => (
                   <React.Fragment key={action.type}>
-                    <td className="px-2 py-1 text-center border-l border-gray-200">
+                    <td className="px-2 py-1 text-right border-l border-gray-200">
                       <EditableCell value={action.userConsume} suffix="pt"
                         onChange={(v) => updateActionPt(rankIdx, actionIdx, 'userConsume', v)} />
                     </td>
-                    <td className="px-2 py-1 text-center">
+                    <td className="px-2 py-1 text-right">
                       <EditableCell value={action.performerNormal} suffix="pt"
                         onChange={(v) => updateActionPt(rankIdx, actionIdx, 'performerNormal', v)} />
                     </td>
-                    <td className="px-2 py-1 text-center">
+                    <td className="px-2 py-1 text-right">
                       <EditableCell value={action.performerBonus} suffix="pt"
                         onChange={(v) => updateActionPt(rankIdx, actionIdx, 'performerBonus', v)} />
                     </td>

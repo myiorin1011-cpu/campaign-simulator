@@ -205,8 +205,8 @@ export function CampaignPlanner() {
                 <tr key={tier.label} className="border-b border-gray-100">
                   <td className="px-3 py-1 font-medium text-gray-700 border border-gray-200 bg-gray-50">{tier.label}</td>
                   {Array.from({ length: 10 }, (_, i) => (
-                    <td key={i} className="px-3 py-1 text-right border border-gray-200">
-                      {tier.points[i] != null ? `${tier.points[i].toLocaleString()}pt` : '—'}
+                    <td key={i} className="px-3 py-1 text-right border border-gray-200 tabular-nums">
+                      {tier.points[i] != null ? `${tier.points[i].toLocaleString()} pt` : '—'}
                     </td>
                   ))}
                 </tr>

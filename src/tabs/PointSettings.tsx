@@ -173,10 +173,10 @@ export function PointSettings() {
                       <EditableCell value={plan.thirdTimeBonusPt} suffix="pt" onChange={(v) => updatePlan(payment, i, 'thirdTimeBonusPt', v)} />
                     </td>
                   )}
-                  <td className="px-3 py-2 text-right bg-indigo-50/40 text-gray-700">{(plan.normalPt + plan.bonusPt).toLocaleString()}pt</td>
-                  <td className="px-3 py-2 text-right bg-indigo-50/40 text-gray-700">{(plan.normalPt + plan.bonusPt + plan.firstTimeBonusPt).toLocaleString()}pt</td>
-                  {hasMulti && <td className="px-3 py-2 text-right bg-indigo-50/40 text-gray-700">{(plan.normalPt + plan.bonusPt + plan.secondTimeBonusPt).toLocaleString()}pt</td>}
-                  {hasMulti && <td className="px-3 py-2 text-right bg-indigo-50/40 text-gray-700">{(plan.normalPt + plan.bonusPt + plan.thirdTimeBonusPt).toLocaleString()}pt</td>}
+                  <td className="px-3 py-2 text-right bg-indigo-50/40 text-gray-700 tabular-nums">{(plan.normalPt + plan.bonusPt).toLocaleString()} pt</td>
+                  <td className="px-3 py-2 text-right bg-indigo-50/40 text-gray-700 tabular-nums">{(plan.normalPt + plan.bonusPt + plan.firstTimeBonusPt).toLocaleString()} pt</td>
+                  {hasMulti && <td className="px-3 py-2 text-right bg-indigo-50/40 text-gray-700 tabular-nums">{(plan.normalPt + plan.bonusPt + plan.secondTimeBonusPt).toLocaleString()} pt</td>}
+                  {hasMulti && <td className="px-3 py-2 text-right bg-indigo-50/40 text-gray-700 tabular-nums">{(plan.normalPt + plan.bonusPt + plan.thirdTimeBonusPt).toLocaleString()} pt</td>}
                   <td className="px-3 py-2 text-right text-blue-600 font-medium">{calcReturnRate(plan)}</td>
                   <td className="px-3 py-2 text-right text-green-600 font-medium">{calcGrossMargin(plan)}</td>
                   {hasFirst && <td className="px-3 py-2 text-right text-pink-600 font-medium bg-pink-50/40">{calcReturnRate(plan, true)}</td>}
