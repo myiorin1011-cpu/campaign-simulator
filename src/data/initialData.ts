@@ -62,8 +62,8 @@ export const initialData: AppData = {
       { id:6, priceWithTax:98000, priceWithoutTax:89091, normalPt:49000, bonusPt:3000, firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
       { id:7, priceWithTax:150000,priceWithoutTax:136364,normalPt:75000, bonusPt:5000, firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
     ]),
-    // Credix決済（手数料0%）／初回特典PTあり
-    credix: withFee(0, [
+    // Credix決済（手数料4%）／初回特典PTあり
+    credix: withFee(0.04, [
       { id:1, priceWithTax:3300,  priceWithoutTax:3000,  normalPt:1650,  bonusPt:0,    firstTimeBonusPt:1000, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
       { id:2, priceWithTax:5500,  priceWithoutTax:5000,  normalPt:2750,  bonusPt:150,  firstTimeBonusPt:500,  secondTimeBonusPt:0, thirdTimeBonusPt:0 },
       { id:3, priceWithTax:11000, priceWithoutTax:10000, normalPt:5500,  bonusPt:300,  firstTimeBonusPt:300,  secondTimeBonusPt:0, thirdTimeBonusPt:0 },
@@ -72,8 +72,8 @@ export const initialData: AppData = {
       { id:6, priceWithTax:98000, priceWithoutTax:89091, normalPt:49000, bonusPt:3000, firstTimeBonusPt:1800, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
       { id:7, priceWithTax:150000,priceWithoutTax:136364,normalPt:75000, bonusPt:5000, firstTimeBonusPt:3000, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
     ]),
-    // Amazon Pay（手数料0%）
-    amazonpay: withFee(0, [
+    // Amazon Pay（手数料3.9%）
+    amazonpay: withFee(0.039, [
       { id:1, priceWithTax:3300,  priceWithoutTax:3000,  normalPt:1650,  bonusPt:0,    firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
       { id:2, priceWithTax:5500,  priceWithoutTax:5000,  normalPt:2750,  bonusPt:150,  firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
       { id:3, priceWithTax:11000, priceWithoutTax:10000, normalPt:5500,  bonusPt:300,  firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },

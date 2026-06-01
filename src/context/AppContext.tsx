@@ -23,8 +23,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [rawData, setData] = useLocalStorage<AppData>('campaign-simulator-data', initialData)
 
   // LocalStorageの古いデータに新フィールドが欠けていても安全に扱うための移行処理
-  // 旧LocalStorageのプランに storeFeeRate が無い場合の既定値（Apple/Googleは10%）
-  const defaultFee = (method: string) => (method === 'apple' || method === 'google' ? 0.10 : 0)
+  // 旧LocalStorageのプランに storeFeeRate が無い場合の既定値
+  const defaultFee = (method: string): number => {
+    switch (method) {
+      case 'apple':
+      case 'google': return 0.10
+      case 'credix': return 0.04
+      case 'amazonpay': return 0.039
+      default: return 0
+    }
+  }
   const backfillFee = (method: string, plans?: typeof initialData.purchasePlans.bank) =>
     (plans ?? []).map((p) => ({ ...p, storeFeeRate: p.storeFeeRate ?? defaultFee(method) }))
 

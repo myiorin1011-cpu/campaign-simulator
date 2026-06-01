@@ -47,6 +47,13 @@ export function PointSettings() {
     updatePurchasePlans(payment, plans)
   }
 
+  // 決済種別ごとに全プランの手数料率を一括設定（％入力 → 0〜1で保存）
+  const updatePaymentFee = (payment: PaymentMethod, ratePercent: number) => {
+    const rate = ratePercent / 100
+    const plans = purchasePlans[payment].map((p) => ({ ...p, storeFeeRate: rate }))
+    updatePurchasePlans(payment, plans)
+  }
+
   return (
     <div className="space-y-8 max-w-5xl">
       <h2 className="text-xl font-bold text-gray-800">ポイント基本設定</h2>
@@ -84,9 +91,21 @@ export function PointSettings() {
         return (
         <section key={payment} className="bg-white rounded-lg shadow p-6 overflow-x-auto">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-700">
-              <span className="text-gray-400 mr-2">{orderIdx + 1}.</span>{PAYMENT_LABELS[payment]} 購入プラン
-            </h3>
+            <div className="flex items-center gap-3">
+              <h3 className="font-semibold text-gray-700">
+                <span className="text-gray-400 mr-2">{orderIdx + 1}.</span>{PAYMENT_LABELS[payment]} 購入プラン
+              </h3>
+              <label className="flex items-center gap-1 text-xs text-gray-500 bg-orange-50 border border-orange-200 rounded px-2 py-1">
+                手数料率
+                <input
+                  type="number" min={0} max={100} step={0.1}
+                  value={Math.round((purchasePlans[payment][0]?.storeFeeRate ?? 0) * 1000) / 10}
+                  onChange={(e) => updatePaymentFee(payment, parseFloat(e.target.value) || 0)}
+                  className="w-16 border border-gray-300 rounded px-1 py-0.5 text-right text-sm text-orange-600 font-medium"
+                />
+                <span className="text-orange-600">%</span>
+              </label>
+            </div>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => movePayment(orderIdx, -1)}
@@ -111,7 +130,6 @@ export function PointSettings() {
                 <th className="px-3 py-2 text-right">通常PT</th>
                 <th className="px-3 py-2 text-right">ボーナスPT</th>
                 <th className="px-3 py-2 text-right">初回特典PT</th>
-                <th className="px-3 py-2 text-right">手数料率</th>
                 <th className="px-3 py-2 text-right">還元率</th>
                 <th className="px-3 py-2 text-right">粗利率</th>
                 {hasFirst && <th className="px-3 py-2 text-right bg-pink-50">還元率(初回)</th>}
@@ -137,13 +155,6 @@ export function PointSettings() {
                   <td className="px-3 py-2 text-right">
                     <EditableCell value={plan.firstTimeBonusPt} suffix="pt" onChange={(v) => updatePlan(payment, i, 'firstTimeBonusPt', v)} />
                   </td>
-                  <td className="px-3 py-2 text-right text-orange-600">
-                    <EditableCell
-                      value={Math.round((plan.storeFeeRate ?? 0) * 1000) / 10}
-                      suffix="%"
-                      onChange={(v) => updatePlan(payment, i, 'storeFeeRate', v / 100)}
-                    />
-                  </td>
                   <td className="px-3 py-2 text-right text-blue-600 font-medium">{calcReturnRate(plan)}</td>
                   <td className="px-3 py-2 text-right text-green-600 font-medium">{calcGrossMargin(plan)}</td>
                   {hasFirst && <td className="px-3 py-2 text-right text-pink-600 font-medium bg-pink-50/40">{calcReturnRate(plan, true)}</td>}
@@ -159,7 +170,7 @@ export function PointSettings() {
       {/* 決済種別コスト比較表 */}
       <section className="bg-white rounded-lg shadow p-6">
         <h3 className="font-semibold text-gray-700 mb-4">決済種別コスト比較</h3>
-        <p className="text-xs text-gray-400 mb-4">※ Apple/Googleのストア手数料は10%で計算。銀行振込・Credix・Amazon Payは非ストア決済のため手数料0%。</p>
+        <p className="text-xs text-gray-400 mb-4">※ 手数料率は各「購入プラン」見出し横で決済種別ごとに設定できます（初期値: 銀行振込0% / Credix4% / Amazon Pay3.9% / Apple・Google10%）。</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm border-collapse">
             <thead>
