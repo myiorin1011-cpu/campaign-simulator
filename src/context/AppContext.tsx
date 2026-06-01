@@ -63,9 +63,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     purchasePlans: mergedPlans,
     paymentOrder: mergedOrder,
     agencies: mergedAgencies,
-    // 旧データに無い場合はシード値で補完。区分(audience)が無い旧データはユーザー向け扱い
-    campaigns: (rawData.campaigns && rawData.campaigns.length > 0)
-      ? rawData.campaigns.map((c) => ({ ...c, audience: c.audience ?? 'user' }))
+    // 区分(audience)が全行に揃った新形式のみ採用。旧形式(区分なし)は新シードに入れ替え
+    campaigns: (rawData.campaigns && rawData.campaigns.length > 0 && rawData.campaigns.every((c) => c.audience === 'user' || c.audience === 'performer'))
+      ? rawData.campaigns
       : initialData.campaigns,
     banners: (rawData.banners && rawData.banners.length > 0) ? rawData.banners : initialData.banners,
     simulatorParams: {
