@@ -12,7 +12,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 const STATUS_OPTIONS = ['開始前', '準備中', '実施中', '終了']
 const WORK_OPTIONS = ['未対応', '対応中', '対応済', '対応なし', '作成前', '作成中', '作成済']
-const TAG_OPTIONS = ['1通', '1文字', '有料画像', '有料動画', '画像送受信', '動画送受信', '通話']
+const TAG_OPTIONS = ['1通', '1文字', '有償', '無償']
 
 // タグの複数選択（チェックボックス式ドロップダウン）
 function TagSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
