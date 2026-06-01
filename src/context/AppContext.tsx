@@ -50,11 +50,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ...initialData.paymentOrder.filter((m) => !rawOrder.includes(m)),
   ]
 
+  // 代理店が未登録（旧データで空）の場合はデフォルトのGradCubeを補完
+  const mergedAgencies = (rawData.agencies && rawData.agencies.length > 0)
+    ? rawData.agencies
+    : initialData.agencies
+
   const data: AppData = {
     ...rawData,
     reports: rawData.reports ?? [],
     purchasePlans: mergedPlans,
     paymentOrder: mergedOrder,
+    agencies: mergedAgencies,
     simulatorParams: {
       ...initialData.simulatorParams,
       ...rawData.simulatorParams,
