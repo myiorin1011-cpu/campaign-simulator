@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer'
 import { useAppContext } from '../context/AppContext'
 import { ReportDocument, type OutputMode } from '../pdf/ReportDocument'
+import { exportReportToPptx } from '../pdf/exportPptx'
 import type { ReportData, ReportSectionConsult } from '../types'
 
 function createInitialReport(
@@ -102,6 +103,7 @@ export function ReportGenerator() {
   )
   const [newMonth, setNewMonth] = useState('')
   const [newServiceName, setNewServiceName] = useState('Canow')
+  const [pptxBusy, setPptxBusy] = useState(false)
 
   const currentReport = useMemo(
     () => data.reports.find(r => r.id === selectedId) ?? null,
@@ -567,7 +569,23 @@ export function ReportGenerator() {
             >
               {({ loading }) => (loading ? '生成中...' : '📄 PDFダウンロード')}
             </PDFDownloadLink>
+            <button
+              onClick={async () => {
+                setPptxBusy(true)
+                try { await exportReportToPptx(currentReport, outputMode) }
+                finally { setPptxBusy(false) }
+              }}
+              disabled={pptxBusy}
+              className="bg-amber-500 text-white px-4 py-1.5 rounded text-sm hover:bg-amber-600 disabled:opacity-50"
+            >
+              {pptxBusy ? '生成中...' : '📊 Googleスライド用に書き出し (.pptx)'}
+            </button>
           </div>
+          <p className="text-xs text-gray-500 bg-amber-50 border border-amber-200 rounded p-2">
+            💡 「Googleスライド用に書き出し」で <strong>.pptx</strong> ファイルがダウンロードされます。これを
+            <strong>Googleドライブにアップロード → 右クリック →「アプリで開く」→「Googleスライド」</strong>
+            で、そのまま編集可能なスライドとして開けます。
+          </p>
           <PDFViewer width="100%" height={500} showToolbar={false}>
             <ReportDocument report={currentReport} mode={outputMode} />
           </PDFViewer>
