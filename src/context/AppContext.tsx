@@ -23,11 +23,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [rawData, setData] = useLocalStorage<AppData>('campaign-simulator-data', initialData)
 
   // LocalStorageの古いデータに新フィールドが欠けていても安全に扱うための移行処理
+  // 旧LocalStorageのプランに storeFeeRate が無い場合の既定値（Apple/Googleは10%）
+  const defaultFee = (method: string) => (method === 'apple' || method === 'google' ? 0.10 : 0)
+  const backfillFee = (method: string, plans?: typeof initialData.purchasePlans.bank) =>
+    (plans ?? []).map((p) => ({ ...p, storeFeeRate: p.storeFeeRate ?? defaultFee(method) }))
+
   const mergedPlans = {
-    ...rawData.purchasePlans,
-    // 旧LocalStorageに新決済種別が無い場合は初期値で補完
-    credix: rawData.purchasePlans?.credix ?? initialData.purchasePlans.credix,
-    amazonpay: rawData.purchasePlans?.amazonpay ?? initialData.purchasePlans.amazonpay,
+    bank:      backfillFee('bank',      rawData.purchasePlans?.bank),
+    credix:    rawData.purchasePlans?.credix ? backfillFee('credix', rawData.purchasePlans.credix) : initialData.purchasePlans.credix,
+    amazonpay: rawData.purchasePlans?.amazonpay ? backfillFee('amazonpay', rawData.purchasePlans.amazonpay) : initialData.purchasePlans.amazonpay,
+    apple:     backfillFee('apple',     rawData.purchasePlans?.apple),
+    google:    backfillFee('google',    rawData.purchasePlans?.google),
   }
   // 並び順: 旧データを尊重しつつ、初期順の未登録決済を末尾に追加
   const rawOrder = rawData.paymentOrder ?? []

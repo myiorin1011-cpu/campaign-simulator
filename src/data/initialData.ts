@@ -1,4 +1,8 @@
-import type { AppData, ActionPoints, ActionType } from '../types'
+import type { AppData, ActionPoints, ActionType, PurchasePlan } from '../types'
+
+// 各プランに決済手数料率(storeFeeRate)を一括付与するヘルパー
+const withFee = (rate: number, plans: Omit<PurchasePlan, 'storeFeeRate'>[]): PurchasePlan[] =>
+  plans.map((p) => ({ ...p, storeFeeRate: rate }))
 
 const defaultActions = (
   msg: [number,number,number],
@@ -48,7 +52,8 @@ export const initialData: AppData = {
   paymentOrder: ['bank', 'credix', 'amazonpay', 'apple', 'google'],
 
   purchasePlans: {
-    bank: [
+    // 銀行振込（手数料0%）
+    bank: withFee(0, [
       { id:1, priceWithTax:3300,  priceWithoutTax:3000,  normalPt:1650,  bonusPt:0,    firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
       { id:2, priceWithTax:5500,  priceWithoutTax:5000,  normalPt:2750,  bonusPt:150,  firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
       { id:3, priceWithTax:11000, priceWithoutTax:10000, normalPt:5500,  bonusPt:300,  firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
@@ -56,8 +61,19 @@ export const initialData: AppData = {
       { id:5, priceWithTax:50000, priceWithoutTax:45455, normalPt:25000, bonusPt:1500, firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
       { id:6, priceWithTax:98000, priceWithoutTax:89091, normalPt:49000, bonusPt:3000, firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
       { id:7, priceWithTax:150000,priceWithoutTax:136364,normalPt:75000, bonusPt:5000, firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
-    ],
-    credix: [
+    ]),
+    // Credix決済（手数料0%）／初回特典PTあり
+    credix: withFee(0, [
+      { id:1, priceWithTax:3300,  priceWithoutTax:3000,  normalPt:1650,  bonusPt:0,    firstTimeBonusPt:1000, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
+      { id:2, priceWithTax:5500,  priceWithoutTax:5000,  normalPt:2750,  bonusPt:150,  firstTimeBonusPt:500,  secondTimeBonusPt:0, thirdTimeBonusPt:0 },
+      { id:3, priceWithTax:11000, priceWithoutTax:10000, normalPt:5500,  bonusPt:300,  firstTimeBonusPt:300,  secondTimeBonusPt:0, thirdTimeBonusPt:0 },
+      { id:4, priceWithTax:25000, priceWithoutTax:22727, normalPt:12500, bonusPt:750,  firstTimeBonusPt:450,  secondTimeBonusPt:0, thirdTimeBonusPt:0 },
+      { id:5, priceWithTax:50000, priceWithoutTax:45455, normalPt:25000, bonusPt:1500, firstTimeBonusPt:900,  secondTimeBonusPt:0, thirdTimeBonusPt:0 },
+      { id:6, priceWithTax:98000, priceWithoutTax:89091, normalPt:49000, bonusPt:3000, firstTimeBonusPt:1800, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
+      { id:7, priceWithTax:150000,priceWithoutTax:136364,normalPt:75000, bonusPt:5000, firstTimeBonusPt:3000, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
+    ]),
+    // Amazon Pay（手数料0%）
+    amazonpay: withFee(0, [
       { id:1, priceWithTax:3300,  priceWithoutTax:3000,  normalPt:1650,  bonusPt:0,    firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
       { id:2, priceWithTax:5500,  priceWithoutTax:5000,  normalPt:2750,  bonusPt:150,  firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
       { id:3, priceWithTax:11000, priceWithoutTax:10000, normalPt:5500,  bonusPt:300,  firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
@@ -65,30 +81,23 @@ export const initialData: AppData = {
       { id:5, priceWithTax:50000, priceWithoutTax:45455, normalPt:25000, bonusPt:1500, firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
       { id:6, priceWithTax:98000, priceWithoutTax:89091, normalPt:49000, bonusPt:3000, firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
       { id:7, priceWithTax:150000,priceWithoutTax:136364,normalPt:75000, bonusPt:5000, firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
-    ],
-    amazonpay: [
-      { id:1, priceWithTax:3300,  priceWithoutTax:3000,  normalPt:1650,  bonusPt:0,    firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
-      { id:2, priceWithTax:5500,  priceWithoutTax:5000,  normalPt:2750,  bonusPt:150,  firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
-      { id:3, priceWithTax:11000, priceWithoutTax:10000, normalPt:5500,  bonusPt:300,  firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
-      { id:4, priceWithTax:25000, priceWithoutTax:22727, normalPt:12500, bonusPt:750,  firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
-      { id:5, priceWithTax:50000, priceWithoutTax:45455, normalPt:25000, bonusPt:1500, firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
-      { id:6, priceWithTax:98000, priceWithoutTax:89091, normalPt:49000, bonusPt:3000, firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
-      { id:7, priceWithTax:150000,priceWithoutTax:136364,normalPt:75000, bonusPt:5000, firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
-    ],
-    apple: [
+    ]),
+    // Apple（ストア手数料10%）
+    apple: withFee(0.10, [
       { id:1, priceWithTax:2200,  priceWithoutTax:2000,  normalPt:1100,  bonusPt:0,   firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0, productId:'jp.canow-wish.apple.2200' },
       { id:2, priceWithTax:4400,  priceWithoutTax:4000,  normalPt:2200,  bonusPt:50,  firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0, productId:'jp.canow-wish.apple.4400' },
       { id:3, priceWithTax:7700,  priceWithoutTax:7000,  normalPt:3850,  bonusPt:100, firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0, productId:'jp.canow-wish.apple.7700' },
       { id:4, priceWithTax:11000, priceWithoutTax:10000, normalPt:5500,  bonusPt:200, firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0, productId:'jp.canow-wish.apple.11000' },
       { id:5, priceWithTax:25000, priceWithoutTax:22727, normalPt:12500, bonusPt:500, firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0, productId:'jp.canow-wish.apple.25000' },
-    ],
-    google: [
+    ]),
+    // Google（ストア手数料10%）
+    google: withFee(0.10, [
       { id:1, priceWithTax:2200,  priceWithoutTax:2000,  normalPt:1100,  bonusPt:0,   firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0, productId:'jp.canow-wish.google.2200' },
       { id:2, priceWithTax:4400,  priceWithoutTax:4000,  normalPt:2200,  bonusPt:50,  firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0, productId:'jp.canow-wish.google.4400' },
       { id:3, priceWithTax:7700,  priceWithoutTax:7000,  normalPt:3850,  bonusPt:100, firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0, productId:'jp.canow-wish.google.7700' },
       { id:4, priceWithTax:11000, priceWithoutTax:10000, normalPt:5500,  bonusPt:200, firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0, productId:'jp.canow-wish.google.11000' },
       { id:5, priceWithTax:25000, priceWithoutTax:22727, normalPt:12500, bonusPt:500, firstTimeBonusPt:0, secondTimeBonusPt:0, thirdTimeBonusPt:0, productId:'jp.canow-wish.google.25000' },
-    ],
+    ]),
   },
 
   performerRanks: [

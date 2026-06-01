@@ -30,14 +30,15 @@ export function PointSettings() {
       : '-'
   }
 
-  // 粗利率 = (税込価格 − 税込価格×消費税率 − 通常pt×0.67 − (通常ボーナス+初回ボーナス)×0.22) ÷ 税込価格
-  // ※スプレッドシートのO11式に準拠
+  // 粗利率 = (税込価格 − 税込×消費税率 − 税込×ストア手数料率 − 通常pt×0.67 − (通常ボーナス+初回ボーナス)×0.22) ÷ 税込価格
+  // ※スプレッドシートのO11式 + 決済手数料を反映
   const calcGrossMargin = (plan: PurchasePlan) => {
     const tax = plan.priceWithTax * pointConfig.taxRate
+    const storeFee = plan.priceWithTax * (plan.storeFeeRate ?? 0)
     const rewardCost =
       plan.normalPt * pointConfig.normalPtCost +
       (plan.bonusPt + plan.firstTimeBonusPt) * pointConfig.bonusPtCost
-    const grossProfit = plan.priceWithTax - tax - rewardCost
+    const grossProfit = plan.priceWithTax - tax - storeFee - rewardCost
     return plan.priceWithTax > 0
       ? ((grossProfit / plan.priceWithTax) * 100).toFixed(1) + '%'
       : '-'
@@ -111,6 +112,7 @@ export function PointSettings() {
                 <th className="px-3 py-2 text-right">通常PT</th>
                 <th className="px-3 py-2 text-right">ボーナスPT</th>
                 <th className="px-3 py-2 text-right">初回特典PT</th>
+                <th className="px-3 py-2 text-right">手数料率</th>
                 <th className="px-3 py-2 text-right">還元率</th>
                 <th className="px-3 py-2 text-right">粗利率</th>
               </tr>
@@ -133,6 +135,13 @@ export function PointSettings() {
                   </td>
                   <td className="px-3 py-2 text-right">
                     <EditableCell value={plan.firstTimeBonusPt} suffix="pt" onChange={(v) => updatePlan(payment, i, 'firstTimeBonusPt', v)} />
+                  </td>
+                  <td className="px-3 py-2 text-right text-orange-600">
+                    <EditableCell
+                      value={Math.round((plan.storeFeeRate ?? 0) * 1000) / 10}
+                      suffix="%"
+                      onChange={(v) => updatePlan(payment, i, 'storeFeeRate', v / 100)}
+                    />
                   </td>
                   <td className="px-3 py-2 text-right text-blue-600 font-medium">{calcReturnRate(plan)}</td>
                   <td className="px-3 py-2 text-right text-green-600 font-medium">{calcGrossMargin(plan)}</td>
@@ -162,16 +171,17 @@ export function PointSettings() {
             <tbody>
               {(
                 [
-                  { method: '銀行振込', rate: 0, plans: purchasePlans.bank },
-                  { method: 'Credix決済', rate: 0, plans: purchasePlans.credix },
-                  { method: 'Amazon Pay', rate: 0, plans: purchasePlans.amazonpay },
-                  { method: 'Apple', rate: 0.10, plans: purchasePlans.apple },
-                  { method: 'Google', rate: 0.10, plans: purchasePlans.google },
-                ] as { method: string; rate: number; plans: typeof purchasePlans.bank }[]
-              ).map(({ method, rate, plans }) => {
+                  { method: '銀行振込', plans: purchasePlans.bank },
+                  { method: 'Credix決済', plans: purchasePlans.credix },
+                  { method: 'Amazon Pay', plans: purchasePlans.amazonpay },
+                  { method: 'Apple', plans: purchasePlans.apple },
+                  { method: 'Google', plans: purchasePlans.google },
+                ] as { method: string; plans: typeof purchasePlans.bank }[]
+              ).map(({ method, plans }) => {
                 // 代表プランとして中間のものを使用
                 const plan = plans[Math.floor(plans.length / 2)]
                 if (!plan) return null
+                const rate = plan.storeFeeRate ?? 0
                 // 税込価格を基準に消費税・ストア手数料・報酬原価を控除（粗利率の定義と統一）
                 const tax = plan.priceWithTax * pointConfig.taxRate
                 const storeFee = plan.priceWithTax * rate

@@ -21,6 +21,7 @@ export interface PurchasePlan {
   firstTimeBonusPt: number
   secondTimeBonusPt: number
   thirdTimeBonusPt: number
+  storeFeeRate: number       // ストア/決済手数料率（0〜1）プランごとに編集可
   productId?: string
 }
 
