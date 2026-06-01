@@ -18,10 +18,9 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   }
 
   return (
-    <div className="min-h-screen bg-indigo-700 flex items-center justify-center">
-      <div className="bg-white rounded-2xl shadow-xl p-10 w-full max-w-sm text-center">
-        <div className="text-4xl mb-3">📊</div>
-        <h1 className="text-xl font-bold text-gray-800 mb-1">キャンペーンシミュレーター</h1>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="bg-white border border-gray-200 p-10 w-full max-w-sm text-center">
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-1">Paigner</h1>
         <p className="text-sm text-gray-500 mb-6">パスワードを入力してください</p>
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
@@ -30,12 +29,12 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
             onChange={e => { setInput(e.target.value); setError(false) }}
             placeholder="パスワード"
             autoFocus
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="w-full border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:border-gray-900"
           />
           {error && <p className="text-red-500 text-xs">パスワードが違います</p>}
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-indigo-700"
+            className="w-full bg-gray-900 text-white py-2 text-sm font-medium hover:bg-gray-700"
           >
             ログイン
           </button>
@@ -46,7 +45,6 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
 }
 // ────────────────────────────────────────────────────
 
-import { TabNav } from './components/TabNav'
 import { PointSettings } from './tabs/PointSettings'
 import { PerformerSettings } from './tabs/PerformerSettings'
 import { SalesSimulator } from './tabs/SalesSimulator'
@@ -78,18 +76,39 @@ export default function App() {
   if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-indigo-700 text-white px-6 py-3 flex items-center justify-between">
-        <h1 className="text-lg font-bold">📊 キャンペーンシミュレーター</h1>
-        <button
-          onClick={() => { if (confirm('全設定を初期値にリセットしますか？')) resetToInitial() }}
-          className="text-xs text-indigo-200 hover:text-white underline"
-        >
-          初期値にリセット
-        </button>
-      </header>
-      <TabNav tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
-      <main className="p-6">
+    <div className="min-h-screen bg-gray-100 flex">
+      {/* 左サイドバー（縦ナビ・フラット） */}
+      <aside className="w-56 shrink-0 bg-white border-r border-gray-200 flex flex-col min-h-screen sticky top-0 h-screen">
+        <div className="px-5 py-4 border-b border-gray-200">
+          <h1 className="text-xl font-bold tracking-tight text-gray-900">Paigner</h1>
+        </div>
+        <nav className="flex-1 overflow-y-auto py-2">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`w-full text-left px-5 py-2.5 text-sm border-l-2 transition-colors ${
+                activeTab === tab.id
+                  ? 'border-gray-900 bg-gray-100 text-gray-900 font-medium'
+                  : 'border-transparent text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+        <div className="px-5 py-3 border-t border-gray-200">
+          <button
+            onClick={() => { if (confirm('全設定を初期値にリセットしますか？')) resetToInitial() }}
+            className="text-xs text-gray-400 hover:text-gray-700"
+          >
+            初期値にリセット
+          </button>
+        </div>
+      </aside>
+
+      {/* メインコンテンツ */}
+      <main className="flex-1 p-8 overflow-x-auto">
         {activeTab === 'point'     && <PointSettings />}
         {activeTab === 'performer' && <PerformerSettings />}
         {activeTab === 'simulator' && <SalesSimulator />}
