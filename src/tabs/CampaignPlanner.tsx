@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
-import { userPatterns, performerPatterns } from '../data/campaignSeeds'
+import { userPatterns, performerPatterns, rankingTiers, rankingNote } from '../data/campaignSeeds'
 import type { Campaign } from '../types'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -11,10 +11,8 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 const STATUS_OPTIONS = ['開始前', '準備中', '実施中', '終了']
-// pt設計・バナー・pt設定 共通の進捗プルダウン
 const WORK_OPTIONS = ['未対応', '対応中', '対応済', '対応なし', '作成前', '作成中', '作成済']
 
-// 開始〜終了の日数（両端含む）を算出。日付未入力なら null
 function computeDays(start: string, end: string): number | null {
   const s = Date.parse(start)
   const e = Date.parse(end)
@@ -25,13 +23,15 @@ function computeDays(start: string, end: string): number | null {
 export function CampaignPlanner() {
   const { data, updateCampaigns } = useAppContext()
   const { campaigns } = data
+  const [audience, setAudience] = useState<'user' | 'performer'>('user')
   const [showPatterns, setShowPatterns] = useState(false)
+
+  const rows = campaigns.filter((c) => c.audience === audience)
 
   const update = (id: string, key: keyof Campaign, value: string | number) => {
     updateCampaigns(campaigns.map((c) => (c.id !== id ? c : { ...c, [key]: value })))
   }
 
-  // 開始/終了の変更時、両方そろっていれば期間日数を自動算出
   const updateDate = (id: string, key: 'start' | 'end', value: string) => {
     updateCampaigns(campaigns.map((c) => {
       if (c.id !== id) return c
@@ -44,7 +44,7 @@ export function CampaignPlanner() {
   const addRow = () => {
     updateCampaigns([
       ...campaigns,
-      { id: crypto.randomUUID(), category: '', title: '', durationDays: 0, start: '', end: '', pattern: '', tag: '', status: '開始前', ptDesign: '未対応', banner: '作成前', ptSetting: '未対応' },
+      { id: crypto.randomUUID(), audience, category: '', title: '', durationDays: 0, start: '', end: '', pattern: '', tag: '', status: '開始前', ptDesign: '未対応', banner: '作成前', ptSetting: '未対応' },
     ])
   }
 
@@ -59,10 +59,22 @@ export function CampaignPlanner() {
         </button>
       </div>
 
+      {/* ユーザー / パフォーマー 切り替え */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setAudience('user')}
+          className={`px-4 py-1.5 text-sm rounded ${audience === 'user' ? 'bg-pink-600 text-white' : 'bg-gray-200 text-gray-600'}`}
+        >👤 ユーザー向け</button>
+        <button
+          onClick={() => setAudience('performer')}
+          className={`px-4 py-1.5 text-sm rounded ${audience === 'performer' ? 'bg-teal-600 text-white' : 'bg-gray-200 text-gray-600'}`}
+        >✨ パフォーマー向け</button>
+      </div>
+
       <section className="bg-white rounded-lg shadow overflow-x-auto">
         <table className="text-xs border-collapse w-full whitespace-nowrap">
           <thead>
-            <tr className="bg-indigo-700 text-white">
+            <tr className={audience === 'user' ? 'bg-pink-700 text-white' : 'bg-teal-700 text-white'}>
               <th className="px-2 py-2 text-left">No</th>
               <th className="px-2 py-2 text-left w-20">種別</th>
               <th className="px-2 py-2 text-left min-w-[260px]">タイトル</th>
@@ -79,55 +91,41 @@ export function CampaignPlanner() {
             </tr>
           </thead>
           <tbody>
-            {campaigns.map((c, i) => {
+            {rows.map((c, i) => {
               const days = computeDays(c.start, c.end)
               return (
               <tr key={c.id} className={`border-b border-gray-100 ${i % 2 ? 'bg-gray-50' : 'bg-white'} hover:bg-indigo-50/40`}>
                 <td className="px-2 py-1 text-gray-400">{i + 1}</td>
-                {/* 種別 */}
                 <td className="px-1 py-1"><input value={c.category} onChange={(e) => update(c.id, 'category', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
-                {/* タイトル */}
                 <td className="px-1 py-1"><input value={c.title} onChange={(e) => update(c.id, 'title', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full min-w-[260px]" /></td>
-                {/* 期間(日) 自動算出（読み取り専用） */}
                 <td className="px-1 py-1 text-center">
                   <span className="inline-block min-w-[2.5rem] font-medium text-indigo-700" title="開始・終了から自動算出">
                     {days != null ? `${days}日` : (c.durationDays ? `${c.durationDays}日` : '—')}
                   </span>
                 </td>
-                {/* 開始（カレンダー） */}
                 <td className="px-1 py-1"><input type="date" value={c.start} onChange={(e) => updateDate(c.id, 'start', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
-                {/* 終了（カレンダー） */}
                 <td className="px-1 py-1"><input type="date" value={c.end} onChange={(e) => updateDate(c.id, 'end', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
-                {/* パターン */}
                 <td className="px-1 py-1"><input value={c.pattern} onChange={(e) => update(c.id, 'pattern', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
-                {/* タグ */}
                 <td className="px-1 py-1"><input value={c.tag} onChange={(e) => update(c.id, 'tag', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
-                {/* ステータス */}
                 <td className="px-1 py-1">
-                  <select
-                    value={c.status}
-                    onChange={(e) => update(c.id, 'status', e.target.value)}
-                    className={`rounded px-1 py-0.5 text-[11px] border-none outline-none ${STATUS_COLORS[c.status] ?? 'bg-gray-100 text-gray-600'}`}
-                  >
+                  <select value={c.status} onChange={(e) => update(c.id, 'status', e.target.value)}
+                    className={`rounded px-1 py-0.5 text-[11px] border-none outline-none ${STATUS_COLORS[c.status] ?? 'bg-gray-100 text-gray-600'}`}>
                     {!STATUS_OPTIONS.includes(c.status) && <option value={c.status}>{c.status || '—'}</option>}
                     {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </td>
-                {/* pt設計 */}
                 <td className="px-1 py-1">
                   <select value={c.ptDesign} onChange={(e) => update(c.id, 'ptDesign', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full">
                     {!WORK_OPTIONS.includes(c.ptDesign) && <option value={c.ptDesign}>{c.ptDesign || '—'}</option>}
                     {WORK_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </td>
-                {/* バナー */}
                 <td className="px-1 py-1">
                   <select value={c.banner} onChange={(e) => update(c.id, 'banner', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full">
                     {!WORK_OPTIONS.includes(c.banner) && <option value={c.banner}>{c.banner || '—'}</option>}
                     {WORK_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </td>
-                {/* pt設定 */}
                 <td className="px-1 py-1">
                   <select value={c.ptSetting} onChange={(e) => update(c.id, 'ptSetting', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full">
                     {!WORK_OPTIONS.includes(c.ptSetting) && <option value={c.ptSetting}>{c.ptSetting || '—'}</option>}
@@ -140,6 +138,9 @@ export function CampaignPlanner() {
               </tr>
               )
             })}
+            {rows.length === 0 && (
+              <tr><td colSpan={13} className="px-3 py-6 text-center text-gray-400 text-sm">この区分のキャンペーンはありません</td></tr>
+            )}
           </tbody>
         </table>
         <div className="p-3">
@@ -147,52 +148,87 @@ export function CampaignPlanner() {
         </div>
       </section>
 
+      {/* パフォーマー向け: ランキングイベント */}
+      {audience === 'performer' && (
+        <section className="bg-white rounded-lg shadow p-4 overflow-x-auto">
+          <h3 className="font-semibold text-gray-700 text-sm mb-1">🏆 ランキングイベント（順位別ボーナスPT）</h3>
+          <p className="text-xs text-gray-500 mb-3">
+            {rankingNote.period}（{rankingNote.start}〜{rankingNote.end}）／ {rankingNote.content}
+          </p>
+          <table className="text-xs border-collapse">
+            <thead>
+              <tr className="bg-teal-100 text-gray-700">
+                <th className="px-3 py-1 text-left border border-gray-200">集計</th>
+                {Array.from({ length: 10 }, (_, i) => (
+                  <th key={i} className="px-3 py-1 text-center border border-gray-200">{i + 1}位</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rankingTiers.map((tier) => (
+                <tr key={tier.label} className="border-b border-gray-100">
+                  <td className="px-3 py-1 font-medium text-gray-700 border border-gray-200 bg-gray-50">{tier.label}</td>
+                  {Array.from({ length: 10 }, (_, i) => (
+                    <td key={i} className="px-3 py-1 text-right border border-gray-200">
+                      {tier.points[i] != null ? `${tier.points[i].toLocaleString()}pt` : '—'}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+
       {showPatterns && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <section className="bg-white rounded-lg shadow p-4 overflow-x-auto">
-            <h3 className="font-semibold text-gray-700 text-sm mb-2">User向けパターン</h3>
-            <table className="text-[11px] border-collapse w-full">
-              <thead>
-                <tr className="bg-gray-100 text-gray-600">
-                  <th className="px-2 py-1 text-left">P</th><th className="px-2 py-1 text-left">内容</th>
-                  <th className="px-2 py-1 text-left">対象</th><th className="px-2 py-1 text-left">回数</th><th className="px-2 py-1 text-left">特典</th>
-                </tr>
-              </thead>
-              <tbody>
-                {userPatterns.map((p) => (
-                  <tr key={p.pattern} className="border-b border-gray-100">
-                    <td className="px-2 py-1 font-bold text-indigo-700">{p.pattern}</td>
-                    <td className="px-2 py-1">{p.content}</td>
-                    <td className="px-2 py-1">{p.target}</td>
-                    <td className="px-2 py-1">{p.count}</td>
-                    <td className="px-2 py-1">{p.benefit}</td>
+        <div className="grid grid-cols-1 gap-4">
+          {audience === 'user' ? (
+            <section className="bg-white rounded-lg shadow p-4 overflow-x-auto">
+              <h3 className="font-semibold text-gray-700 text-sm mb-2">User向けパターン（CPパターン_User）</h3>
+              <table className="text-[11px] border-collapse w-full">
+                <thead>
+                  <tr className="bg-gray-100 text-gray-600">
+                    <th className="px-2 py-1 text-left">P</th><th className="px-2 py-1 text-left">内容</th>
+                    <th className="px-2 py-1 text-left">対象</th><th className="px-2 py-1 text-left">回数</th><th className="px-2 py-1 text-left">特典</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
-          <section className="bg-white rounded-lg shadow p-4 overflow-x-auto">
-            <h3 className="font-semibold text-gray-700 text-sm mb-2">Performer向けパターン</h3>
-            <table className="text-[11px] border-collapse w-full">
-              <thead>
-                <tr className="bg-gray-100 text-gray-600">
-                  <th className="px-2 py-1 text-left">P</th><th className="px-2 py-1 text-left">内容</th>
-                  <th className="px-2 py-1 text-left">対象</th><th className="px-2 py-1 text-left">条件</th><th className="px-2 py-1 text-left">特典</th>
-                </tr>
-              </thead>
-              <tbody>
-                {performerPatterns.map((p) => (
-                  <tr key={p.pattern} className="border-b border-gray-100">
-                    <td className="px-2 py-1 font-bold text-indigo-700">{p.pattern}</td>
-                    <td className="px-2 py-1">{p.content}</td>
-                    <td className="px-2 py-1">{p.target}</td>
-                    <td className="px-2 py-1">{p.condition}</td>
-                    <td className="px-2 py-1">{p.benefit}</td>
+                </thead>
+                <tbody>
+                  {userPatterns.map((pp) => (
+                    <tr key={pp.pattern} className="border-b border-gray-100">
+                      <td className="px-2 py-1 font-bold text-pink-700">{pp.pattern}</td>
+                      <td className="px-2 py-1">{pp.content}</td>
+                      <td className="px-2 py-1">{pp.target}</td>
+                      <td className="px-2 py-1">{pp.count}</td>
+                      <td className="px-2 py-1">{pp.benefit}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          ) : (
+            <section className="bg-white rounded-lg shadow p-4 overflow-x-auto">
+              <h3 className="font-semibold text-gray-700 text-sm mb-2">Performer向けパターン（CPパターン_Performer）</h3>
+              <table className="text-[11px] border-collapse w-full">
+                <thead>
+                  <tr className="bg-gray-100 text-gray-600">
+                    <th className="px-2 py-1 text-left">P</th><th className="px-2 py-1 text-left">内容</th>
+                    <th className="px-2 py-1 text-left">対象</th><th className="px-2 py-1 text-left">条件</th><th className="px-2 py-1 text-left">特典</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
+                </thead>
+                <tbody>
+                  {performerPatterns.map((pp) => (
+                    <tr key={pp.pattern} className="border-b border-gray-100">
+                      <td className="px-2 py-1 font-bold text-teal-700">{pp.pattern}</td>
+                      <td className="px-2 py-1">{pp.content}</td>
+                      <td className="px-2 py-1">{pp.target}</td>
+                      <td className="px-2 py-1">{pp.condition}</td>
+                      <td className="px-2 py-1">{pp.benefit}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          )}
         </div>
       )}
     </div>

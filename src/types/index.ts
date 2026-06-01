@@ -173,6 +173,7 @@ export interface ReportData {
 // ─── キャンペーン企画 ───────────────────────────────
 export interface Campaign {
   id: string
+  audience: 'user' | 'performer'  // ユーザー向け / パフォーマー向け
   category: string      // 種別（記念/季節/ボーナス/ゲリラ/定期 等）
   title: string         // タイトル
   durationDays: number  // 実施期間（日数）
