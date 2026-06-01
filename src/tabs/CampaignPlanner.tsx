@@ -12,6 +12,42 @@ const STATUS_COLORS: Record<string, string> = {
 
 const STATUS_OPTIONS = ['開始前', '準備中', '実施中', '終了']
 const WORK_OPTIONS = ['未対応', '対応中', '対応済', '対応なし', '作成前', '作成中', '作成済']
+const TAG_OPTIONS = ['1通', '1文字', '有料画像', '有料動画', '画像送受信', '動画送受信', '通話']
+
+// タグの複数選択（チェックボックス式ドロップダウン）
+function TagSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const selected = value ? value.split(',').map((s) => s.trim()).filter(Boolean) : []
+  const toggle = (t: string) => {
+    const next = selected.includes(t) ? selected.filter((x) => x !== t) : [...selected, t]
+    onChange(next.join(', '))
+  }
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full text-left truncate hover:bg-gray-50"
+        title={selected.join(', ')}
+      >
+        {selected.length ? selected.join(', ') : '—'}
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute z-20 mt-1 bg-white border border-gray-200 rounded shadow-lg text-xs p-1 min-w-[120px]">
+            {TAG_OPTIONS.map((t) => (
+              <label key={t} className="flex items-center gap-1 px-1 py-0.5 hover:bg-gray-50 cursor-pointer">
+                <input type="checkbox" checked={selected.includes(t)} onChange={() => toggle(t)} />
+                {t}
+              </label>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
 
 function computeDays(start: string, end: string): number | null {
   const s = Date.parse(start)
@@ -106,7 +142,7 @@ export function CampaignPlanner() {
                 <td className="px-1 py-1"><input type="date" value={c.start} onChange={(e) => updateDate(c.id, 'start', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
                 <td className="px-1 py-1"><input type="date" value={c.end} onChange={(e) => updateDate(c.id, 'end', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
                 <td className="px-1 py-1"><input value={c.pattern} onChange={(e) => update(c.id, 'pattern', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
-                <td className="px-1 py-1"><input value={c.tag} onChange={(e) => update(c.id, 'tag', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
+                <td className="px-1 py-1"><TagSelect value={c.tag} onChange={(v) => update(c.id, 'tag', v)} /></td>
                 <td className="px-1 py-1">
                   <select value={c.status} onChange={(e) => update(c.id, 'status', e.target.value)}
                     className={`rounded px-1 py-0.5 text-[11px] border-none outline-none ${STATUS_COLORS[c.status] ?? 'bg-gray-100 text-gray-600'}`}>
