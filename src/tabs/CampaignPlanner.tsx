@@ -10,19 +10,13 @@ const STATUS_COLORS: Record<string, string> = {
   '終了': 'bg-gray-200 text-gray-500',
 }
 
-const COLS: { key: keyof Campaign; label: string; w: string }[] = [
-  { key: 'category', label: '種別', w: 'w-20' },
-  { key: 'title', label: 'タイトル', w: 'min-w-[260px]' },
-  { key: 'durationDays', label: '期間(日)', w: 'w-16' },
-  { key: 'start', label: '開始', w: 'w-24' },
-  { key: 'end', label: '終了', w: 'w-24' },
-  { key: 'pattern', label: 'パターン', w: 'w-20' },
-  { key: 'tag', label: 'タグ', w: 'w-24' },
-  { key: 'status', label: 'ステータス', w: 'w-24' },
-  { key: 'ptDesign', label: 'pt設計', w: 'w-20' },
-  { key: 'banner', label: 'バナー', w: 'w-20' },
-  { key: 'ptSetting', label: 'pt設定', w: 'w-20' },
-]
+// 開始〜終了の日数（両端含む）を算出。日付未入力なら null
+function computeDays(start: string, end: string): number | null {
+  const s = Date.parse(start)
+  const e = Date.parse(end)
+  if (isNaN(s) || isNaN(e)) return null
+  return Math.floor((e - s) / 86400000) + 1
+}
 
 export function CampaignPlanner() {
   const { data, updateCampaigns } = useAppContext()
@@ -31,6 +25,16 @@ export function CampaignPlanner() {
 
   const update = (id: string, key: keyof Campaign, value: string | number) => {
     updateCampaigns(campaigns.map((c) => (c.id !== id ? c : { ...c, [key]: value })))
+  }
+
+  // 開始/終了の変更時、両方そろっていれば期間日数を自動算出
+  const updateDate = (id: string, key: 'start' | 'end', value: string) => {
+    updateCampaigns(campaigns.map((c) => {
+      if (c.id !== id) return c
+      const next = { ...c, [key]: value }
+      const days = computeDays(next.start, next.end)
+      return days != null ? { ...next, durationDays: days } : next
+    }))
   }
 
   const addRow = () => {
@@ -56,41 +60,62 @@ export function CampaignPlanner() {
           <thead>
             <tr className="bg-indigo-700 text-white">
               <th className="px-2 py-2 text-left">No</th>
-              {COLS.map((col) => (
-                <th key={col.key} className={`px-2 py-2 text-left ${col.w}`}>{col.label}</th>
-              ))}
+              <th className="px-2 py-2 text-left w-20">種別</th>
+              <th className="px-2 py-2 text-left min-w-[260px]">タイトル</th>
+              <th className="px-2 py-2 text-left w-16">期間(日)</th>
+              <th className="px-2 py-2 text-left w-32">開始</th>
+              <th className="px-2 py-2 text-left w-32">終了</th>
+              <th className="px-2 py-2 text-left w-20">パターン</th>
+              <th className="px-2 py-2 text-left w-24">タグ</th>
+              <th className="px-2 py-2 text-left w-24">ステータス</th>
+              <th className="px-2 py-2 text-left w-20">pt設計</th>
+              <th className="px-2 py-2 text-left w-20">バナー</th>
+              <th className="px-2 py-2 text-left w-20">pt設定</th>
               <th className="px-2 py-2"></th>
             </tr>
           </thead>
           <tbody>
-            {campaigns.map((c, i) => (
+            {campaigns.map((c, i) => {
+              const days = computeDays(c.start, c.end)
+              return (
               <tr key={c.id} className={`border-b border-gray-100 ${i % 2 ? 'bg-gray-50' : 'bg-white'} hover:bg-indigo-50/40`}>
                 <td className="px-2 py-1 text-gray-400">{i + 1}</td>
-                {COLS.map((col) => (
-                  <td key={col.key} className="px-1 py-1">
-                    {col.key === 'status' ? (
-                      <span className={`inline-block px-2 py-0.5 rounded text-[11px] ${STATUS_COLORS[c.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                        <input
-                          value={c.status}
-                          onChange={(e) => update(c.id, 'status', e.target.value)}
-                          className="bg-transparent outline-none w-20 text-center"
-                        />
-                      </span>
-                    ) : (
-                      <input
-                        type={col.key === 'durationDays' ? 'number' : 'text'}
-                        value={c[col.key]}
-                        onChange={(e) => update(c.id, col.key, col.key === 'durationDays' ? (parseInt(e.target.value) || 0) : e.target.value)}
-                        className={`border border-gray-200 rounded px-1 py-0.5 text-xs ${col.w === 'min-w-[260px]' ? 'w-full min-w-[260px]' : 'w-full'}`}
-                      />
-                    )}
-                  </td>
-                ))}
+                {/* 種別 */}
+                <td className="px-1 py-1"><input value={c.category} onChange={(e) => update(c.id, 'category', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
+                {/* タイトル */}
+                <td className="px-1 py-1"><input value={c.title} onChange={(e) => update(c.id, 'title', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full min-w-[260px]" /></td>
+                {/* 期間(日) 自動算出（読み取り専用） */}
+                <td className="px-1 py-1 text-center">
+                  <span className="inline-block min-w-[2.5rem] font-medium text-indigo-700" title="開始・終了から自動算出">
+                    {days != null ? `${days}日` : (c.durationDays ? `${c.durationDays}日` : '—')}
+                  </span>
+                </td>
+                {/* 開始（カレンダー） */}
+                <td className="px-1 py-1"><input type="date" value={c.start} onChange={(e) => updateDate(c.id, 'start', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
+                {/* 終了（カレンダー） */}
+                <td className="px-1 py-1"><input type="date" value={c.end} onChange={(e) => updateDate(c.id, 'end', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
+                {/* パターン */}
+                <td className="px-1 py-1"><input value={c.pattern} onChange={(e) => update(c.id, 'pattern', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
+                {/* タグ */}
+                <td className="px-1 py-1"><input value={c.tag} onChange={(e) => update(c.id, 'tag', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
+                {/* ステータス */}
+                <td className="px-1 py-1">
+                  <span className={`inline-block px-2 py-0.5 rounded text-[11px] ${STATUS_COLORS[c.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                    <input value={c.status} onChange={(e) => update(c.id, 'status', e.target.value)} className="bg-transparent outline-none w-20 text-center" />
+                  </span>
+                </td>
+                {/* pt設計 */}
+                <td className="px-1 py-1"><input value={c.ptDesign} onChange={(e) => update(c.id, 'ptDesign', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
+                {/* バナー */}
+                <td className="px-1 py-1"><input value={c.banner} onChange={(e) => update(c.id, 'banner', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
+                {/* pt設定 */}
+                <td className="px-1 py-1"><input value={c.ptSetting} onChange={(e) => update(c.id, 'ptSetting', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
                 <td className="px-1 py-1 text-center">
                   <button onClick={() => remove(c.id)} className="text-red-400 hover:text-red-600 text-xs">削除</button>
                 </td>
               </tr>
-            ))}
+              )
+            })}
           </tbody>
         </table>
         <div className="p-3">
