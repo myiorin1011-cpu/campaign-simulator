@@ -136,6 +136,14 @@ export const initialData: AppData = {
     retentionRate: 0.40,
   },
 
-  agencies: [],
+  agencies: [
+    {
+      id: 'gradcube-default',
+      name: 'GradCube',
+      months: Array.from({ length: 12 }, (_, i) => ({
+        month: i + 1, adBudget: 0, applications: 0, debuts: 0, sales: 0,
+      })),
+    },
+  ],
   reports: [],
 }
