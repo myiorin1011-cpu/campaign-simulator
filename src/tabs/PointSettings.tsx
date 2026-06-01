@@ -22,26 +22,23 @@ export function PointSettings() {
     updatePaymentOrder(next)
   }
 
-  // 還元率 = 合計付与PT（通常＝通常pt＋通常ボーナス）× User販売単価(¥2) ÷ 販売価格(税込)
-  const calcReturnRate = (plan: PurchasePlan) => {
-    const totalPt = plan.normalPt + plan.bonusPt
-    return plan.priceWithTax > 0
-      ? ((totalPt * pointConfig.userPtRate / plan.priceWithTax) * 100).toFixed(1) + '%'
-      : '-'
+  const pctOf = (value: number, base: number) => (base > 0 ? (value / base * 100).toFixed(1) + '%' : '-')
+
+  // 還元率 = 付与PT × User販売単価(¥2) ÷ 販売価格(税込)
+  //   通常：通常pt＋通常ボーナス ／ 初回：＋初回特典PT
+  const calcReturnRate = (plan: PurchasePlan, withFirst = false) => {
+    const totalPt = plan.normalPt + plan.bonusPt + (withFirst ? plan.firstTimeBonusPt : 0)
+    return pctOf(totalPt * pointConfig.userPtRate, plan.priceWithTax)
   }
 
-  // 粗利率 = (税込価格 − 税込×消費税率 − 税込×ストア手数料率 − 通常pt×0.67 − (通常ボーナス+初回ボーナス)×0.22) ÷ 税込価格
-  // ※スプレッドシートのO11式 + 決済手数料を反映
-  const calcGrossMargin = (plan: PurchasePlan) => {
+  // 粗利率 = (税込 − 税込×消費税率 − 税込×手数料率 − 通常pt×0.67 − ボーナス×0.22) ÷ 税込
+  //   通常：通常ボーナスのみ ／ 初回：通常ボーナス＋初回特典PT（スプレッドシートO11式）
+  const calcGrossMargin = (plan: PurchasePlan, withFirst = false) => {
     const tax = plan.priceWithTax * pointConfig.taxRate
     const storeFee = plan.priceWithTax * (plan.storeFeeRate ?? 0)
-    const rewardCost =
-      plan.normalPt * pointConfig.normalPtCost +
-      (plan.bonusPt + plan.firstTimeBonusPt) * pointConfig.bonusPtCost
-    const grossProfit = plan.priceWithTax - tax - storeFee - rewardCost
-    return plan.priceWithTax > 0
-      ? ((grossProfit / plan.priceWithTax) * 100).toFixed(1) + '%'
-      : '-'
+    const bonusPt = plan.bonusPt + (withFirst ? plan.firstTimeBonusPt : 0)
+    const rewardCost = plan.normalPt * pointConfig.normalPtCost + bonusPt * pointConfig.bonusPtCost
+    return pctOf(plan.priceWithTax - tax - storeFee - rewardCost, plan.priceWithTax)
   }
 
   const updatePlan = (payment: PaymentMethod, index: number, field: keyof PurchasePlan, value: number) => {
@@ -82,7 +79,9 @@ export function PointSettings() {
       </section>
 
       {/* 決済別購入プラン（並び替え可能） */}
-      {paymentOrder.map((payment, orderIdx) => (
+      {paymentOrder.map((payment, orderIdx) => {
+        const hasFirst = purchasePlans[payment].some((p) => p.firstTimeBonusPt > 0)
+        return (
         <section key={payment} className="bg-white rounded-lg shadow p-6 overflow-x-auto">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-gray-700">
@@ -115,6 +114,8 @@ export function PointSettings() {
                 <th className="px-3 py-2 text-right">手数料率</th>
                 <th className="px-3 py-2 text-right">還元率</th>
                 <th className="px-3 py-2 text-right">粗利率</th>
+                {hasFirst && <th className="px-3 py-2 text-right bg-pink-50">還元率(初回)</th>}
+                {hasFirst && <th className="px-3 py-2 text-right bg-pink-50">粗利率(初回)</th>}
               </tr>
             </thead>
             <tbody>
@@ -145,12 +146,15 @@ export function PointSettings() {
                   </td>
                   <td className="px-3 py-2 text-right text-blue-600 font-medium">{calcReturnRate(plan)}</td>
                   <td className="px-3 py-2 text-right text-green-600 font-medium">{calcGrossMargin(plan)}</td>
+                  {hasFirst && <td className="px-3 py-2 text-right text-pink-600 font-medium bg-pink-50/40">{calcReturnRate(plan, true)}</td>}
+                  {hasFirst && <td className="px-3 py-2 text-right text-pink-700 font-medium bg-pink-50/40">{calcGrossMargin(plan, true)}</td>}
                 </tr>
               ))}
             </tbody>
           </table>
         </section>
-      ))}
+        )
+      })}
 
       {/* 決済種別コスト比較表 */}
       <section className="bg-white rounded-lg shadow p-6">
