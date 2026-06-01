@@ -3,6 +3,8 @@ import type { Banner } from '../types'
 
 const cell = 'border border-gray-200 rounded px-1 py-0.5 text-xs w-full'
 
+const STATUS_OPTIONS = ['', '作成前', '作成中', '確認中', '完成', '適用中', '停止中']
+
 export function BannerManager() {
   const { data, updateBanners } = useAppContext()
   const { banners } = data
@@ -59,12 +61,20 @@ export function BannerManager() {
                 <td className="px-1 py-1 bg-pink-50/40"><textarea rows={2} value={b.userText} onChange={(e) => update(b.id, 'userText', e.target.value)} className={`${cell} min-w-[200px]`} /></td>
                 <td className="px-1 py-1 bg-pink-50/40"><input value={b.userBanner} onChange={(e) => update(b.id, 'userBanner', e.target.value)} className={`${cell} w-28`} /></td>
                 <td className="px-1 py-1 bg-pink-50/40"><input value={b.userLink} onChange={(e) => update(b.id, 'userLink', e.target.value)} className={`${cell} w-28`} /></td>
-                <td className="px-1 py-1 bg-pink-50/40"><input value={b.userStatus} onChange={(e) => update(b.id, 'userStatus', e.target.value)} className={`${cell} w-20`} /></td>
+                <td className="px-1 py-1 bg-pink-50/40">
+                  <select value={b.userStatus} onChange={(e) => update(b.id, 'userStatus', e.target.value)} className={`${cell} w-24`}>
+                    {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s || '—'}</option>)}
+                  </select>
+                </td>
                 {/* Performer */}
                 <td className="px-1 py-1 bg-teal-50/40"><textarea rows={2} value={b.performerText} onChange={(e) => update(b.id, 'performerText', e.target.value)} className={`${cell} min-w-[200px]`} /></td>
                 <td className="px-1 py-1 bg-teal-50/40"><input value={b.performerBanner} onChange={(e) => update(b.id, 'performerBanner', e.target.value)} className={`${cell} w-28`} /></td>
                 <td className="px-1 py-1 bg-teal-50/40"><input value={b.performerLink} onChange={(e) => update(b.id, 'performerLink', e.target.value)} className={`${cell} w-28`} /></td>
-                <td className="px-1 py-1 bg-teal-50/40"><input value={b.performerStatus} onChange={(e) => update(b.id, 'performerStatus', e.target.value)} className={`${cell} w-20`} /></td>
+                <td className="px-1 py-1 bg-teal-50/40">
+                  <select value={b.performerStatus} onChange={(e) => update(b.id, 'performerStatus', e.target.value)} className={`${cell} w-24`}>
+                    {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s || '—'}</option>)}
+                  </select>
+                </td>
                 <td className="px-1 py-1 text-center"><button onClick={() => remove(b.id)} className="text-red-400 hover:text-red-600">削除</button></td>
               </tr>
             ))}
