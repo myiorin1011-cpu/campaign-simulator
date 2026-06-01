@@ -11,6 +11,8 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 const STATUS_OPTIONS = ['開始前', '準備中', '実施中', '終了']
+// pt設計・バナー・pt設定 共通の進捗プルダウン
+const WORK_OPTIONS = ['未対応', '対応中', '対応済', '対応なし', '作成前', '作成中', '作成済']
 
 // 開始〜終了の日数（両端含む）を算出。日付未入力なら null
 function computeDays(start: string, end: string): number | null {
@@ -112,11 +114,26 @@ export function CampaignPlanner() {
                   </select>
                 </td>
                 {/* pt設計 */}
-                <td className="px-1 py-1"><input value={c.ptDesign} onChange={(e) => update(c.id, 'ptDesign', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
+                <td className="px-1 py-1">
+                  <select value={c.ptDesign} onChange={(e) => update(c.id, 'ptDesign', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full">
+                    {!WORK_OPTIONS.includes(c.ptDesign) && <option value={c.ptDesign}>{c.ptDesign || '—'}</option>}
+                    {WORK_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </td>
                 {/* バナー */}
-                <td className="px-1 py-1"><input value={c.banner} onChange={(e) => update(c.id, 'banner', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
+                <td className="px-1 py-1">
+                  <select value={c.banner} onChange={(e) => update(c.id, 'banner', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full">
+                    {!WORK_OPTIONS.includes(c.banner) && <option value={c.banner}>{c.banner || '—'}</option>}
+                    {WORK_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </td>
                 {/* pt設定 */}
-                <td className="px-1 py-1"><input value={c.ptSetting} onChange={(e) => update(c.id, 'ptSetting', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
+                <td className="px-1 py-1">
+                  <select value={c.ptSetting} onChange={(e) => update(c.id, 'ptSetting', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full">
+                    {!WORK_OPTIONS.includes(c.ptSetting) && <option value={c.ptSetting}>{c.ptSetting || '—'}</option>}
+                    {WORK_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </td>
                 <td className="px-1 py-1 text-center">
                   <button onClick={() => remove(c.id)} className="text-red-400 hover:text-red-600 text-xs">削除</button>
                 </td>
