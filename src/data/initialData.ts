@@ -64,7 +64,7 @@ export const initialData: AppData = {
     ]),
     // Credix決済（手数料4%）／初回特典PTあり
     credix: withFee(0.04, [
-      { id:1, priceWithTax:3300,  priceWithoutTax:3000,  normalPt:1650,  bonusPt:0,    firstTimeBonusPt:1000, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
+      { id:1, priceWithTax:1100,  priceWithoutTax:1000,  normalPt:550,   bonusPt:0,    firstTimeBonusPt:1000, secondTimeBonusPt:0, thirdTimeBonusPt:0 },
       { id:2, priceWithTax:5500,  priceWithoutTax:5000,  normalPt:2750,  bonusPt:150,  firstTimeBonusPt:500,  secondTimeBonusPt:0, thirdTimeBonusPt:0 },
       { id:3, priceWithTax:11000, priceWithoutTax:10000, normalPt:5500,  bonusPt:300,  firstTimeBonusPt:300,  secondTimeBonusPt:0, thirdTimeBonusPt:0 },
       { id:4, priceWithTax:25000, priceWithoutTax:22727, normalPt:12500, bonusPt:750,  firstTimeBonusPt:450,  secondTimeBonusPt:0, thirdTimeBonusPt:0 },
