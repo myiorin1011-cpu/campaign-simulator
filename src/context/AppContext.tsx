@@ -14,6 +14,8 @@ interface AppContextType {
   updateAgencies: (agencies: AppData['agencies']) => void
   updateReports: (reports: AppData['reports']) => void
   updatePaymentOrder: (order: AppData['paymentOrder']) => void
+  updateCampaigns: (campaigns: AppData['campaigns']) => void
+  updateBanners: (banners: AppData['banners']) => void
   resetToInitial: () => void
 }
 
@@ -61,6 +63,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     purchasePlans: mergedPlans,
     paymentOrder: mergedOrder,
     agencies: mergedAgencies,
+    // 旧データに無い場合はシード値で補完
+    campaigns: (rawData.campaigns && rawData.campaigns.length > 0) ? rawData.campaigns : initialData.campaigns,
+    banners: (rawData.banners && rawData.banners.length > 0) ? rawData.banners : initialData.banners,
     simulatorParams: {
       ...initialData.simulatorParams,
       ...rawData.simulatorParams,
@@ -94,6 +99,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updatePaymentOrder: AppContextType['updatePaymentOrder'] = (order) =>
     setData(prev => ({ ...prev, paymentOrder: order }))
 
+  const updateCampaigns: AppContextType['updateCampaigns'] = (campaigns) =>
+    setData(prev => ({ ...prev, campaigns }))
+
+  const updateBanners: AppContextType['updateBanners'] = (banners) =>
+    setData(prev => ({ ...prev, banners }))
+
   const resetToInitial = () => setData(initialData)
 
   return (
@@ -101,7 +112,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       data, setData,
       updatePointConfig, updatePurchasePlans, updatePerformerRanks,
       updateSimulatorParams, updateCohortParams, updateAgencies, updateReports,
-      updatePaymentOrder,
+      updatePaymentOrder, updateCampaigns, updateBanners,
       resetToInitial,
     }}>
       {children}

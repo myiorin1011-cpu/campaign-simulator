@@ -170,6 +170,37 @@ export interface ReportData {
   }
 }
 
+// ─── キャンペーン企画 ───────────────────────────────
+export interface Campaign {
+  id: string
+  category: string      // 種別（記念/季節/ボーナス/ゲリラ/定期 等）
+  title: string         // タイトル
+  durationDays: number  // 実施期間（日数）
+  start: string         // 開始
+  end: string           // 終了
+  pattern: string       // パターン（A1/B3 等）
+  tag: string           // タグ（1通, 1文字 等）
+  status: string        // ステータス（準備中/開始前 等）
+  ptDesign: string      // pt設計
+  banner: string        // バナー
+  ptSetting: string     // pt設定
+}
+
+// ─── キャンペーンバナー管理 ─────────────────────────
+export interface Banner {
+  id: string
+  category: string         // 月/種別（1月・記念・デフォルト 等）
+  event: string            // イベント名
+  userText: string         // ユーザー訴求文
+  userBanner: string       // 完成バナー(URL/メモ) 375×131
+  userLink: string         // リンク先
+  userStatus: string       // ステータス
+  performerText: string    // パフォーマー訴求文
+  performerBanner: string  // 完成バナー(URL/メモ)
+  performerLink: string    // リンク先
+  performerStatus: string  // ステータス
+}
+
 // アプリ全体データ
 export interface AppData {
   pointConfig: PointConfig
@@ -180,4 +211,6 @@ export interface AppData {
   cohortParams: CohortParams
   agencies: Agency[]
   reports: ReportData[]
+  campaigns: Campaign[]
+  banners: Banner[]
 }

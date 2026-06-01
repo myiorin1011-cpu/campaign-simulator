@@ -55,6 +55,8 @@ import { AgencyROI } from './tabs/AgencyROI'
 import { IncomeCalculator } from './tabs/IncomeCalculator'
 import { useAppContext } from './context/AppContext'
 import { ReportGenerator } from './tabs/ReportGenerator'
+import { CampaignPlanner } from './tabs/CampaignPlanner'
+import { BannerManager } from './tabs/BannerManager'
 
 const TABS = [
   { id: 'point',     label: '① ポイント設定' },
@@ -64,6 +66,8 @@ const TABS = [
   { id: 'agency',    label: '⑤ 代理店回収率' },
   { id: 'income',    label: '⑥ 目標月収逆算' },
   { id: 'report',    label: '⑦ 結果報告書' },
+  { id: 'campaign',  label: '⑧ キャンペーン企画' },
+  { id: 'banner',    label: '⑨ バナー管理' },
 ]
 
 export default function App() {
@@ -93,6 +97,8 @@ export default function App() {
         {activeTab === 'agency'    && <AgencyROI />}
         {activeTab === 'income'    && <IncomeCalculator />}
         {activeTab === 'report'    && <ReportGenerator />}
+        {activeTab === 'campaign'  && <CampaignPlanner />}
+        {activeTab === 'banner'    && <BannerManager />}
       </main>
     </div>
   )

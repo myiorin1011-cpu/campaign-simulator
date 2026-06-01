@@ -1,4 +1,5 @@
 import type { AppData, ActionPoints, ActionType, PurchasePlan } from '../types'
+import { seedCampaigns, seedBanners } from './campaignSeeds'
 
 // 各プランに決済手数料率(storeFeeRate)を一括付与するヘルパー
 const withFee = (rate: number, plans: Omit<PurchasePlan, 'storeFeeRate'>[]): PurchasePlan[] =>
@@ -146,4 +147,6 @@ export const initialData: AppData = {
     },
   ],
   reports: [],
+  campaigns: seedCampaigns,
+  banners: seedBanners,
 }
