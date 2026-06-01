@@ -22,17 +22,24 @@ export function PointSettings() {
     updatePaymentOrder(next)
   }
 
+  // 還元率 = 合計付与PT（通常＝通常pt＋通常ボーナス）× User販売単価(¥2) ÷ 販売価格(税込)
   const calcReturnRate = (plan: PurchasePlan) => {
-    const totalPt = plan.normalPt + plan.bonusPt + plan.firstTimeBonusPt
-    return plan.priceWithoutTax > 0
-      ? ((totalPt / plan.priceWithoutTax) * 100).toFixed(1) + '%'
+    const totalPt = plan.normalPt + plan.bonusPt
+    return plan.priceWithTax > 0
+      ? ((totalPt * pointConfig.userPtRate / plan.priceWithTax) * 100).toFixed(1) + '%'
       : '-'
   }
 
+  // 粗利率 = (税込価格 − 税込価格×消費税率 − 通常pt×0.67 − (通常ボーナス+初回ボーナス)×0.22) ÷ 税込価格
+  // ※スプレッドシートのO11式に準拠
   const calcGrossMargin = (plan: PurchasePlan) => {
-    const rewardCost = plan.normalPt * pointConfig.normalPtCost + plan.bonusPt * pointConfig.bonusPtCost
-    return plan.priceWithoutTax > 0
-      ? (((plan.priceWithoutTax - rewardCost) / plan.priceWithoutTax) * 100).toFixed(1) + '%'
+    const tax = plan.priceWithTax * pointConfig.taxRate
+    const rewardCost =
+      plan.normalPt * pointConfig.normalPtCost +
+      (plan.bonusPt + plan.firstTimeBonusPt) * pointConfig.bonusPtCost
+    const grossProfit = plan.priceWithTax - tax - rewardCost
+    return plan.priceWithTax > 0
+      ? ((grossProfit / plan.priceWithTax) * 100).toFixed(1) + '%'
       : '-'
   }
 
@@ -146,7 +153,7 @@ export function PointSettings() {
               <tr className="bg-gray-50 text-gray-600 text-xs">
                 <th className="px-3 py-2 text-left">決済方法</th>
                 <th className="px-3 py-2 text-right">ストア手数料率</th>
-                <th className="px-3 py-2 text-right">代表プランの売上</th>
+                <th className="px-3 py-2 text-right">代表プランの売上(税込)</th>
                 <th className="px-3 py-2 text-right">手数料コスト</th>
                 <th className="px-3 py-2 text-right">手数料差引後</th>
                 <th className="px-3 py-2 text-right">実質粗利率</th>
@@ -165,15 +172,20 @@ export function PointSettings() {
                 // 代表プランとして中間のものを使用
                 const plan = plans[Math.floor(plans.length / 2)]
                 if (!plan) return null
-                const storeFee = plan.priceWithoutTax * rate
-                const afterFee = plan.priceWithoutTax - storeFee
-                const rewardCost = plan.normalPt * pointConfig.normalPtCost + plan.bonusPt * pointConfig.bonusPtCost
-                const grossMargin = afterFee > 0 ? ((afterFee - rewardCost) / afterFee * 100).toFixed(1) : '-'
+                // 税込価格を基準に消費税・ストア手数料・報酬原価を控除（粗利率の定義と統一）
+                const tax = plan.priceWithTax * pointConfig.taxRate
+                const storeFee = plan.priceWithTax * rate
+                const afterFee = plan.priceWithTax - storeFee
+                const rewardCost =
+                  plan.normalPt * pointConfig.normalPtCost +
+                  (plan.bonusPt + plan.firstTimeBonusPt) * pointConfig.bonusPtCost
+                const grossProfit = plan.priceWithTax - tax - storeFee - rewardCost
+                const grossMargin = plan.priceWithTax > 0 ? (grossProfit / plan.priceWithTax * 100).toFixed(1) : '-'
                 return (
                   <tr key={method} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="px-3 py-2 font-medium text-gray-700">{method}</td>
                     <td className="px-3 py-2 text-right text-orange-600">{(rate * 100).toFixed(0)}%</td>
-                    <td className="px-3 py-2 text-right">¥{plan.priceWithoutTax.toLocaleString()}</td>
+                    <td className="px-3 py-2 text-right">¥{plan.priceWithTax.toLocaleString()}</td>
                     <td className="px-3 py-2 text-right text-red-500">
                       {rate > 0 ? `▲¥${Math.floor(storeFee).toLocaleString()}` : '-'}
                     </td>
