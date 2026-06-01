@@ -229,8 +229,8 @@ export function PointSettings() {
                   { method: 'Google', plans: purchasePlans.google },
                 ] as { method: string; plans: typeof purchasePlans.bank }[]
               ).map(({ method, plans }) => {
-                // 代表プランとして中間のものを使用
-                const plan = plans[Math.floor(plans.length / 2)]
+                // 代表プランとして全決済共通の¥11,000プランを使用（無ければ中間）
+                const plan = plans.find((p) => p.priceWithTax === 11000) ?? plans[Math.floor(plans.length / 2)]
                 if (!plan) return null
                 const rate = plan.storeFeeRate ?? 0
                 // 粗利率の定義と統一：控除は決済手数料率のみ（通常ボーナス基準）
