@@ -31,14 +31,14 @@ export function PointSettings() {
     return pctOf(totalPt * pointConfig.userPtRate, plan.priceWithTax)
   }
 
-  // 粗利率 = (税込 − 税込×消費税率 − 税込×手数料率 − 通常pt×0.67 − ボーナス×0.22) ÷ 税込
-  //   通常：通常ボーナスのみ ／ 初回：通常ボーナス＋初回特典PT（スプレッドシートO11式）
+  // 粗利率 = (税込 − 税込×決済手数料率 − 通常pt×0.67 − ボーナス×0.22) ÷ 税込
+  //   ※スプレッドシートの式に準拠。控除するのは決済手数料率のみ（消費税は別途控除しない）
+  //   通常：通常ボーナスのみ ／ 初回：通常ボーナス＋初回特典PT
   const calcGrossMargin = (plan: PurchasePlan, withFirst = false) => {
-    const tax = plan.priceWithTax * pointConfig.taxRate
-    const storeFee = plan.priceWithTax * (plan.storeFeeRate ?? 0)
+    const fee = plan.priceWithTax * (plan.storeFeeRate ?? 0)
     const bonusPt = plan.bonusPt + (withFirst ? plan.firstTimeBonusPt : 0)
     const rewardCost = plan.normalPt * pointConfig.normalPtCost + bonusPt * pointConfig.bonusPtCost
-    return pctOf(plan.priceWithTax - tax - storeFee - rewardCost, plan.priceWithTax)
+    return pctOf(plan.priceWithTax - fee - rewardCost, plan.priceWithTax)
   }
 
   const updatePlan = (payment: PaymentMethod, index: number, field: keyof PurchasePlan, value: number) => {
@@ -219,14 +219,13 @@ export function PointSettings() {
                 const plan = plans[Math.floor(plans.length / 2)]
                 if (!plan) return null
                 const rate = plan.storeFeeRate ?? 0
-                // 税込価格を基準に消費税・ストア手数料・報酬原価を控除（粗利率の定義と統一）
-                const tax = plan.priceWithTax * pointConfig.taxRate
+                // 粗利率の定義と統一：控除は決済手数料率のみ（通常ボーナス基準）
                 const storeFee = plan.priceWithTax * rate
                 const afterFee = plan.priceWithTax - storeFee
                 const rewardCost =
                   plan.normalPt * pointConfig.normalPtCost +
-                  (plan.bonusPt + plan.firstTimeBonusPt) * pointConfig.bonusPtCost
-                const grossProfit = plan.priceWithTax - tax - storeFee - rewardCost
+                  plan.bonusPt * pointConfig.bonusPtCost
+                const grossProfit = plan.priceWithTax - storeFee - rewardCost
                 const grossMargin = plan.priceWithTax > 0 ? (grossProfit / plan.priceWithTax * 100).toFixed(1) : '-'
                 return (
                   <tr key={method} className="border-b border-gray-100 hover:bg-gray-50">
