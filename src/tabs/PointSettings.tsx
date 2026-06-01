@@ -185,6 +185,20 @@ export function PointSettings() {
               ))}
             </tbody>
           </table>
+
+          {/* 計算式の注記 */}
+          <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded text-[11px] text-gray-600 leading-relaxed">
+            <p className="font-semibold text-gray-700 mb-1">📐 計算式（{PAYMENT_LABELS[payment]}：手数料率 {Math.round((purchasePlans[payment][0]?.storeFeeRate ?? 0) * 1000) / 10}%）</p>
+            <p>
+              <span className="text-blue-600 font-medium">還元率</span> ＝（通常PT ＋ ボーナスPT{hasFirst && '〔初回は＋初回特典PT〕'}）× User販売単価(¥{pointConfig.userPtRate}) ÷ 販売価格(税込)
+            </p>
+            <p>
+              <span className="text-green-600 font-medium">粗利率</span> ＝（販売価格(税込) − 販売価格×手数料率 − 通常PT×¥{pointConfig.normalPtCost} − ボーナスPT{hasFirst && '〔初回は＋初回特典PT〕'}×¥{pointConfig.bonusPtCost}）÷ 販売価格(税込)
+            </p>
+            <p className="text-gray-400 mt-1">
+              ※ 通常PT原価¥{pointConfig.normalPtCost}・ボーナスPT原価¥{pointConfig.bonusPtCost}・User販売単価¥{pointConfig.userPtRate} は上部「基本単価・手数料」で変更可。消費税は粗利率の控除に含めません。
+            </p>
+          </div>
         </section>
         )
       })}
