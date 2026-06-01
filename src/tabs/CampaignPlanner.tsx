@@ -10,6 +10,8 @@ const STATUS_COLORS: Record<string, string> = {
   '終了': 'bg-gray-200 text-gray-500',
 }
 
+const STATUS_OPTIONS = ['開始前', '準備中', '実施中', '終了']
+
 // 開始〜終了の日数（両端含む）を算出。日付未入力なら null
 function computeDays(start: string, end: string): number | null {
   const s = Date.parse(start)
@@ -100,9 +102,14 @@ export function CampaignPlanner() {
                 <td className="px-1 py-1"><input value={c.tag} onChange={(e) => update(c.id, 'tag', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
                 {/* ステータス */}
                 <td className="px-1 py-1">
-                  <span className={`inline-block px-2 py-0.5 rounded text-[11px] ${STATUS_COLORS[c.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                    <input value={c.status} onChange={(e) => update(c.id, 'status', e.target.value)} className="bg-transparent outline-none w-20 text-center" />
-                  </span>
+                  <select
+                    value={c.status}
+                    onChange={(e) => update(c.id, 'status', e.target.value)}
+                    className={`rounded px-1 py-0.5 text-[11px] border-none outline-none ${STATUS_COLORS[c.status] ?? 'bg-gray-100 text-gray-600'}`}
+                  >
+                    {!STATUS_OPTIONS.includes(c.status) && <option value={c.status}>{c.status || '—'}</option>}
+                    {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
                 </td>
                 {/* pt設計 */}
                 <td className="px-1 py-1"><input value={c.ptDesign} onChange={(e) => update(c.id, 'ptDesign', e.target.value)} className="border border-gray-200 rounded px-1 py-0.5 text-xs w-full" /></td>
