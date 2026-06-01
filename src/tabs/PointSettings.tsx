@@ -88,6 +88,8 @@ export function PointSettings() {
       {/* 決済別購入プラン（並び替え可能） */}
       {paymentOrder.map((payment, orderIdx) => {
         const hasFirst = purchasePlans[payment].some((p) => p.firstTimeBonusPt > 0)
+        // 2回目・3回目特典PTはCredixのみ対象
+        const hasMulti = payment === 'credix'
         return (
         <section key={payment} className="bg-white rounded-lg shadow p-6 overflow-x-auto">
           <div className="flex items-center justify-between mb-4">
@@ -130,6 +132,12 @@ export function PointSettings() {
                 <th className="px-3 py-2 text-right">通常PT</th>
                 <th className="px-3 py-2 text-right">ボーナスPT</th>
                 <th className="px-3 py-2 text-right">初回特典PT</th>
+                {hasMulti && <th className="px-3 py-2 text-right">2回目特典PT</th>}
+                {hasMulti && <th className="px-3 py-2 text-right">3回目特典PT</th>}
+                <th className="px-3 py-2 text-right bg-indigo-50">合計付与PT(通常)</th>
+                <th className="px-3 py-2 text-right bg-indigo-50">合計付与PT(初回)</th>
+                {hasMulti && <th className="px-3 py-2 text-right bg-indigo-50">合計付与PT(2回目)</th>}
+                {hasMulti && <th className="px-3 py-2 text-right bg-indigo-50">合計付与PT(3回目)</th>}
                 <th className="px-3 py-2 text-right">還元率</th>
                 <th className="px-3 py-2 text-right">粗利率</th>
                 {hasFirst && <th className="px-3 py-2 text-right bg-pink-50">還元率(初回)</th>}
@@ -155,6 +163,20 @@ export function PointSettings() {
                   <td className="px-3 py-2 text-right">
                     <EditableCell value={plan.firstTimeBonusPt} suffix="pt" onChange={(v) => updatePlan(payment, i, 'firstTimeBonusPt', v)} />
                   </td>
+                  {hasMulti && (
+                    <td className="px-3 py-2 text-right">
+                      <EditableCell value={plan.secondTimeBonusPt} suffix="pt" onChange={(v) => updatePlan(payment, i, 'secondTimeBonusPt', v)} />
+                    </td>
+                  )}
+                  {hasMulti && (
+                    <td className="px-3 py-2 text-right">
+                      <EditableCell value={plan.thirdTimeBonusPt} suffix="pt" onChange={(v) => updatePlan(payment, i, 'thirdTimeBonusPt', v)} />
+                    </td>
+                  )}
+                  <td className="px-3 py-2 text-right bg-indigo-50/40 text-gray-700">{(plan.normalPt + plan.bonusPt).toLocaleString()}pt</td>
+                  <td className="px-3 py-2 text-right bg-indigo-50/40 text-gray-700">{(plan.normalPt + plan.bonusPt + plan.firstTimeBonusPt).toLocaleString()}pt</td>
+                  {hasMulti && <td className="px-3 py-2 text-right bg-indigo-50/40 text-gray-700">{(plan.normalPt + plan.bonusPt + plan.secondTimeBonusPt).toLocaleString()}pt</td>}
+                  {hasMulti && <td className="px-3 py-2 text-right bg-indigo-50/40 text-gray-700">{(plan.normalPt + plan.bonusPt + plan.thirdTimeBonusPt).toLocaleString()}pt</td>}
                   <td className="px-3 py-2 text-right text-blue-600 font-medium">{calcReturnRate(plan)}</td>
                   <td className="px-3 py-2 text-right text-green-600 font-medium">{calcGrossMargin(plan)}</td>
                   {hasFirst && <td className="px-3 py-2 text-right text-pink-600 font-medium bg-pink-50/40">{calcReturnRate(plan, true)}</td>}
