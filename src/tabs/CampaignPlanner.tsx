@@ -208,6 +208,7 @@ export function CampaignPlanner() {
                 {Array.from({ length: 10 }, (_, i) => (
                   <th key={i} className="px-3 py-1 text-center border border-gray-200">{i + 1}位</th>
                 ))}
+                <th className="px-3 py-1 text-center border border-gray-200 bg-teal-200">合計報酬</th>
               </tr>
             </thead>
             <tbody>
@@ -224,6 +225,9 @@ export function CampaignPlanner() {
                       />
                     </td>
                   ))}
+                  <td className="px-3 py-1 text-right border border-gray-200 bg-teal-50 font-bold text-teal-700 tabular-nums">
+                    {Array.from({ length: 10 }, (_, k) => tier.points[k] ?? 0).reduce((s, v) => s + v, 0).toLocaleString()} pt
+                  </td>
                 </tr>
               ))}
             </tbody>
