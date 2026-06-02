@@ -7,6 +7,9 @@ export function IncomeCalculator() {
   const [targetIncome, setTargetIncome] = useState(200000)
   const [messageRatio, setMessageRatio] = useState(0.6) // 収入のうちメッセージで稼ぐ割合（残りは有料鑑定文字）
   const [isIndividual, setIsIndividual] = useState(true)
+  // 1日に現実的にこなせる稼働上限（これと必要量を比較して達成見込みを判定）
+  const [maxDailyMessages, setMaxDailyMessages] = useState(300)
+  const [maxDailyChars, setMaxDailyChars] = useState(8000)
 
   const results = useMemo(() => {
     return performerRanks
@@ -32,16 +35,20 @@ export function IncomeCalculator() {
         const withholdRate = isIndividual ? pointConfig.withholdingIndividual : pointConfig.withholdingCorporate
         const netIncome = targetIncome * (1 - withholdRate) - pointConfig.transferFee
 
-        // 実現性（1日あたり: メッセージ通数・有料鑑定文字数で判断）
-        const feasibility = dailyMessages <= 200 && dailyChars <= 4000
-          ? '◎ 達成しやすい'
-          : dailyMessages <= 500 && dailyChars <= 10000
-          ? '○ 頑張れば達成可能'
-          : '△ 高稼働が必要'
+        // 稼働率 = 必要量 ÷ 1日の上限。メッセージと文字数の高い方が律速になる
+        const loadMsg = maxDailyMessages > 0 ? dailyMessages / maxDailyMessages : Infinity
+        const loadChar = maxDailyChars > 0 ? dailyChars / maxDailyChars : Infinity
+        const load = Math.max(loadMsg, loadChar)
 
-        return { rank, messagesNeeded, charsNeeded, dailyMessages, dailyChars, netIncome, feasibility }
+        // 上限に対する負荷で判定（下位ランクは必要量が膨らみ上限を超える＝非現実的）
+        const feasibility = load <= 0.5 ? '◎ 余裕で達成'
+          : load <= 0.8 ? '○ 達成可能'
+          : load <= 1.0 ? '△ 高稼働が必要'
+          : '✕ 現実的でない'
+
+        return { rank, messagesNeeded, charsNeeded, dailyMessages, dailyChars, netIncome, feasibility, load }
       })
-  }, [targetIncome, messageRatio, isIndividual, performerRanks, pointConfig])
+  }, [targetIncome, messageRatio, isIndividual, maxDailyMessages, maxDailyChars, performerRanks, pointConfig])
 
   const fmt = (n: number) => `¥${Math.floor(n).toLocaleString()}`
 
@@ -90,6 +97,30 @@ export function IncomeCalculator() {
             </div>
           </div>
         </div>
+        {/* 稼働上限（達成見込みの判定基準） */}
+        <div className="mt-5 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-xl">
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">1日の上限メッセージ数（現実的な稼働）</label>
+            <input
+              type="number" min={1}
+              value={maxDailyMessages}
+              onChange={(e) => setMaxDailyMessages(parseInt(e.target.value) || 1)}
+              className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-right"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">1日の上限文字数（有料鑑定）</label>
+            <input
+              type="number" min={1} step={500}
+              value={maxDailyChars}
+              onChange={(e) => setMaxDailyChars(parseInt(e.target.value) || 1)}
+              className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-right"
+            />
+          </div>
+        </div>
+        <p className="text-[11px] text-gray-400 mt-2">
+          ※ 達成見込みは「必要な1日あたり稼働 ÷ 上記の上限」（＝稼働率）で判定します。下位ランクは単価が低く必要量が膨らむため、上限を超えると「現実的でない」と表示されます。
+        </p>
       </section>
 
       {/* 結果テーブル */}
@@ -103,11 +134,12 @@ export function IncomeCalculator() {
               <th className="px-3 py-2 text-right">必要文字数/月</th>
               <th className="px-3 py-2 text-right">1日あたり文字数</th>
               <th className="px-3 py-2 text-right">税引後手取り</th>
+              <th className="px-3 py-2 text-right">稼働率</th>
               <th className="px-3 py-2 text-center">達成見込み</th>
             </tr>
           </thead>
           <tbody>
-            {results.map(({ rank, messagesNeeded, charsNeeded, dailyMessages, dailyChars, netIncome, feasibility }) => (
+            {results.map(({ rank, messagesNeeded, charsNeeded, dailyMessages, dailyChars, netIncome, feasibility, load }) => (
               <tr key={rank.stage} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="px-3 py-2 font-medium text-gray-700">{rank.name}</td>
                 <td className="px-3 py-2 text-right tabular-nums">
@@ -125,11 +157,15 @@ export function IncomeCalculator() {
                 <td className="px-3 py-2 text-right text-green-700 font-bold tabular-nums">
                   {fmt(netIncome)}
                 </td>
+                <td className={`px-3 py-2 text-right font-bold tabular-nums ${load > 1 ? 'text-red-600' : load > 0.8 ? 'text-orange-600' : 'text-gray-700'}`}>
+                  {isFinite(load) ? `${(load * 100).toFixed(0)}%` : '-'}
+                </td>
                 <td className="px-3 py-2 text-center text-sm">
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                     feasibility.startsWith('◎') ? 'bg-green-100 text-green-700'
                     : feasibility.startsWith('○') ? 'bg-yellow-100 text-yellow-700'
-                    : 'bg-orange-100 text-orange-700'
+                    : feasibility.startsWith('△') ? 'bg-orange-100 text-orange-700'
+                    : 'bg-red-100 text-red-700'
                   }`}>
                     {feasibility}
                   </span>
