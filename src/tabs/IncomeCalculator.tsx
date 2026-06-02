@@ -1,47 +1,47 @@
 import { useState, useMemo } from 'react'
 import { useAppContext } from '../context/AppContext'
-import { calcRequiredActivity } from '../utils/calculations'
-import type { ActivityPattern } from '../types'
 
 export function IncomeCalculator() {
   const { data } = useAppContext()
   const { performerRanks, pointConfig } = data
   const [targetIncome, setTargetIncome] = useState(200000)
-  const [pattern, setPattern] = useState<ActivityPattern>('balanced')
+  const [messageRatio, setMessageRatio] = useState(0.6) // 収入のうちメッセージで稼ぐ割合（残りは有料鑑定文字）
   const [isIndividual, setIsIndividual] = useState(true)
 
   const results = useMemo(() => {
     return performerRanks
       .filter((r) => r.stage > 1) // Bronzeは除外（全0）
       .map((rank) => {
-        const msgAction = rank.actions.find((a) => a.type === 'message')
-        const voiceAction = rank.actions.find((a) => a.type === 'voice_call')
+        const msgAction = rank.actions.find((a) => a.type === 'message')         // メッセージ送信(1通)
+        const charAction = rank.actions.find((a) => a.type === 'fortune_char')   // 有料鑑定(1文字)
 
-        const activity = calcRequiredActivity({
-          targetIncome,
-          normalPtCost: pointConfig.normalPtCost,
-          bonusPtCost: pointConfig.bonusPtCost,
-          messageNormalPt: msgAction?.performerNormal ?? 0,
-          messageBonusPt: msgAction?.performerBonus ?? 0,
-          pattern,
-          voiceNormalPt: voiceAction?.performerNormal ?? 0,
-          voiceBonusPt: voiceAction?.performerBonus ?? 0,
-        })
+        // 1通・1文字あたりの報酬額（通常pt原価 + ボーナスpt原価）
+        const incomePerMessage = (msgAction?.performerNormal ?? 0) * pointConfig.normalPtCost
+          + (msgAction?.performerBonus ?? 0) * pointConfig.bonusPtCost
+        const incomePerChar = (charAction?.performerNormal ?? 0) * pointConfig.normalPtCost
+          + (charAction?.performerBonus ?? 0) * pointConfig.bonusPtCost
 
-        // 税引後手取り試算
+        const incomeFromMessage = targetIncome * messageRatio
+        const incomeFromChar = targetIncome * (1 - messageRatio)
+
+        const messagesNeeded = incomePerMessage > 0 ? Math.ceil(incomeFromMessage / incomePerMessage) : 0
+        const charsNeeded = incomePerChar > 0 ? Math.ceil(incomeFromChar / incomePerChar) : 0
+        const dailyMessages = Math.ceil(messagesNeeded / 30)
+        const dailyChars = Math.ceil(charsNeeded / 30)
+
         const withholdRate = isIndividual ? pointConfig.withholdingIndividual : pointConfig.withholdingCorporate
         const netIncome = targetIncome * (1 - withholdRate) - pointConfig.transferFee
 
-        // 実現性スコア（1日あたり稼働量で判断）
-        const feasibility = activity.dailyMessages <= 50 && activity.dailyVoiceMinutes <= 120
+        // 実現性（1日あたり: メッセージ通数・有料鑑定文字数で判断）
+        const feasibility = dailyMessages <= 200 && dailyChars <= 4000
           ? '◎ 達成しやすい'
-          : activity.dailyMessages <= 150 && activity.dailyVoiceMinutes <= 240
+          : dailyMessages <= 500 && dailyChars <= 10000
           ? '○ 頑張れば達成可能'
           : '△ 高稼働が必要'
 
-        return { rank, activity, netIncome, feasibility }
+        return { rank, messagesNeeded, charsNeeded, dailyMessages, dailyChars, netIncome, feasibility }
       })
-  }, [targetIncome, pattern, isIndividual, performerRanks, pointConfig])
+  }, [targetIncome, messageRatio, isIndividual, performerRanks, pointConfig])
 
   const fmt = (n: number) => `¥${Math.floor(n).toLocaleString()}`
 
@@ -65,16 +65,16 @@ export function IncomeCalculator() {
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-600 mb-1">稼働パターン</label>
-            <select
-              value={pattern}
-              onChange={(e) => setPattern(e.target.value as ActivityPattern)}
-              className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-            >
-              <option value="balanced">バランス型（メッセ60%/通話25%/他15%）</option>
-              <option value="message">メッセージ中心（メッセ90%/通話5%）</option>
-              <option value="call">通話中心（メッセ20%/通話70%）</option>
-            </select>
+            <label className="block text-sm text-gray-600 mb-1">
+              メッセージ:有料鑑定 配分 <strong>{(messageRatio * 100).toFixed(0)}% : {((1 - messageRatio) * 100).toFixed(0)}%</strong>
+            </label>
+            <input
+              type="range" min={0} max={1} step={0.05}
+              value={messageRatio}
+              onChange={(e) => setMessageRatio(parseFloat(e.target.value))}
+              className="w-full accent-indigo-600"
+            />
+            <p className="text-[10px] text-gray-400 mt-1">収入のうちメッセージ送信で稼ぐ割合（残りは有料鑑定の文字数）。通話は計算に含めません。</p>
           </div>
           <div>
             <label className="block text-sm text-gray-600 mb-1">源泉徴収区分</label>
@@ -99,30 +99,30 @@ export function IncomeCalculator() {
             <tr className="bg-indigo-700 text-white text-xs">
               <th className="px-3 py-2 text-left">ランク</th>
               <th className="px-3 py-2 text-right">必要メッセージ数/月</th>
-              <th className="px-3 py-2 text-right">1日あたり</th>
-              <th className="px-3 py-2 text-right">必要通話時間/月</th>
-              <th className="px-3 py-2 text-right">1日あたり</th>
+              <th className="px-3 py-2 text-right">1日あたり通数</th>
+              <th className="px-3 py-2 text-right">必要文字数/月</th>
+              <th className="px-3 py-2 text-right">1日あたり文字数</th>
               <th className="px-3 py-2 text-right">税引後手取り</th>
               <th className="px-3 py-2 text-center">達成見込み</th>
             </tr>
           </thead>
           <tbody>
-            {results.map(({ rank, activity, netIncome, feasibility }) => (
+            {results.map(({ rank, messagesNeeded, charsNeeded, dailyMessages, dailyChars, netIncome, feasibility }) => (
               <tr key={rank.stage} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="px-3 py-2 font-medium text-gray-700">{rank.name}</td>
-                <td className="px-3 py-2 text-right font-mono">
-                  {activity.messagesNeeded > 0 ? `${activity.messagesNeeded.toLocaleString()}通` : '-'}
+                <td className="px-3 py-2 text-right tabular-nums">
+                  {messagesNeeded > 0 ? `${messagesNeeded.toLocaleString()} 通` : '-'}
                 </td>
-                <td className="px-3 py-2 text-right text-indigo-600 font-bold">
-                  {activity.dailyMessages > 0 ? `${activity.dailyMessages}通/日` : '-'}
+                <td className="px-3 py-2 text-right text-indigo-600 font-bold tabular-nums">
+                  {dailyMessages > 0 ? `${dailyMessages.toLocaleString()} 通/日` : '-'}
                 </td>
-                <td className="px-3 py-2 text-right font-mono">
-                  {activity.voiceMinutesNeeded > 0 ? `${activity.voiceMinutesNeeded.toLocaleString()}分` : '-'}
+                <td className="px-3 py-2 text-right tabular-nums">
+                  {charsNeeded > 0 ? `${charsNeeded.toLocaleString()} 字` : '-'}
                 </td>
-                <td className="px-3 py-2 text-right text-purple-600 font-bold">
-                  {activity.dailyVoiceMinutes > 0 ? `${activity.dailyVoiceMinutes}分/日` : '-'}
+                <td className="px-3 py-2 text-right text-purple-600 font-bold tabular-nums">
+                  {dailyChars > 0 ? `${dailyChars.toLocaleString()} 字/日` : '-'}
                 </td>
-                <td className="px-3 py-2 text-right text-green-700 font-bold">
+                <td className="px-3 py-2 text-right text-green-700 font-bold tabular-nums">
                   {fmt(netIncome)}
                 </td>
                 <td className="px-3 py-2 text-center text-sm">
@@ -139,7 +139,7 @@ export function IncomeCalculator() {
           </tbody>
         </table>
         <p className="text-xs text-gray-400 px-4 py-2">
-          ※ 手取り = 目標月収 × (1 - 源泉徴収率) - 振込手数料¥{pointConfig.transferFee}
+          ※ 手取り = 目標月収 × (1 - 源泉徴収率) - 振込手数料¥{pointConfig.transferFee}／ 文字数は有料鑑定(1文字)単価で算出。通話は含めません。
         </p>
       </section>
     </div>
