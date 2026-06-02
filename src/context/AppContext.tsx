@@ -16,6 +16,7 @@ interface AppContextType {
   updatePaymentOrder: (order: AppData['paymentOrder']) => void
   updateCampaigns: (campaigns: AppData['campaigns']) => void
   updateBanners: (banners: AppData['banners']) => void
+  updateRankingTiers: (tiers: AppData['rankingTiers']) => void
   resetToInitial: () => void
 }
 
@@ -68,6 +69,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ? rawData.campaigns
       : initialData.campaigns,
     banners: (rawData.banners && rawData.banners.length > 0) ? rawData.banners : initialData.banners,
+    rankingTiers: (rawData.rankingTiers && rawData.rankingTiers.length > 0) ? rawData.rankingTiers : initialData.rankingTiers,
     simulatorParams: {
       ...initialData.simulatorParams,
       ...rawData.simulatorParams,
@@ -114,6 +116,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updateBanners: AppContextType['updateBanners'] = (banners) =>
     setData(prev => ({ ...prev, banners }))
 
+  const updateRankingTiers: AppContextType['updateRankingTiers'] = (rankingTiers) =>
+    setData(prev => ({ ...prev, rankingTiers }))
+
   const resetToInitial = () => setData(initialData)
 
   return (
@@ -121,7 +126,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       data, setData,
       updatePointConfig, updatePurchasePlans, updatePerformerRanks,
       updateSimulatorParams, updateCohortParams, updateAgencies, updateReports,
-      updatePaymentOrder, updateCampaigns, updateBanners,
+      updatePaymentOrder, updateCampaigns, updateBanners, updateRankingTiers,
       resetToInitial,
     }}>
       {children}

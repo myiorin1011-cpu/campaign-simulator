@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
-import { userPatterns, performerPatterns, rankingTiers, rankingNote } from '../data/campaignSeeds'
+import { userPatterns, performerPatterns, rankingNote } from '../data/campaignSeeds'
 import type { Campaign } from '../types'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -57,8 +57,18 @@ function computeDays(start: string, end: string): number | null {
 }
 
 export function CampaignPlanner() {
-  const { data, updateCampaigns } = useAppContext()
-  const { campaigns } = data
+  const { data, updateCampaigns, updateRankingTiers } = useAppContext()
+  const { campaigns, rankingTiers } = data
+
+  // ランキングイベントのpt編集（順位ごと、未入力は0）
+  const setTierPoint = (tierIdx: number, posIdx: number, value: number) => {
+    updateRankingTiers(rankingTiers.map((t, ti) => {
+      if (ti !== tierIdx) return t
+      const points = Array.from({ length: 10 }, (_, k) => t.points[k] ?? 0)
+      points[posIdx] = value
+      return { ...t, points }
+    }))
+  }
   const [audience, setAudience] = useState<'user' | 'performer'>('user')
   const [showPatterns, setShowPatterns] = useState(false)
 
@@ -201,12 +211,17 @@ export function CampaignPlanner() {
               </tr>
             </thead>
             <tbody>
-              {rankingTiers.map((tier) => (
+              {rankingTiers.map((tier, ti) => (
                 <tr key={tier.label} className="border-b border-gray-100">
                   <td className="px-3 py-1 font-medium text-gray-700 border border-gray-200 bg-gray-50">{tier.label}</td>
                   {Array.from({ length: 10 }, (_, i) => (
-                    <td key={i} className="px-3 py-1 text-right border border-gray-200 tabular-nums">
-                      {tier.points[i] != null ? `${tier.points[i].toLocaleString()} pt` : '—'}
+                    <td key={i} className="px-1 py-1 text-right border border-gray-200">
+                      <input
+                        type="number" min={0}
+                        value={tier.points[i] ?? 0}
+                        onChange={(e) => setTierPoint(ti, i, parseInt(e.target.value) || 0)}
+                        className="w-16 border border-gray-200 rounded px-1 py-0.5 text-xs text-right tabular-nums"
+                      />
                     </td>
                   ))}
                 </tr>

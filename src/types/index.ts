@@ -204,6 +204,12 @@ export interface Banner {
   performerStatus: string  // ステータス
 }
 
+// ランキングイベント（順位別ボーナスPT）
+export interface RankingTier {
+  label: string      // 集計（前日/前週/前月/新人 等）
+  points: number[]   // 1位〜10位のボーナスPT
+}
+
 // アプリ全体データ
 export interface AppData {
   pointConfig: PointConfig
@@ -216,4 +222,5 @@ export interface AppData {
   reports: ReportData[]
   campaigns: Campaign[]
   banners: Banner[]
+  rankingTiers: RankingTier[]
 }
