@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useAppContext } from '../context/AppContext'
+import { rankCriteria } from '../data/rankCriteria'
 
 export function IncomeCalculator() {
   const { data } = useAppContext()
@@ -13,8 +14,10 @@ export function IncomeCalculator() {
 
   const results = useMemo(() => {
     return performerRanks
-      .filter((r) => r.stage > 1) // Bronzeは除外（全0）
+      .filter((r) => !rankCriteria[r.stage]?.placeholder) // 仕様上のみのランク(ブロンズ/ロイヤルエメラルド/ロイヤルルビー)を除外
       .map((rank) => {
+        const criterion = rankCriteria[rank.stage]
+        const threshold = criterion?.threshold ?? null
         const msgAction = rank.actions.find((a) => a.type === 'message')         // メッセージ送信(1通)
         const charAction = rank.actions.find((a) => a.type === 'fortune_char')   // 有料鑑定(1文字)
 
@@ -46,7 +49,10 @@ export function IncomeCalculator() {
           : load <= 1.0 ? '△ 高稼働が必要'
           : '✕ 現実的でない'
 
-        return { rank, messagesNeeded, charsNeeded, dailyMessages, dailyChars, netIncome, feasibility, load }
+        // ランク維持基準との整合：目標がそのランクの維持基準を下回ると、そのランク自体に居られない
+        const belowRankFloor = threshold != null && targetIncome < threshold
+
+        return { rank, messagesNeeded, charsNeeded, dailyMessages, dailyChars, netIncome, feasibility, load, threshold, belowRankFloor }
       })
   }, [targetIncome, messageRatio, isIndividual, maxDailyMessages, maxDailyChars, performerRanks, pointConfig])
 
@@ -129,6 +135,7 @@ export function IncomeCalculator() {
           <thead>
             <tr className="bg-indigo-700 text-white text-xs">
               <th className="px-3 py-2 text-left">ランク</th>
+              <th className="px-3 py-2 text-right">月間維持基準</th>
               <th className="px-3 py-2 text-right">必要メッセージ数/月</th>
               <th className="px-3 py-2 text-right">1日あたり通数</th>
               <th className="px-3 py-2 text-right">必要文字数/月</th>
@@ -139,9 +146,13 @@ export function IncomeCalculator() {
             </tr>
           </thead>
           <tbody>
-            {results.map(({ rank, messagesNeeded, charsNeeded, dailyMessages, dailyChars, netIncome, feasibility, load }) => (
+            {results.map(({ rank, messagesNeeded, charsNeeded, dailyMessages, dailyChars, netIncome, feasibility, load, threshold, belowRankFloor }) => (
               <tr key={rank.stage} className="border-b border-gray-100 hover:bg-gray-50">
-                <td className="px-3 py-2 font-medium text-gray-700">{rank.name}</td>
+                <td className="px-3 py-2 font-medium text-gray-700" title={rankCriteria[rank.stage]?.note}>{rank.name}</td>
+                <td className="px-3 py-2 text-right text-gray-500 tabular-nums">
+                  {threshold != null ? `${fmt(threshold)}〜` : '—'}
+                  {belowRankFloor && <div className="text-[10px] text-red-500">目標が基準未満</div>}
+                </td>
                 <td className="px-3 py-2 text-right tabular-nums">
                   {messagesNeeded > 0 ? `${messagesNeeded.toLocaleString()} 通` : '-'}
                 </td>
@@ -174,8 +185,9 @@ export function IncomeCalculator() {
             ))}
           </tbody>
         </table>
-        <p className="text-xs text-gray-400 px-4 py-2">
-          ※ 手取り = 目標月収 × (1 - 源泉徴収率) - 振込手数料¥{pointConfig.transferFee}／ 文字数は有料鑑定(1文字)単価で算出。通話は含めません。
+        <p className="text-xs text-gray-400 px-4 py-2 leading-relaxed">
+          ※ 手取り = 目標月収 × (1 - 源泉徴収率) - 振込手数料¥{pointConfig.transferFee}／ 文字数は有料鑑定(1文字)単価で算出。通話は含めません。<br />
+          ※ 「月間維持基準」はランク昇降基準シートの値。目標がそのランクの基準を下回ると本来は1つ下のランクへダウンします（＝そのランクで稼ぐ前提が崩れる）。ブロンズ・ロイヤルエメラルド・ロイヤルルビーは仕様上のみのランクのため非表示です。
         </p>
       </section>
     </div>
