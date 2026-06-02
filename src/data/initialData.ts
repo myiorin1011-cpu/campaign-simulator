@@ -37,7 +37,9 @@ const defaultActions = (
   }))
 }
 
-export const initialData: AppData = {
+const clone = <T,>(o: T): T => JSON.parse(JSON.stringify(o))
+
+const baseData: Omit<AppData, 'purchasePlans1' | 'purchasePlans2' | 'performerRanks1' | 'performerRanks2'> = {
   pointConfig: {
     userPtRate: 2,
     performerPtRate: 1,
@@ -152,4 +154,13 @@ export const initialData: AppData = {
   campaigns: seedCampaigns,
   banners: seedBanners,
   rankingTiers: seedRankingTiers,
+}
+
+export const initialData: AppData = {
+  ...baseData,
+  // キャンペーン設定1・2は基本設定の複製から開始
+  purchasePlans1: clone(baseData.purchasePlans),
+  purchasePlans2: clone(baseData.purchasePlans),
+  performerRanks1: clone(baseData.performerRanks),
+  performerRanks2: clone(baseData.performerRanks),
 }

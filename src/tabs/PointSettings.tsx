@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { EditableCell } from '../components/EditableCell'
 import type { PaymentMethod, PurchasePlan } from '../types'
@@ -10,9 +11,18 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   google: 'Google',
 }
 
+const SCENARIOS = [
+  { field: 'purchasePlans' as const, label: '基本設定' },
+  { field: 'purchasePlans1' as const, label: 'キャンペーン設定1' },
+  { field: 'purchasePlans2' as const, label: 'キャンペーン設定2' },
+]
+type PlansField = typeof SCENARIOS[number]['field']
+
 export function PointSettings() {
-  const { data, updatePointConfig, updatePurchasePlans, updatePaymentOrder } = useAppContext()
-  const { pointConfig, purchasePlans, paymentOrder } = data
+  const { data, updatePointConfig, updatePlansScenario, updatePaymentOrder } = useAppContext()
+  const { pointConfig, paymentOrder } = data
+  const [scenario, setScenario] = useState<PlansField>('purchasePlans')
+  const purchasePlans = data[scenario]
 
   const movePayment = (index: number, dir: -1 | 1) => {
     const target = index + dir
@@ -44,19 +54,36 @@ export function PointSettings() {
   const updatePlan = (payment: PaymentMethod, index: number, field: keyof PurchasePlan, value: number) => {
     const plans = [...purchasePlans[payment]]
     plans[index] = { ...plans[index], [field]: value }
-    updatePurchasePlans(payment, plans)
+    updatePlansScenario(scenario, payment, plans)
   }
 
   // 決済種別ごとに全プランの手数料率を一括設定（％入力 → 0〜1で保存）
   const updatePaymentFee = (payment: PaymentMethod, ratePercent: number) => {
     const rate = ratePercent / 100
     const plans = purchasePlans[payment].map((p) => ({ ...p, storeFeeRate: rate }))
-    updatePurchasePlans(payment, plans)
+    updatePlansScenario(scenario, payment, plans)
   }
 
   return (
     <div className="space-y-8 max-w-5xl">
-      <h2 className="text-xl font-bold text-gray-800">ポイント基本設定</h2>
+      <h2 className="text-xl font-bold text-gray-800">ポイント設定</h2>
+
+      {/* シナリオ切り替えタブ */}
+      <div className="flex gap-1 border-b border-gray-200">
+        {SCENARIOS.map((s) => (
+          <button
+            key={s.field}
+            onClick={() => setScenario(s.field)}
+            className={`px-4 py-2 text-sm -mb-px border-b-2 ${
+              scenario === s.field
+                ? 'border-gray-900 text-gray-900 font-medium'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
 
       {/* 基本単価 */}
       <section className="bg-white rounded-lg shadow p-6">

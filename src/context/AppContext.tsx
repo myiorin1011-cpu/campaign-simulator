@@ -8,6 +8,9 @@ interface AppContextType {
   setData: (data: AppData) => void
   updatePointConfig: (config: Partial<AppData['pointConfig']>) => void
   updatePurchasePlans: (payment: keyof AppData['purchasePlans'], plans: AppData['purchasePlans'][typeof payment]) => void
+  // シナリオ別（基本/キャンペーン1/2）の更新
+  updatePlansScenario: (field: 'purchasePlans' | 'purchasePlans1' | 'purchasePlans2', payment: keyof AppData['purchasePlans'], plans: AppData['purchasePlans'][keyof AppData['purchasePlans']]) => void
+  updateRanksScenario: (field: 'performerRanks' | 'performerRanks1' | 'performerRanks2', ranks: AppData['performerRanks']) => void
   updatePerformerRanks: (ranks: AppData['performerRanks']) => void
   updateSimulatorParams: (params: Partial<AppData['simulatorParams']>) => void
   updateCohortParams: (params: Partial<AppData['cohortParams']>) => void
@@ -58,10 +61,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ? rawData.agencies
     : initialData.agencies
 
+  // キャンペーン設定1・2が無い旧データは基本設定の複製で補完
+  const clone = <T,>(o: T): T => JSON.parse(JSON.stringify(o))
+  const purchasePlans1 = rawData.purchasePlans1 ?? clone(mergedPlans)
+  const purchasePlans2 = rawData.purchasePlans2 ?? clone(mergedPlans)
+  const performerRanks1 = rawData.performerRanks1 ?? clone(rawData.performerRanks ?? initialData.performerRanks)
+  const performerRanks2 = rawData.performerRanks2 ?? clone(rawData.performerRanks ?? initialData.performerRanks)
+
   const data: AppData = {
     ...rawData,
     reports: rawData.reports ?? [],
     purchasePlans: mergedPlans,
+    purchasePlans1,
+    purchasePlans2,
+    performerRanks1,
+    performerRanks2,
     paymentOrder: mergedOrder,
     agencies: mergedAgencies,
     // 区分(audience)が全行に揃った新形式のみ採用。旧形式(区分なし)は新シードに入れ替え
@@ -91,6 +105,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updatePurchasePlans: AppContextType['updatePurchasePlans'] = (payment, plans) =>
     setData(prev => ({ ...prev, purchasePlans: { ...prev.purchasePlans, [payment]: plans } }))
+
+  const updatePlansScenario: AppContextType['updatePlansScenario'] = (field, payment, plans) =>
+    setData(prev => ({ ...prev, [field]: { ...prev[field], [payment]: plans } }))
+
+  const updateRanksScenario: AppContextType['updateRanksScenario'] = (field, ranks) =>
+    setData(prev => ({ ...prev, [field]: ranks }))
 
   const updatePerformerRanks: AppContextType['updatePerformerRanks'] = (ranks) =>
     setData(prev => ({ ...prev, performerRanks: ranks }))
@@ -124,7 +144,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <AppContext.Provider value={{
       data, setData,
-      updatePointConfig, updatePurchasePlans, updatePerformerRanks,
+      updatePointConfig, updatePurchasePlans, updatePlansScenario, updateRanksScenario, updatePerformerRanks,
       updateSimulatorParams, updateCohortParams, updateAgencies, updateReports,
       updatePaymentOrder, updateCampaigns, updateBanners, updateRankingTiers,
       resetToInitial,

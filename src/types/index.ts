@@ -213,9 +213,13 @@ export interface RankingTier {
 // アプリ全体データ
 export interface AppData {
   pointConfig: PointConfig
-  purchasePlans: Record<PaymentMethod, PurchasePlan[]>
+  purchasePlans: Record<PaymentMethod, PurchasePlan[]>          // 基本設定
+  purchasePlans1: Record<PaymentMethod, PurchasePlan[]>         // キャンペーン設定1
+  purchasePlans2: Record<PaymentMethod, PurchasePlan[]>         // キャンペーン設定2
   paymentOrder: PaymentMethod[]   // 決済別プラン表の表示順
-  performerRanks: PerformerRank[]
+  performerRanks: PerformerRank[]          // 基本設定
+  performerRanks1: PerformerRank[]         // キャンペーン設定1
+  performerRanks2: PerformerRank[]         // キャンペーン設定2
   simulatorParams: SimulatorParams
   cohortParams: CohortParams
   agencies: Agency[]

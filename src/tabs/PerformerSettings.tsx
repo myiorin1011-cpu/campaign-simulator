@@ -21,9 +21,18 @@ const ACTION_LABELS: Record<ActionType, string> = {
   post_paid_video: '投稿有料動画',
 }
 
+const RANK_SCENARIOS = [
+  { field: 'performerRanks' as const, label: '基本設定' },
+  { field: 'performerRanks1' as const, label: 'キャンペーン設定1' },
+  { field: 'performerRanks2' as const, label: 'キャンペーン設定2' },
+]
+type RanksField = typeof RANK_SCENARIOS[number]['field']
+
 export function PerformerSettings() {
-  const { data, updatePerformerRanks } = useAppContext()
-  const { performerRanks, pointConfig } = data
+  const { data, updateRanksScenario } = useAppContext()
+  const { pointConfig } = data
+  const [scenario, setScenario] = useState<RanksField>('performerRanks')
+  const performerRanks = data[scenario]
 
   const updateActionPt = (
     rankIdx: number,
@@ -39,7 +48,7 @@ export function PerformerSettings() {
         ),
       }
     )
-    updatePerformerRanks(ranks)
+    updateRanksScenario(scenario, ranks)
   }
 
   const actionTypes = performerRanks[0]?.actions.map((a) => a.type) ?? []
@@ -65,7 +74,25 @@ export function PerformerSettings() {
 
   return (
     <div className="max-w-full">
-      <h2 className="text-xl font-bold text-gray-800 mb-6">パフォーマーランク別獲得ポイント</h2>
+      <h2 className="text-xl font-bold text-gray-800 mb-4">パフォーマーランク別獲得ポイント</h2>
+
+      {/* シナリオ切り替えタブ */}
+      <div className="flex gap-1 border-b border-gray-200 mb-4">
+        {RANK_SCENARIOS.map((s) => (
+          <button
+            key={s.field}
+            onClick={() => setScenario(s.field)}
+            className={`px-4 py-2 text-sm -mb-px border-b-2 ${
+              scenario === s.field
+                ? 'border-gray-900 text-gray-900 font-medium'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
       <p className="text-xs text-gray-500 mb-4">
         ※ セルをクリックして編集できます。通常pt単価:¥{pointConfig.normalPtCost} / ボーナスpt単価:¥{pointConfig.bonusPtCost}
       </p>
