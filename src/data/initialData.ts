@@ -135,6 +135,8 @@ export const initialData: AppData = {
     secondMonthArppu: 12000,
     continuousArppu: 10000,
     retentionRate: 0.40,
+    secondMonthRetention: 0.30,   // 2ヶ月目継続率 30%
+    continuousRetention: 0.20,    // 3ヶ月目以降継続率 20%
   },
 
   agencies: [

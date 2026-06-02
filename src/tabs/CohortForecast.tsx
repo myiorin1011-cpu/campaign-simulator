@@ -14,18 +14,22 @@ export function CohortForecast() {
   })
 
   const rows = useMemo(() => {
+    const r2 = cp.secondMonthRetention   // 1ヶ月目→2ヶ月目
+    const r3 = cp.continuousRetention    // 3ヶ月目以降の毎月継続率
     return Array.from({ length: cp.months }, (_, i) => {
       const month = i + 1
       const newCount = kpi.payingUsers
       const newSales = newCount * cp.newUserArppu
 
-      const secondCount = month >= 2 ? Math.floor(kpi.payingUsers * cp.retentionRate) : 0
+      // 2ヶ月目残存 = 新規 × 2ヶ月目継続率
+      const secondCount = month >= 2 ? Math.floor(kpi.payingUsers * r2) : 0
       const secondSales = secondCount * cp.secondMonthArppu
 
+      // 3ヶ月目以降: コホート年齢 age（age=2が2ヶ月目）。age>=3 は r2 × r3^(age-2)
       let continuousCount = 0
       if (month >= 3) {
-        for (let k = 2; k < month; k++) {
-          continuousCount += Math.floor(kpi.payingUsers * Math.pow(cp.retentionRate, k))
+        for (let age = 3; age <= month; age++) {
+          continuousCount += Math.floor(kpi.payingUsers * r2 * Math.pow(r3, age - 2))
         }
       }
       const continuousSales = continuousCount * cp.continuousArppu
@@ -62,21 +66,35 @@ export function CohortForecast() {
             </div>
           ))}
         </div>
-        <div className="mt-4 max-w-xs">
-          <label className="block text-sm text-gray-600 mb-1">
-            継続率 (%) ※シミュレーターと連動
-          </label>
-          <input
-            type="range" min={0.01} max={0.99} step={0.01}
-            value={cp.retentionRate}
-            onChange={(e) => {
-              const v = parseFloat(e.target.value)
-              updateCohortParams({ retentionRate: v })
-              updateSimulatorParams({ retentionRate: v })
-            }}
-            className="w-full accent-indigo-600"
-          />
-          <span className="text-sm font-bold text-indigo-600">{(cp.retentionRate * 100).toFixed(0)}%</span>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">
+              2ヶ月目の継続率 (%) <span className="text-gray-400">1→2ヶ月目</span>
+            </label>
+            <input
+              type="range" min={0.01} max={0.99} step={0.01}
+              value={cp.secondMonthRetention}
+              onChange={(e) => updateCohortParams({ secondMonthRetention: parseFloat(e.target.value) })}
+              className="w-full accent-indigo-600"
+            />
+            <span className="text-sm font-bold text-indigo-600">{(cp.secondMonthRetention * 100).toFixed(0)}%</span>
+          </div>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">
+              3ヶ月目以降の継続率 (%) <span className="text-gray-400">毎月 ※シミュレーター連動</span>
+            </label>
+            <input
+              type="range" min={0.01} max={0.99} step={0.01}
+              value={cp.continuousRetention}
+              onChange={(e) => {
+                const v = parseFloat(e.target.value)
+                updateCohortParams({ continuousRetention: v, retentionRate: v })
+                updateSimulatorParams({ retentionRate: v })
+              }}
+              className="w-full accent-indigo-600"
+            />
+            <span className="text-sm font-bold text-indigo-600">{(cp.continuousRetention * 100).toFixed(0)}%</span>
+          </div>
         </div>
       </section>
 

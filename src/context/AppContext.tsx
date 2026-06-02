@@ -75,6 +75,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       monthlyMessages: rawData.simulatorParams?.monthlyMessages ?? initialData.simulatorParams.monthlyMessages,
       monthlyPaidOpens: rawData.simulatorParams?.monthlyPaidOpens ?? initialData.simulatorParams.monthlyPaidOpens,
     },
+    cohortParams: {
+      ...initialData.cohortParams,
+      ...rawData.cohortParams,
+      // 2ヶ月目・3ヶ月目以降の継続率を補完（旧データは従来のretentionRate or 既定値）
+      secondMonthRetention: rawData.cohortParams?.secondMonthRetention ?? initialData.cohortParams.secondMonthRetention,
+      continuousRetention: rawData.cohortParams?.continuousRetention ?? initialData.cohortParams.continuousRetention,
+    },
   }
 
   const updatePointConfig: AppContextType['updatePointConfig'] = (config) =>

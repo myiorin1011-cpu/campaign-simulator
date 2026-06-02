@@ -82,7 +82,9 @@ export interface CohortParams {
   newUserArppu: number
   secondMonthArppu: number
   continuousArppu: number
-  retentionRate: number      // タブ3から引き継ぎ可（上書き可）
+  retentionRate: number      // タブ3から引き継ぎ可（後方互換・代表値）
+  secondMonthRetention: number   // 2ヶ月目継続率（1ヶ月目→2ヶ月目）
+  continuousRetention: number    // 3ヶ月目以降の継続率
 }
 
 // 代理店
