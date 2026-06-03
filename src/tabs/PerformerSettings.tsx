@@ -89,16 +89,19 @@ export function PerformerSettings() {
     .map((rank) => {
       const m = rank.actions.find((a) => a.type === 'message')
       const c = rank.actions.find((a) => a.type === 'fortune_char')
-      // 獲得pt = P通常（表の獲得pt：シルバー 1通=80pt / 1文字=4pt）
-      const basePt = sim.messages * (m?.performerNormal ?? 0) + sim.chars * (c?.performerNormal ?? 0)
-      const baseIncome = basePt * pointConfig.normalPtCost
-      // キャンペーン上乗せ（ボーナスptとして付与・原価¥0.22/pt）
+      // 通常獲得pt = P通常 / ボーナス獲得pt = Pボーナス
+      const normalPt = sim.messages * (m?.performerNormal ?? 0) + sim.chars * (c?.performerNormal ?? 0)
+      const bonusPt = sim.messages * (m?.performerBonus ?? 0) + sim.chars * (c?.performerBonus ?? 0)
+      // キャンペーン上乗せはボーナス側に加算
       const upliftPt = sim.messages * sim.addMsg + sim.chars * sim.addChar
-      const cpPt = basePt + upliftPt
-      const cpIncome = baseIncome + upliftPt * pointConfig.bonusPtCost
-      const addIncome = cpIncome - baseIncome
-      const addRate = baseIncome > 0 ? addIncome / baseIncome : 0
-      return { rank, basePt, cpPt, upliftPt, baseIncome, cpIncome, addIncome, addRate }
+      const cpBonusPt = bonusPt + upliftPt
+
+      const normalIncome = normalPt * pointConfig.normalPtCost
+      const bonusIncome = bonusPt * pointConfig.bonusPtCost
+      const cpBonusIncome = cpBonusPt * pointConfig.bonusPtCost
+      const addIncome = upliftPt * pointConfig.bonusPtCost
+      const addRate = bonusIncome > 0 ? addIncome / bonusIncome : null
+      return { rank, normalPt, bonusPt, cpBonusPt, normalIncome, bonusIncome, cpBonusIncome, addIncome, addRate }
     })
 
   return (
@@ -253,32 +256,39 @@ export function PerformerSettings() {
             <thead>
               <tr className="bg-indigo-100 text-gray-700">
                 <th className="px-3 py-2 text-left border border-gray-200">ランク</th>
-                <th className="px-3 py-2 text-right border border-gray-200">基本 獲得pt</th>
-                <th className="px-3 py-2 text-right border border-gray-200 bg-amber-100">CP 獲得pt</th>
-                <th className="px-3 py-2 text-right border border-gray-200">基本 報酬</th>
-                <th className="px-3 py-2 text-right border border-gray-200 bg-amber-100">CP 報酬</th>
+                <th className="px-3 py-2 text-right border border-gray-200">通常 獲得pt</th>
+                <th className="px-3 py-2 text-right border border-gray-200">ボーナス 獲得pt(基本)</th>
+                <th className="px-3 py-2 text-right border border-gray-200 bg-amber-100">ボーナス 獲得pt(CP)</th>
+                <th className="px-3 py-2 text-right border border-gray-200">通常報酬</th>
+                <th className="px-3 py-2 text-right border border-gray-200">ボーナス報酬(基本)</th>
+                <th className="px-3 py-2 text-right border border-gray-200 bg-amber-100">ボーナス報酬(CP)</th>
                 <th className="px-3 py-2 text-right border border-gray-200">増加額</th>
                 <th className="px-3 py-2 text-right border border-gray-200">増加率</th>
               </tr>
             </thead>
             <tbody>
-              {simRows.map(({ rank, basePt, cpPt, baseIncome, cpIncome, addIncome, addRate }) => (
+              {simRows.map(({ rank, normalPt, bonusPt, cpBonusPt, normalIncome, bonusIncome, cpBonusIncome, addIncome, addRate }) => (
                 <tr key={rank.stage} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="px-3 py-1.5 border border-gray-200 font-medium text-gray-700">{rank.name}</td>
-                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums">{Math.round(basePt).toLocaleString()} pt</td>
-                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums bg-amber-50 font-medium">{Math.round(cpPt).toLocaleString()} pt</td>
-                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums">{yen(baseIncome)}</td>
-                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums bg-amber-50 font-medium">{yen(cpIncome)}</td>
+                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums text-gray-500">{Math.round(normalPt).toLocaleString()} pt</td>
+                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums">{Math.round(bonusPt).toLocaleString()} pt</td>
+                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums bg-amber-50 font-medium">{Math.round(cpBonusPt).toLocaleString()} pt</td>
+                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums text-gray-500">{yen(normalIncome)}</td>
+                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums">{yen(bonusIncome)}</td>
+                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums bg-amber-50 font-medium">{yen(cpBonusIncome)}</td>
                   <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums text-green-700 font-bold">+{yen(addIncome)}</td>
-                  <td className={`px-3 py-1.5 border border-gray-200 text-right tabular-nums font-bold ${addRate >= 0.5 ? 'text-red-600' : 'text-gray-700'}`}>+{(addRate * 100).toFixed(1)}%</td>
+                  <td className={`px-3 py-1.5 border border-gray-200 text-right tabular-nums font-bold ${addRate != null && addRate >= 0.5 ? 'text-red-600' : 'text-gray-700'}`}>
+                    {addRate != null ? `+${(addRate * 100).toFixed(1)}%` : '—'}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
         <p className="text-[11px] text-gray-400 mt-3 leading-relaxed">
-          ※ 獲得ptは表のP通常（例: シルバー 1通=80pt / 1文字=4pt）。基本報酬 = 獲得pt×¥{pointConfig.normalPtCost}。キャンペーン上乗せptはボーナスpt（¥{pointConfig.bonusPtCost}/pt）として会社が追加負担します。<br />
-          ※ 増加率が高いランク（特に下位）ほど同じ上乗せでもインパクト大。上位ランクは元の単価が高いため上乗せの相対効果は小さくなります。会社負担（増加額）とインセンティブ効果のバランスで適正値を判断できます。
+          ※ 通常獲得pt＝P通常 / ボーナス獲得pt＝Pボーナス（表の値）。通常報酬＝通常pt×¥{pointConfig.normalPtCost}、ボーナス報酬＝ボーナスpt×¥{pointConfig.bonusPtCost}。<br />
+          ※ キャンペーンの上乗せ（+pt/通・+pt/字）は<strong>ボーナスpt</strong>に加算され、会社は¥{pointConfig.bonusPtCost}/ptを追加負担します。増加額・増加率はボーナス報酬に対する増分です。<br />
+          ※ 増加率が高いランク（特に下位＝元のボーナス単価が低い）ほど同じ上乗せのインパクトが大きくなります。会社負担とインセンティブ効果のバランスで適正な上乗せ幅を判断できます。
         </p>
       </section>
     </div>
