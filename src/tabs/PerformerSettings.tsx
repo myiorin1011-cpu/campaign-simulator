@@ -72,6 +72,36 @@ export function PerformerSettings() {
     { key: 'activeDap', label: '稼働DAP数', money: false },
   ]
 
+  // ─── 1鑑定シミュレーター（基本 vs キャンペーン比較）───
+  // ※常に「基本設定」のランクを基準にキャンペーン上乗せを比較
+  const [sim, setSim] = useState({
+    messages: 30,    // 1鑑定あたりの通数
+    chars: 400,      // 1鑑定あたりの文字数
+    addMsg: 10,      // キャンペーン: 1通あたり +pt
+    addChar: 1,      // キャンペーン: 1文字あたり +pt
+  })
+  const simRows = data.performerRanks
+    .filter((r) => {
+      const m = r.actions.find((a) => a.type === 'message')
+      const c = r.actions.find((a) => a.type === 'fortune_char')
+      return (m && (m.performerNormal || m.performerBonus)) || (c && (c.performerNormal || c.performerBonus))
+    })
+    .map((rank) => {
+      const m = rank.actions.find((a) => a.type === 'message')
+      const c = rank.actions.find((a) => a.type === 'fortune_char')
+      const normalPt = sim.messages * (m?.performerNormal ?? 0) + sim.chars * (c?.performerNormal ?? 0)
+      const bonusPt = sim.messages * (m?.performerBonus ?? 0) + sim.chars * (c?.performerBonus ?? 0)
+      const basePt = normalPt + bonusPt
+      const baseIncome = normalPt * pointConfig.normalPtCost + bonusPt * pointConfig.bonusPtCost
+      // キャンペーン上乗せ（ボーナスptとして付与）
+      const upliftPt = sim.messages * sim.addMsg + sim.chars * sim.addChar
+      const cpPt = basePt + upliftPt
+      const cpIncome = normalPt * pointConfig.normalPtCost + (bonusPt + upliftPt) * pointConfig.bonusPtCost
+      const addIncome = cpIncome - baseIncome
+      const addRate = baseIncome > 0 ? addIncome / baseIncome : 0
+      return { rank, basePt, cpPt, upliftPt, baseIncome, cpIncome, addIncome, addRate }
+    })
+
   return (
     <div className="max-w-full">
       <h2 className="text-xl font-bold text-gray-800 mb-4">パフォーマーランク別獲得ポイント</h2>
@@ -189,6 +219,67 @@ export function PerformerSettings() {
         </div>
         <p className="text-xs text-gray-500 mt-4">
           ※ 稼働DAP1人あたり平均報酬: <strong>{yen(dap.activeDap > 0 ? dap.totalReward / dap.activeDap : 0)}</strong>
+        </p>
+      </section>
+
+      {/* 1鑑定シミュレーター（基本 vs キャンペーン比較） */}
+      <section className="bg-white rounded-lg shadow p-6 mt-8">
+        <h3 className="font-semibold text-gray-700 mb-1">1鑑定シミュレーター（基本 vs キャンペーン比較）</h3>
+        <p className="text-xs text-gray-500 mb-4">
+          1鑑定あたりの通数・文字数を入力し、キャンペーンの上乗せpt（+pt/通・+pt/字）が各ランクの獲得pt・報酬にどう効くかを比較します。何ptアップが適正かの判断にお使いください。※通話など他の機能は含みません。
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5 max-w-2xl">
+          {([
+            { key: 'messages', label: '1鑑定の通数', unit: '通' },
+            { key: 'chars', label: '1鑑定の文字数', unit: '字' },
+            { key: 'addMsg', label: 'CP: 1通あたり +pt', unit: 'pt' },
+            { key: 'addChar', label: 'CP: 1文字あたり +pt', unit: 'pt' },
+          ] as { key: keyof typeof sim; label: string; unit: string }[]).map(({ key, label, unit }) => (
+            <div key={key}>
+              <label className="block text-xs text-gray-600 mb-1">{label}</label>
+              <div className="flex items-center gap-1">
+                <input
+                  type="number" min={0}
+                  value={sim[key]}
+                  onChange={(e) => setSim((s) => ({ ...s, [key]: parseFloat(e.target.value) || 0 }))}
+                  className={`w-full border rounded px-2 py-1 text-sm text-right ${key.startsWith('add') ? 'border-amber-300 text-amber-700' : 'border-gray-300'}`}
+                />
+                <span className="text-[10px] text-gray-400">{unit}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="overflow-x-auto">
+          <table className="text-xs border-collapse w-full">
+            <thead>
+              <tr className="bg-indigo-100 text-gray-700">
+                <th className="px-3 py-2 text-left border border-gray-200">ランク</th>
+                <th className="px-3 py-2 text-right border border-gray-200">基本 獲得pt</th>
+                <th className="px-3 py-2 text-right border border-gray-200 bg-amber-100">CP 獲得pt</th>
+                <th className="px-3 py-2 text-right border border-gray-200">基本 報酬</th>
+                <th className="px-3 py-2 text-right border border-gray-200 bg-amber-100">CP 報酬</th>
+                <th className="px-3 py-2 text-right border border-gray-200">増加額</th>
+                <th className="px-3 py-2 text-right border border-gray-200">増加率</th>
+              </tr>
+            </thead>
+            <tbody>
+              {simRows.map(({ rank, basePt, cpPt, baseIncome, cpIncome, addIncome, addRate }) => (
+                <tr key={rank.stage} className="border-b border-gray-100 hover:bg-gray-50">
+                  <td className="px-3 py-1.5 border border-gray-200 font-medium text-gray-700">{rank.name}</td>
+                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums">{Math.round(basePt).toLocaleString()} pt</td>
+                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums bg-amber-50 font-medium">{Math.round(cpPt).toLocaleString()} pt</td>
+                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums">{yen(baseIncome)}</td>
+                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums bg-amber-50 font-medium">{yen(cpIncome)}</td>
+                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums text-green-700 font-bold">+{yen(addIncome)}</td>
+                  <td className={`px-3 py-1.5 border border-gray-200 text-right tabular-nums font-bold ${addRate >= 0.5 ? 'text-red-600' : 'text-gray-700'}`}>+{(addRate * 100).toFixed(1)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-[11px] text-gray-400 mt-3 leading-relaxed">
+          ※ 報酬額 = 通常pt×¥{pointConfig.normalPtCost} + ボーナスpt×¥{pointConfig.bonusPtCost}。キャンペーン上乗せptはボーナスpt（¥{pointConfig.bonusPtCost}/pt）として会社が追加負担します。<br />
+          ※ 増加率が高いランク（特に下位）ほど同じ上乗せでもインパクト大。上位ランクは元の単価が高いため上乗せの相対効果は小さくなります。会社負担（増加額）とインセンティブ効果のバランスで適正値を判断できます。
         </p>
       </section>
     </div>
