@@ -89,14 +89,13 @@ export function PerformerSettings() {
     .map((rank) => {
       const m = rank.actions.find((a) => a.type === 'message')
       const c = rank.actions.find((a) => a.type === 'fortune_char')
-      const normalPt = sim.messages * (m?.performerNormal ?? 0) + sim.chars * (c?.performerNormal ?? 0)
-      const bonusPt = sim.messages * (m?.performerBonus ?? 0) + sim.chars * (c?.performerBonus ?? 0)
-      const basePt = normalPt + bonusPt
-      const baseIncome = normalPt * pointConfig.normalPtCost + bonusPt * pointConfig.bonusPtCost
-      // キャンペーン上乗せ（ボーナスptとして付与）
+      // 獲得pt = P通常（表の獲得pt：シルバー 1通=80pt / 1文字=4pt）
+      const basePt = sim.messages * (m?.performerNormal ?? 0) + sim.chars * (c?.performerNormal ?? 0)
+      const baseIncome = basePt * pointConfig.normalPtCost
+      // キャンペーン上乗せ（ボーナスptとして付与・原価¥0.22/pt）
       const upliftPt = sim.messages * sim.addMsg + sim.chars * sim.addChar
       const cpPt = basePt + upliftPt
-      const cpIncome = normalPt * pointConfig.normalPtCost + (bonusPt + upliftPt) * pointConfig.bonusPtCost
+      const cpIncome = baseIncome + upliftPt * pointConfig.bonusPtCost
       const addIncome = cpIncome - baseIncome
       const addRate = baseIncome > 0 ? addIncome / baseIncome : 0
       return { rank, basePt, cpPt, upliftPt, baseIncome, cpIncome, addIncome, addRate }
@@ -278,7 +277,7 @@ export function PerformerSettings() {
           </table>
         </div>
         <p className="text-[11px] text-gray-400 mt-3 leading-relaxed">
-          ※ 報酬額 = 通常pt×¥{pointConfig.normalPtCost} + ボーナスpt×¥{pointConfig.bonusPtCost}。キャンペーン上乗せptはボーナスpt（¥{pointConfig.bonusPtCost}/pt）として会社が追加負担します。<br />
+          ※ 獲得ptは表のP通常（例: シルバー 1通=80pt / 1文字=4pt）。基本報酬 = 獲得pt×¥{pointConfig.normalPtCost}。キャンペーン上乗せptはボーナスpt（¥{pointConfig.bonusPtCost}/pt）として会社が追加負担します。<br />
           ※ 増加率が高いランク（特に下位）ほど同じ上乗せでもインパクト大。上位ランクは元の単価が高いため上乗せの相対効果は小さくなります。会社負担（増加額）とインセンティブ効果のバランスで適正値を判断できます。
         </p>
       </section>
