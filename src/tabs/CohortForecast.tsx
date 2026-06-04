@@ -47,7 +47,31 @@ export function CohortForecast() {
 
       {/* パラメータ */}
       <section className="card">
-        <h3 className="section-title" style={{ marginBottom: '1rem' }}>コホート設定</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="section-title" style={{ margin: 0 }}>コホート設定</h3>
+          <button
+            onClick={() => {
+              updateCohortParams({
+                newUserArppu:       sp.arppu,
+                secondMonthArppu:   Math.round(sp.arppu * 0.85),
+                continuousArppu:    Math.round(sp.arppu * 0.75),
+                continuousRetention: sp.retentionRate,
+                retentionRate:      sp.retentionRate,
+                secondMonthRetention: Math.min(sp.retentionRate + 0.1, 0.99),
+              })
+              updateSimulatorParams({ retentionRate: sp.retentionRate })
+            }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
+              background: 'var(--accent-dim)', border: '1px solid rgba(99,102,241,0.3)',
+              color: 'var(--accent-light)', fontSize: 12, fontWeight: 500,
+            }}
+            title={`ARPPU: ¥${sp.arppu.toLocaleString()} / 継続率: ${(sp.retentionRate * 100).toFixed(0)}%`}
+          >
+            ← 売上Simから引き継ぎ
+          </button>
+        </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           {([
             { label: '予測月数', key: 'months' as const, min: 3, max: 36 },
@@ -66,6 +90,11 @@ export function CohortForecast() {
             </div>
           ))}
         </div>
+        <p className="text-[11px] mt-3" style={{ color: 'var(--text-muted)' }}>
+          売上Sim設定値 — ARPPU: <span style={{ color: 'var(--accent-light)' }}>¥{sp.arppu.toLocaleString()}</span>
+          　継続率: <span style={{ color: 'var(--accent-light)' }}>{(sp.retentionRate * 100).toFixed(0)}%</span>
+          　引き継ぎ時: 新規=ARPPU、2ヶ月目=×0.85、継続=×0.75
+        </p>
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
           <div>
             <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
