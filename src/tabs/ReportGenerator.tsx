@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { calcMonthlyKPI } from '../utils/calculations'
 import { PDFViewer, PDFDownloadLink } from '@react-pdf/renderer'
 import { useAppContext } from '../context/AppContext'
 import { ReportDocument, type OutputMode } from '../pdf/ReportDocument'
@@ -156,6 +157,51 @@ export function ReportGenerator() {
     )
   }
 
+  const autoFill = () => {
+    if (!currentReport) return
+    const { simulatorParams: sp, agencies } = data
+    const kpi = calcMonthlyKPI({
+      adBudget: sp.adBudget,
+      cpi: sp.cpi,
+      conversionRate: sp.conversionRate,
+      arppu: sp.arppu,
+    })
+    const monthlySales = kpi.payingUsers * sp.arppu
+    const agencyData = agencies.map(a => {
+      const lastMonth = a.months.filter(m => m.adBudget > 0 || m.sales > 0).slice(-1)[0]
+      const adBudget = lastMonth?.adBudget ?? 0
+      const sales    = lastMonth?.sales ?? 0
+      return { name: a.name, adBudget, sales, roas: adBudget > 0 ? sales / adBudget : 0 }
+    })
+    const totalAdBudget = agencyData.reduce((s, a) => s + a.adBudget, 0)
+    const totalSales    = agencyData.reduce((s, a) => s + a.sales, 0)
+
+    updateReports(
+      data.reports.map(r => r.id !== currentReport.id ? r : {
+        ...r,
+        sections: {
+          ...r.sections,
+          user: {
+            ...r.sections.user,
+            arppu: sp.arppu,
+            installCount: kpi.installs,
+            conversionRate: sp.conversionRate,
+          },
+          sales: {
+            ...r.sections.sales,
+            target: Math.round(monthlySales * 1.1),
+            actual: Math.round(monthlySales),
+          },
+          ad: {
+            ...r.sections.ad,
+            agencies: agencyData,
+            totalRoas: totalAdBudget > 0 ? totalSales / totalAdBudget : 0,
+          },
+        },
+      })
+    )
+  }
+
   const fileName = currentReport
     ? `${currentReport.meta.serviceName}-${currentReport.meta.month}-結果報告-${outputMode === 'internal' ? '社内' : 'パフォーマー向け'}.pdf`
     : 'report.pdf'
@@ -164,7 +210,21 @@ export function ReportGenerator() {
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-center justify-between">
         <h2 className="page-title">結果報告書</h2>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {currentReport && viewMode === 'edit' && (
+            <button
+              onClick={autoFill}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
+                background: 'var(--accent-dim)', border: '1px solid rgba(99,102,241,0.3)',
+                color: 'var(--accent-light)', fontSize: 12, fontWeight: 500,
+              }}
+              title="売上シミュレーター・代理店データから主要項目を自動入力します"
+            >
+              ⚡ Simデータから自動入力
+            </button>
+          )}
           <button
             onClick={() => setViewMode('edit')}
             className={`px-3 py-1 text-sm rounded ${viewMode === 'edit' ? 'btn-primary' : 'btn-ghost'}`}
