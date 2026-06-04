@@ -4,7 +4,7 @@ import { useAppContext } from '../context/AppContext'
 import { KPICard } from '../components/KPICard'
 import {
   calcMonthlyKPI, calcPerformerIncome, calcLTV, calcPaybackMonths,
-  calcCampaignImpact, calcTargetPerformerBudget,
+  calcCampaignImpact, calcTargetPerformerBudget, calcAutoGrossMarginRate,
 } from '../utils/calculations'
 
 export function SalesSimulator() {
@@ -15,6 +15,16 @@ export function SalesSimulator() {
   const [impactSales, setImpactSales]           = useState(3200000)
   const [impactScenario, setImpactScenario]     = useState<ImpactScenario>('base')
   const [targetMarginRate, setTargetMarginRate] = useState(40)
+
+  const [useAutoMargin, setUseAutoMargin] = useState(true)
+
+  const autoMarginRate = useMemo(
+    () => calcAutoGrossMarginRate(data.purchasePlans, pointConfig),
+    [data.purchasePlans, pointConfig],
+  )
+
+  // 実効粗利率: 自動モードはポイント設定から計算、手動モードはシミュレーターのスライダー値を使用
+  const effectiveGrossMarginRate = useAutoMargin ? autoMarginRate : p.grossMarginRate
 
   const allPlans = {
     base:      data.purchasePlans,
@@ -82,7 +92,7 @@ export function SalesSimulator() {
         : (1 - Math.pow(p.retentionRate, month)) / (1 - p.retentionRate)
       const totalUsers = Math.floor(kpi.payingUsers * retentionMultiplier)
       const sales = totalUsers * p.arppu
-      const grossProfit = Math.floor(sales * p.grossMarginRate)
+      const grossProfit = Math.floor(sales * effectiveGrossMarginRate)
       return {
         month: `${month}月`,
         売上: sales,
@@ -90,11 +100,11 @@ export function SalesSimulator() {
         パフォーマー報酬: Math.floor(performerMonthlyIncome * retentionMultiplier),
       }
     })
-  }, [kpi, p, performerMonthlyIncome])
+  }, [kpi, p, performerMonthlyIncome, effectiveGrossMarginRate])
 
   // LTV・ペイバック
   const ltv = calcLTV(p.arppu, p.retentionRate)
-  const paybackMonths = calcPaybackMonths(p.cpi, p.arppu, p.conversionRate, p.grossMarginRate)
+  const paybackMonths = calcPaybackMonths(p.cpi, p.arppu, p.conversionRate, effectiveGrossMarginRate)
   // LTV ÷ CPA(=1課金あたり獲得コスト) ユニットエコノミクス
   const cpaPerPayer = p.conversionRate > 0 ? p.cpi / p.conversionRate : 0
   const ltvCacRatio = cpaPerPayer > 0 ? ltv / cpaPerPayer : 0
@@ -105,7 +115,7 @@ export function SalesSimulator() {
 
   // 損益分岐グラフ：1課金ユーザーあたり累積粗利 vs 獲得コスト(CPA)
   const breakevenData = useMemo(() => {
-    const monthlyGP = p.arppu * p.grossMarginRate
+    const monthlyGP = p.arppu * effectiveGrossMarginRate
     return Array.from({ length: 12 }, (_, i) => {
       const month = i + 1
       const mult = p.retentionRate === 1
@@ -117,7 +127,7 @@ export function SalesSimulator() {
         獲得コストCPA: Math.floor(cpaPerPayer),
       }
     })
-  }, [p.arppu, p.grossMarginRate, p.retentionRate, cpaPerPayer])
+  }, [p.arppu, effectiveGrossMarginRate, p.retentionRate, cpaPerPayer])
 
   const fmt = (n: number) => `¥${Math.floor(n).toLocaleString()}`
 
@@ -217,7 +227,6 @@ export function SalesSimulator() {
             { label: '課金率 (%)', key: 'conversionRate' as const, min: 0.01, max: 0.5, step: 0.01, pct: true },
             { label: 'ARPPU (¥)', key: 'arppu' as const, min: 1000, max: 200000, step: 1000, pct: false },
             { label: '継続率 (%)', key: 'retentionRate' as const, min: 0.01, max: 0.99, step: 0.01, pct: true },
-            { label: '粗利率 (%)', key: 'grossMarginRate' as const, min: 0.1, max: 0.9, step: 0.01, pct: true },
           ] as const).map(({ label, key, min, max, step, pct }) => (
             <div key={key}>
               <label className="block text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>
@@ -232,6 +241,54 @@ export function SalesSimulator() {
             </div>
           ))}
         </div>
+        {/* 粗利率: ポイント設定から自動計算 or 手動入力 */}
+        <div className="mt-4 p-3 rounded-lg" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              粗利率
+              {useAutoMargin && (
+                <span className="ml-2 text-[11px] px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-dim)', color: 'var(--accent-light)' }}>
+                  ポイント設定から自動計算
+                </span>
+              )}
+            </span>
+            <button
+              onClick={() => setUseAutoMargin(v => !v)}
+              className="text-[11px] px-2 py-1 rounded"
+              style={{
+                background: useAutoMargin ? 'var(--accent-dim)' : 'var(--bg-hover)',
+                color: useAutoMargin ? 'var(--accent-light)' : 'var(--text-muted)',
+                border: '1px solid var(--border)',
+                cursor: 'pointer',
+              }}
+            >
+              {useAutoMargin ? '🔒 自動' : '✏️ 手動'}
+            </button>
+          </div>
+          {useAutoMargin ? (
+            <div className="flex items-center gap-3">
+              <span className="text-2xl font-bold font-mono-num" style={{ color: 'var(--positive)' }}>
+                {(autoMarginRate * 100).toFixed(1)}%
+              </span>
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                ポイント設定の基本設定プランから算出。キャンペーン時の影響は上部パネルで確認。
+              </span>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>
+                手動入力: <strong style={{ color: 'var(--text-primary)' }}>{(p.grossMarginRate * 100).toFixed(0)}%</strong>
+              </label>
+              <input
+                type="range" min={0.1} max={0.9} step={0.01}
+                value={p.grossMarginRate}
+                onChange={(e) => updateSimulatorParams({ grossMarginRate: parseFloat(e.target.value) })}
+                className="w-full accent-indigo-600"
+              />
+            </div>
+          )}
+        </div>
+
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>

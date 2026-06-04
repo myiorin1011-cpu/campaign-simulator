@@ -191,6 +191,18 @@ function weightedPlanMetrics(
 }
 
 /**
+ * ポイント設定から粗利率を自動計算する
+ * 粗利率 = 1 - 加重平均決済手数料率 - 加重平均報酬コスト率
+ */
+export function calcAutoGrossMarginRate(
+  plans: Record<PaymentMethod, PurchasePlan[]>,
+  pointConfig: PointConfig,
+): number {
+  const { storeFeeRate, rewardCostRatio } = weightedPlanMetrics(plans, pointConfig)
+  return Math.max(0, 1 - storeFeeRate - rewardCostRatio)
+}
+
+/**
  * キャンペーン収益影響計算
  * 売上額に対して指定シナリオの粗利・パフォーマー報酬・損失を返す
  * loss = 基本シナリオとの差分コスト（正 = 追加コスト発生）
