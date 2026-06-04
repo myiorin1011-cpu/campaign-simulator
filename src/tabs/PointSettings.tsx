@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { calcBonusPtEqualizationLoss } from '../utils/calculations'
 import { useAppContext } from '../context/AppContext'
 import { EditableCell } from '../components/EditableCell'
 import type { PaymentMethod, PurchasePlan } from '../types'
@@ -23,6 +24,16 @@ export function PointSettings() {
   const { pointConfig, paymentOrder } = data
   const [scenario, setScenario] = useState<PlansField>('purchasePlans')
   const purchasePlans = data[scenario]
+
+  const [eqSales, setEqSales] = useState(3200000)
+
+  const eqResult = useMemo(
+    () => calcBonusPtEqualizationLoss(eqSales, pointConfig, purchasePlans),
+    [eqSales, pointConfig, purchasePlans],
+  )
+
+  const fmt = (n: number) => n.toLocaleString('ja-JP')
+  const pct = (r: number) => (r * 100).toFixed(1) + '%'
 
   const movePayment = (index: number, dir: -1 | 1) => {
     const target = index + dir
@@ -288,6 +299,72 @@ export function PointSettings() {
           💡 Apple/Google のストア決済は手数料10%が差し引かれるため、同じ販売価格でも実質粗利率が銀行振込・Credix・Amazon Payより低下します。非ストア決済（銀行振込/Credix/Amazon Pay）への誘導が粗利改善に有効です。
         </div>
       </section>
+
+        {/* 均等化シミュレーター */}
+        <div className="mt-6 bg-white rounded-lg border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">
+            🔄 通常PT = ボーナスPT 均等化シミュレーター
+          </h3>
+          <div className="flex items-center gap-2 mb-4">
+            <label className="text-xs text-gray-600 whitespace-nowrap">想定売上</label>
+            <span className="text-xs text-gray-500">¥</span>
+            <input
+              type="number"
+              value={eqSales}
+              onChange={(e) => setEqSales(Number(e.target.value))}
+              className="border border-gray-200 rounded px-2 py-1 text-sm w-36 text-right"
+              step={100000}
+            />
+          </div>
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-gray-500 border-b">
+                <th className="text-left py-1 font-medium w-40"></th>
+                <th className="text-right py-1 font-medium">現在設定</th>
+                <th className="text-right py-1 font-medium">均等化した場合</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              <tr>
+                <td className="py-1.5 text-gray-600">通常PT原価</td>
+                <td className="py-1.5 text-right">¥{pointConfig.normalPtCost.toFixed(2)}/pt</td>
+                <td className="py-1.5 text-right">¥{pointConfig.normalPtCost.toFixed(2)}/pt</td>
+              </tr>
+              <tr>
+                <td className="py-1.5 text-gray-600">ボーナスPT原価</td>
+                <td className="py-1.5 text-right">¥{pointConfig.bonusPtCost.toFixed(2)}/pt</td>
+                <td className="py-1.5 text-right font-semibold text-orange-600">
+                  ¥{pointConfig.normalPtCost.toFixed(2)}/pt（↑均等化）
+                </td>
+              </tr>
+              <tr>
+                <td className="py-1.5 text-gray-600">パフォーマー報酬</td>
+                <td className="py-1.5 text-right">¥{fmt(eqResult.currentCost)}</td>
+                <td className="py-1.5 text-right text-orange-600">¥{fmt(eqResult.equalizedCost)}</td>
+              </tr>
+              <tr>
+                <td className="py-1.5 text-gray-600">原価増加額</td>
+                <td className="py-1.5 text-right text-gray-400">—</td>
+                <td className="py-1.5 text-right font-semibold text-red-600">
+                  {eqResult.lossDiff > 0 ? `+¥${fmt(eqResult.lossDiff)}` : '±0'}
+                </td>
+              </tr>
+              <tr className="border-t border-gray-200">
+                <td className="py-1.5 text-gray-600">粗利率</td>
+                <td className="py-1.5 text-right font-semibold text-green-700">
+                  {pct(eqResult.currentGrossMarginRate)}
+                </td>
+                <td className="py-1.5 text-right font-semibold text-orange-600">
+                  {pct(eqResult.equalizedGrossMarginRate)}
+                  <span className="ml-1 text-red-500 text-xs">
+                    ({eqResult.currentGrossMarginRate > eqResult.equalizedGrossMarginRate ? '-' : '+'}
+                    {Math.abs((eqResult.currentGrossMarginRate - eqResult.equalizedGrossMarginRate) * 100).toFixed(1)}pt)
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
     </div>
   )
 }
