@@ -62,7 +62,7 @@ html, body {
   font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
   background-color: var(--bg-app);
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 15.5px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
@@ -99,7 +99,7 @@ html, body {
 
 /* ─── Section Heading ─────────────────────────────────── */
 .section-title {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -111,7 +111,7 @@ html, body {
 .table-dark {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.8125rem;
+  font-size: 0.95rem;
 }
 
 .table-dark thead tr {
@@ -121,7 +121,7 @@ html, body {
 .table-dark thead th {
   padding: 0.5rem 0.75rem;
   text-align: right;
-  font-size: 0.6875rem;
+  font-size: 0.82rem;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -164,8 +164,8 @@ html, body {
   border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text-primary);
-  padding: 0.3125rem 0.625rem;
-  font-size: 0.8125rem;
+  padding: 0.35rem 0.625rem;
+  font-size: 0.95rem;
   transition: border-color 0.15s;
   outline: none;
 }
@@ -218,7 +218,7 @@ html, body {
 
 .scenario-tab {
   padding: 0.5rem 1rem;
-  font-size: 0.8125rem;
+  font-size: 0.95rem;
   cursor: pointer;
   border: none;
   background: none;
@@ -242,9 +242,9 @@ html, body {
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.125rem 0.5rem;
+  padding: 0.15rem 0.55rem;
   border-radius: 999px;
-  font-size: 0.6875rem;
+  font-size: 0.8rem;
   font-weight: 500;
 }
 
@@ -290,8 +290,8 @@ html, body {
 }
 
 .stat-row:last-child { border-bottom: none; }
-.stat-label { color: var(--text-secondary); font-size: 0.8125rem; }
-.stat-value { font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; color: var(--text-primary); }
+.stat-label { color: var(--text-secondary); font-size: 0.95rem; }
+.stat-value { font-family: 'JetBrains Mono', monospace; font-size: 1rem; color: var(--text-primary); }
 
 /* ─── Select ──────────────────────────────────────────── */
 select.input-dark option {
