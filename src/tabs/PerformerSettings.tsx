@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { EditableCell } from '../components/EditableCell'
 import { calcDapDistribution } from '../utils/calculations'
@@ -123,61 +123,52 @@ export function PerformerSettings() {
         ※ セルをクリックして編集できます。通常pt単価:¥{pointConfig.normalPtCost} / ボーナスpt単価:¥{pointConfig.bonusPtCost}
       </p>
 
-      <div className="overflow-x-auto">
-        <table className="text-xs border-collapse whitespace-nowrap" style={{ borderColor: 'var(--border)' }}>
-          <thead>
-            <tr style={{ background: 'var(--accent)', color: 'var(--text-primary)' }}>
-              <th className="px-3 py-2 text-left sticky left-0 z-10" style={{ background: 'var(--accent)' }}>ランク</th>
-              {actionTypes.map((actionType) => (
-                <th key={actionType} className="px-2 py-2 text-center" style={{ borderLeft: '1px solid rgba(99,102,241,0.4)' }} colSpan={3}>
-                  {ACTION_LABELS[actionType]}
-                </th>
-              ))}
-            </tr>
-            <tr style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}>
-              <th className="px-3 py-1 sticky left-0 z-10" style={{ background: 'var(--bg-elevated)' }}></th>
-              {actionTypes.map((actionType) => (
-                <React.Fragment key={actionType}>
-                  <th className="px-2 py-1 text-center" style={{ borderLeft: '1px solid var(--border)', color: 'var(--accent-light)' }}>U消費</th>
-                  <th className="px-2 py-1 text-center" style={{ color: 'var(--positive)' }}>P通常</th>
-                  <th className="px-2 py-1 text-center" style={{ color: 'var(--warning)' }}>Pボーナス</th>
-                </React.Fragment>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {performerRanks.map((rank, rankIdx) => (
-              <tr key={rank.stage} style={{
-                borderBottom: '1px solid var(--border-subtle)',
-                background: rankIdx % 2 === 1 ? 'var(--bg-elevated)' : 'var(--bg-card)',
-              }}>
-                <td className="px-3 py-1 font-medium sticky left-0 z-10" style={{
-                  color: 'var(--text-secondary)',
-                  borderRight: '1px solid var(--border)',
-                  background: rankIdx % 2 === 1 ? 'var(--bg-elevated)' : 'var(--bg-card)',
-                }}>
-                  {rank.name}
-                </td>
-                {rank.actions.map((action, actionIdx) => (
-                  <React.Fragment key={action.type}>
-                    <td className="px-2 py-1 text-right" style={{ borderLeft: '1px solid var(--border-subtle)' }}>
-                      <EditableCell value={action.userConsume} suffix="pt"
-                        onChange={(v) => updateActionPt(rankIdx, actionIdx, 'userConsume', v)} />
-                    </td>
-                    <td className="px-2 py-1 text-right">
-                      <EditableCell value={action.performerNormal} suffix="pt"
-                        onChange={(v) => updateActionPt(rankIdx, actionIdx, 'performerNormal', v)} />
-                    </td>
-                    <td className="px-2 py-1 text-right">
-                      <EditableCell value={action.performerBonus} suffix="pt"
-                        onChange={(v) => updateActionPt(rankIdx, actionIdx, 'performerBonus', v)} />
-                    </td>
-                  </React.Fragment>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* カテゴリ別カード（横並びグリッド） */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {actionTypes.map((actionType, actionIdx) => (
+          <div key={actionType} className="card" style={{ padding: '0.875rem 1rem' }}>
+            <h3 className="font-bold" style={{ color: 'var(--accent-light)', fontSize: '0.95rem', marginBottom: '0.625rem' }}>
+              {ACTION_LABELS[actionType]}
+            </h3>
+            <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                  <th className="text-left" style={{ padding: '0.3rem 0.4rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>ランク</th>
+                  <th className="text-right" style={{ padding: '0.3rem 0.4rem', fontSize: '0.8rem', color: 'var(--accent-light)' }}>U消費</th>
+                  <th className="text-right" style={{ padding: '0.3rem 0.4rem', fontSize: '0.8rem', color: 'var(--positive)' }}>P通常</th>
+                  <th className="text-right" style={{ padding: '0.3rem 0.4rem', fontSize: '0.8rem', color: 'var(--warning)' }}>Pボーナス</th>
+                </tr>
+              </thead>
+              <tbody>
+                {performerRanks.map((rank, rankIdx) => {
+                  const action = rank.actions[actionIdx]
+                  return (
+                    <tr key={rank.stage} style={{
+                      borderBottom: '1px solid var(--border-subtle)',
+                      background: rankIdx % 2 === 1 ? 'var(--bg-elevated)' : 'transparent',
+                    }}>
+                      <td className="font-medium" style={{ padding: '0.3rem 0.4rem', fontSize: '0.875rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                        {rank.name}
+                      </td>
+                      <td className="text-right font-mono-num" style={{ padding: '0.3rem 0.4rem', fontSize: '0.9rem' }}>
+                        <EditableCell value={action.userConsume} suffix="pt"
+                          onChange={(v) => updateActionPt(rankIdx, actionIdx, 'userConsume', v)} />
+                      </td>
+                      <td className="text-right font-mono-num" style={{ padding: '0.3rem 0.4rem', fontSize: '0.9rem' }}>
+                        <EditableCell value={action.performerNormal} suffix="pt"
+                          onChange={(v) => updateActionPt(rankIdx, actionIdx, 'performerNormal', v)} />
+                      </td>
+                      <td className="text-right font-mono-num" style={{ padding: '0.3rem 0.4rem', fontSize: '0.9rem' }}>
+                        <EditableCell value={action.performerBonus} suffix="pt"
+                          onChange={(v) => updateActionPt(rankIdx, actionIdx, 'performerBonus', v)} />
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        ))}
       </div>
 
       {/* DAP稼働分布表 */}
