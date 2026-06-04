@@ -1,12 +1,41 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { useAppContext } from '../context/AppContext'
 import { KPICard } from '../components/KPICard'
-import { calcMonthlyKPI, calcPerformerIncome, calcLTV, calcPaybackMonths } from '../utils/calculations'
+import {
+  calcMonthlyKPI, calcPerformerIncome, calcLTV, calcPaybackMonths,
+  calcCampaignImpact, calcTargetPerformerBudget,
+} from '../utils/calculations'
 
 export function SalesSimulator() {
   const { data, updateSimulatorParams } = useAppContext()
   const { simulatorParams: p, performerRanks, pointConfig } = data
+
+  type ImpactScenario = 'base' | 'campaign1' | 'campaign2'
+  const [impactSales, setImpactSales]           = useState(3200000)
+  const [impactScenario, setImpactScenario]     = useState<ImpactScenario>('base')
+  const [targetMarginRate, setTargetMarginRate] = useState(40)
+
+  const allPlans = {
+    base:      data.purchasePlans,
+    campaign1: data.purchasePlans1,
+    campaign2: data.purchasePlans2,
+  }
+
+  const impact = useMemo(
+    () => calcCampaignImpact(impactSales, impactScenario, pointConfig, allPlans),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [impactSales, impactScenario, data.purchasePlans, data.purchasePlans1, data.purchasePlans2, pointConfig],
+  )
+
+  const budget = useMemo(
+    () => calcTargetPerformerBudget(impactSales, targetMarginRate / 100, pointConfig, allPlans[impactScenario]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [impactSales, targetMarginRate, impactScenario, data.purchasePlans, data.purchasePlans1, data.purchasePlans2, pointConfig],
+  )
+
+  const fmt2 = (n: number) => n.toLocaleString('ja-JP')
+  const pct = (r: number) => (r * 100).toFixed(1) + '%'
 
   // 有料メッセージ1開封あたりの平均文字数（有料鑑定は1文字単価のため換算が必要）
   const CHARS_PER_PAID_OPEN = 400
@@ -94,6 +123,84 @@ export function SalesSimulator() {
 
   return (
     <div className="space-y-6 max-w-4xl">
+      {/* キャンペーン収益影響パネル */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">キャンペーン収益影響シミュレーター</h2>
+
+        {/* シナリオ選択 */}
+        <div className="flex gap-2 mb-4">
+          {(['base', 'campaign1', 'campaign2'] as ImpactScenario[]).map((s) => (
+            <button
+              key={s}
+              onClick={() => setImpactScenario(s)}
+              className={`px-3 py-1 rounded text-xs font-medium border transition-colors ${
+                impactScenario === s
+                  ? 'bg-indigo-600 text-white border-indigo-600'
+                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              {s === 'base' ? '基本設定' : s === 'campaign1' ? 'キャンペーン1' : 'キャンペーン2'}
+            </button>
+          ))}
+        </div>
+
+        {/* 売上入力 */}
+        <div className="flex items-center gap-2 mb-4">
+          <label className="text-xs text-gray-600 whitespace-nowrap">売上入力</label>
+          <span className="text-xs text-gray-500">¥</span>
+          <input
+            type="number"
+            value={impactSales}
+            onChange={(e) => setImpactSales(Number(e.target.value))}
+            className="border border-gray-200 rounded px-2 py-1 text-sm w-36 text-right"
+            step={100000}
+          />
+        </div>
+
+        {/* 結果カード */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+          <div className="bg-green-50 rounded-lg p-3 text-center">
+            <div className="text-xs text-gray-500 mb-1">粗利額</div>
+            <div className="text-lg font-bold text-green-700">¥{fmt2(impact.grossMargin)}</div>
+          </div>
+          <div className="bg-blue-50 rounded-lg p-3 text-center">
+            <div className="text-xs text-gray-500 mb-1">粗利率</div>
+            <div className="text-lg font-bold text-blue-700">{pct(impact.grossMarginRate)}</div>
+          </div>
+          <div className="bg-purple-50 rounded-lg p-3 text-center">
+            <div className="text-xs text-gray-500 mb-1">パフォーマー報酬</div>
+            <div className="text-lg font-bold text-purple-700">¥{fmt2(impact.performerReward)}</div>
+          </div>
+          <div className={`rounded-lg p-3 text-center ${impact.loss > 0 ? 'bg-red-50' : 'bg-gray-50'}`}>
+            <div className="text-xs text-gray-500 mb-1">基本比損失</div>
+            <div className={`text-lg font-bold ${impact.loss > 0 ? 'text-red-600' : 'text-gray-500'}`}>
+              {impact.loss > 0 ? `+¥${fmt2(impact.loss)}` : '±0'}
+            </div>
+          </div>
+        </div>
+
+        {/* 目標粗利率からの逆算 */}
+        <div className="border-t border-gray-100 pt-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-gray-600">目標粗利率</span>
+            <input
+              type="number"
+              value={targetMarginRate}
+              onChange={(e) => setTargetMarginRate(Number(e.target.value))}
+              className="border border-gray-200 rounded px-2 py-1 text-sm w-16 text-right"
+              min={0} max={100} step={1}
+            />
+            <span className="text-xs text-gray-500">%</span>
+            <span className="text-xs text-gray-400">→</span>
+            <span className="text-xs text-gray-600">
+              パフォーマーに払える上限:
+              <span className="ml-1 font-semibold text-purple-700">¥{fmt2(budget.maxPerformerBudget)}</span>
+            </span>
+            <span className="text-xs text-gray-400">（実際粗利: ¥{fmt2(budget.actualGrossMargin)}）</span>
+          </div>
+        </div>
+      </div>
+
       <h2 className="text-xl font-bold text-gray-800">売上シミュレーター</h2>
 
       {/* パラメータ入力 */}
