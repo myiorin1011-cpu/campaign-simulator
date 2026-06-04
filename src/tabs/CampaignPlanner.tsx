@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { userPatterns, performerPatterns, rankingNote } from '../data/campaignSeeds'
+import { inferCampaignIntent } from '../utils/calculations'
 import type { Campaign } from '../types'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -71,6 +72,13 @@ export function CampaignPlanner() {
   }
   const [audience, setAudience] = useState<'user' | 'performer'>('user')
   const [showPatterns, setShowPatterns] = useState(false)
+  const [editing, setEditing] = useState<Campaign | null>(null)
+
+  const saveEditing = () => {
+    if (!editing) return
+    updateCampaigns(campaigns.map((c) => (c.id !== editing.id ? c : editing)))
+    setEditing(null)
+  }
 
   const rows = campaigns.filter((c) => c.audience === audience)
 
@@ -178,7 +186,8 @@ export function CampaignPlanner() {
                     {WORK_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </td>
-                <td className="px-1 py-1 text-center">
+                <td className="px-1 py-1 text-center flex gap-1">
+                  <button onClick={() => setEditing(c)} className="text-indigo-500 hover:text-indigo-700 text-xs">編集</button>
                   <button onClick={() => remove(c.id)} className="text-red-400 hover:text-red-600 text-xs">削除</button>
                 </td>
               </tr>
@@ -193,6 +202,81 @@ export function CampaignPlanner() {
           <button onClick={addRow} className="text-sm text-indigo-600 hover:underline">＋ キャンペーンを追加</button>
         </div>
       </section>
+
+      {/* 編集フォーム */}
+      {editing && (
+        <section className="bg-white rounded-lg shadow p-4 space-y-3">
+          <h3 className="font-semibold text-gray-700 text-sm">キャンペーン編集</h3>
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">タイトル</label>
+              <input
+                value={editing.title}
+                onChange={(e) => setEditing({ ...editing, title: e.target.value })}
+                className="border border-gray-200 rounded px-2 py-1 text-xs w-full"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">pt設計</label>
+              <select
+                value={editing.ptDesign}
+                onChange={(e) => setEditing({ ...editing, ptDesign: e.target.value })}
+                className="border border-gray-200 rounded px-2 py-1 text-xs w-full"
+              >
+                {WORK_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">対応シナリオ</label>
+              <select
+                value={editing.scenarioRef}
+                onChange={(e) =>
+                  setEditing({ ...editing, scenarioRef: e.target.value as '' | 'campaign1' | 'campaign2' })
+                }
+                className="border border-gray-200 rounded px-2 py-1 text-xs w-full"
+              >
+                <option value="">未設定</option>
+                <option value="campaign1">キャンペーン設定1</option>
+                <option value="campaign2">キャンペーン設定2</option>
+              </select>
+            </div>
+          </div>
+          {/* 自動生成: ポイント設計分析 */}
+          {(() => {
+            const analysis = inferCampaignIntent(editing, data.pointConfig, {
+              base:      data.purchasePlans,
+              campaign1: data.purchasePlans1,
+              campaign2: data.purchasePlans2,
+            })
+            if (!analysis) return null
+            return (
+              <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="text-xs font-semibold text-amber-800 mb-2">📊 ポイント設計分析（自動生成）</div>
+                <div className="space-y-1.5 text-xs text-gray-700">
+                  <div>
+                    <span className="font-medium text-gray-500">設計意図　</span>
+                    {analysis.intent}
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-500">目的　　　</span>
+                    {analysis.purpose}
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-500">期待効果　</span>
+                    <span className={analysis.expectedEffect.includes('+') ? 'text-purple-700 font-semibold' : ''}>
+                      {analysis.expectedEffect}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
+          <div className="flex gap-2">
+            <button onClick={saveEditing} className="px-3 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700">保存</button>
+            <button onClick={() => setEditing(null)} className="px-3 py-1 bg-gray-200 text-gray-600 text-xs rounded hover:bg-gray-300">キャンセル</button>
+          </div>
+        </section>
+      )}
 
       {/* パフォーマー向け: ランキングイベント */}
       {audience === 'performer' && (
