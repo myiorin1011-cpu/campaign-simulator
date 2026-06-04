@@ -124,8 +124,8 @@ export function SalesSimulator() {
   return (
     <div className="space-y-6 max-w-4xl">
       {/* キャンペーン収益影響パネル */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">キャンペーン収益影響シミュレーター</h2>
+      <div className="card mb-6">
+        <h2 className="section-title">キャンペーン収益影響シミュレーター</h2>
 
         {/* シナリオ選択 */}
         <div className="flex gap-2 mb-4">
@@ -136,7 +136,7 @@ export function SalesSimulator() {
               className={`px-3 py-1 rounded text-xs font-medium border transition-colors ${
                 impactScenario === s
                   ? 'bg-indigo-600 text-white border-indigo-600'
-                  : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                  : 'btn-ghost'
               }`}
             >
               {s === 'base' ? '基本設定' : s === 'campaign1' ? 'キャンペーン1' : 'キャンペーン2'}
@@ -146,66 +146,70 @@ export function SalesSimulator() {
 
         {/* 売上入力 */}
         <div className="flex items-center gap-2 mb-4">
-          <label className="text-xs text-gray-600 whitespace-nowrap">売上入力</label>
-          <span className="text-xs text-gray-500">¥</span>
+          <label className="text-xs whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>売上入力</label>
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>¥</span>
           <input
             type="number"
             value={impactSales}
             onChange={(e) => setImpactSales(Number(e.target.value))}
-            className="border border-gray-200 rounded px-2 py-1 text-sm w-36 text-right"
+            className="input-dark w-36 text-right"
             step={100000}
           />
         </div>
 
         {/* 結果カード */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-          <div className="bg-green-50 rounded-lg p-3 text-center">
-            <div className="text-xs text-gray-500 mb-1">粗利額</div>
-            <div className="text-lg font-bold text-green-700">¥{fmt2(impact.grossMargin)}</div>
+          <div style={{ background: 'var(--positive-bg)', border: '1px solid rgba(63,185,80,0.2)', borderRadius: 8, padding: '10px 12px', textAlign: 'center' }}>
+            <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>粗利額</div>
+            <div className="kpi-value" style={{ color: 'var(--positive)' }}>¥{fmt2(impact.grossMargin)}</div>
           </div>
-          <div className="bg-blue-50 rounded-lg p-3 text-center">
-            <div className="text-xs text-gray-500 mb-1">粗利率</div>
-            <div className="text-lg font-bold text-blue-700">{pct(impact.grossMarginRate)}</div>
+          <div style={{ background: 'var(--accent-dim)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 8, padding: '10px 12px', textAlign: 'center' }}>
+            <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>粗利率</div>
+            <div className="kpi-value" style={{ color: 'var(--accent-light)' }}>{pct(impact.grossMarginRate)}</div>
           </div>
-          <div className="bg-purple-50 rounded-lg p-3 text-center">
-            <div className="text-xs text-gray-500 mb-1">パフォーマー報酬</div>
-            <div className="text-lg font-bold text-purple-700">¥{fmt2(impact.performerReward)}</div>
+          <div style={{ background: 'var(--purple-bg)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: 8, padding: '10px 12px', textAlign: 'center' }}>
+            <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>パフォーマー報酬</div>
+            <div className="kpi-value" style={{ color: 'var(--purple)' }}>¥{fmt2(impact.performerReward)}</div>
           </div>
-          <div className={`rounded-lg p-3 text-center ${impact.loss > 0 ? 'bg-red-50' : impact.loss < 0 ? 'bg-green-50' : 'bg-gray-50'}`}>
-            <div className="text-xs text-gray-500 mb-1">基本比損失</div>
-            <div className={`text-lg font-bold ${impact.loss > 0 ? 'text-red-600' : impact.loss < 0 ? 'text-green-600' : 'text-gray-500'}`}>
+          <div style={{
+            background: impact.loss > 0 ? 'var(--negative-bg)' : impact.loss < 0 ? 'var(--positive-bg)' : 'var(--bg-elevated)',
+            border: impact.loss > 0 ? '1px solid rgba(248,81,73,0.2)' : impact.loss < 0 ? '1px solid rgba(63,185,80,0.2)' : '1px solid var(--border)',
+            borderRadius: 8, padding: '10px 12px', textAlign: 'center'
+          }}>
+            <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>基本比損失</div>
+            <div className="kpi-value" style={{ color: impact.loss > 0 ? 'var(--negative)' : impact.loss < 0 ? 'var(--positive)' : 'var(--text-muted)' }}>
               {impact.loss > 0 ? `+¥${fmt2(impact.loss)}` : impact.loss < 0 ? `-¥${fmt2(Math.abs(impact.loss))}` : '±0'}
             </div>
           </div>
         </div>
 
         {/* 目標粗利率からの逆算 */}
-        <div className="border-t border-gray-100 pt-4">
+        <div className="pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-gray-600">目標粗利率</span>
+            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>目標粗利率</span>
             <input
               type="number"
               value={targetMarginRate}
               onChange={(e) => setTargetMarginRate(Number(e.target.value))}
-              className="border border-gray-200 rounded px-2 py-1 text-sm w-16 text-right"
+              className="input-dark w-16 text-right"
               min={0} max={100} step={1}
             />
-            <span className="text-xs text-gray-500">%</span>
-            <span className="text-xs text-gray-400">→</span>
-            <span className="text-xs text-gray-600">
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>%</span>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>→</span>
+            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
               パフォーマーに払える上限:
-              <span className="ml-1 font-semibold text-purple-700">¥{fmt2(budget.maxPerformerBudget)}</span>
+              <span className="ml-1 font-semibold" style={{ color: 'var(--purple)' }}>¥{fmt2(budget.maxPerformerBudget)}</span>
             </span>
-            <span className="text-xs text-gray-400">（実際粗利: ¥{fmt2(budget.actualGrossMargin)}）</span>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>（実際粗利: ¥{fmt2(budget.actualGrossMargin)}）</span>
           </div>
         </div>
       </div>
 
-      <h2 className="text-xl font-bold text-gray-800">売上シミュレーター</h2>
+      <h2 className="page-title">売上シミュレーター</h2>
 
       {/* パラメータ入力 */}
-      <section className="bg-white rounded-lg shadow p-6">
-        <h3 className="font-semibold text-gray-700 mb-4">入力パラメータ</h3>
+      <section className="card">
+        <h3 className="section-title">入力パラメータ</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {([
             { label: '月間広告費 (¥)', key: 'adBudget' as const, min: 0, max: 50000000, step: 100000, pct: false },
@@ -216,8 +220,8 @@ export function SalesSimulator() {
             { label: '粗利率 (%)', key: 'grossMarginRate' as const, min: 0.1, max: 0.9, step: 0.01, pct: true },
           ] as const).map(({ label, key, min, max, step, pct }) => (
             <div key={key}>
-              <label className="block text-sm text-gray-600 mb-1">
-                {label}: <strong>{pct ? `${(p[key] * 100).toFixed(0)}%` : `¥${(p[key] as number).toLocaleString()}`}</strong>
+              <label className="block text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>
+                {label}: <strong style={{ color: 'var(--text-primary)' }}>{pct ? `${(p[key] * 100).toFixed(0)}%` : `¥${(p[key] as number).toLocaleString()}`}</strong>
               </label>
               <input
                 type="range" min={min} max={max} step={step}
@@ -230,47 +234,47 @@ export function SalesSimulator() {
         </div>
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm text-gray-600 mb-1">
-              月間メッセージ受信数（1人あたり）: <strong>{p.monthlyMessages.toLocaleString()}通</strong>
+            <label className="block text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>
+              月間メッセージ受信数（1人あたり）: <strong style={{ color: 'var(--text-primary)' }}>{p.monthlyMessages.toLocaleString()}通</strong>
             </label>
             <input
               type="number" min={0} step={100}
               value={p.monthlyMessages}
               onChange={(e) => updateSimulatorParams({ monthlyMessages: parseInt(e.target.value) || 0 })}
-              className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-right"
+              className="input-dark w-full text-right"
             />
-            <p className="text-[10px] text-gray-400 mt-1">例: 1日200通 × 30日 = 6,000通</p>
+            <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>例: 1日200通 × 30日 = 6,000通</p>
           </div>
           <div>
-            <label className="block text-sm text-gray-600 mb-1">
-              月間 有料メッセージ開封数（1人あたり）: <strong>{p.monthlyPaidOpens.toLocaleString()}回</strong>
+            <label className="block text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>
+              月間 有料メッセージ開封数（1人あたり）: <strong style={{ color: 'var(--text-primary)' }}>{p.monthlyPaidOpens.toLocaleString()}回</strong>
             </label>
             <input
               type="number" min={0} step={10}
               value={p.monthlyPaidOpens}
               onChange={(e) => updateSimulatorParams({ monthlyPaidOpens: parseInt(e.target.value) || 0 })}
-              className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-right"
+              className="input-dark w-full text-right"
             />
-            <p className="text-[10px] text-gray-400 mt-1">1開封＝平均400文字で換算（有料鑑定の1文字単価×400）。通話は売上に含めません。</p>
+            <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>1開封＝平均400文字で換算（有料鑑定の1文字単価×400）。通話は売上に含めません。</p>
           </div>
         </div>
       </section>
 
       {/* 全ランク想定月収一覧 */}
-      <section className="bg-white rounded-lg shadow p-6">
-        <h3 className="font-semibold text-gray-700 mb-1">ランク別 想定月収一覧</h3>
-        <p className="text-xs text-gray-500 mb-4">
+      <section className="card">
+        <h3 className="section-title">ランク別 想定月収一覧</h3>
+        <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>
           上記のメッセージ受信数・有料メッセージ開封数での各ランクの想定月収です。代表値（ゴールド）を下部KPI・グラフに使用しています。
         </p>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm border-collapse">
+          <table className="table-dark">
             <thead>
-              <tr className="bg-indigo-100 text-gray-700 text-xs">
-                <th className="px-3 py-2 text-left border border-gray-200">ランク</th>
-                <th className="px-3 py-2 text-right border border-gray-200">通常pt/月</th>
-                <th className="px-3 py-2 text-right border border-gray-200">ボーナスpt/月</th>
-                <th className="px-3 py-2 text-right border border-gray-200">想定月収(税引前)</th>
-                <th className="px-3 py-2 text-right border border-gray-200">税引後</th>
+              <tr>
+                <th className="text-left">ランク</th>
+                <th className="text-right">通常pt/月</th>
+                <th className="text-right">ボーナスpt/月</th>
+                <th className="text-right">想定月収(税引前)</th>
+                <th className="text-right">税引後</th>
               </tr>
             </thead>
             <tbody>
@@ -280,15 +284,16 @@ export function SalesSimulator() {
                 return (
                   <tr
                     key={row.rank.stage}
-                    className={`${isRep ? 'bg-amber-50 font-semibold' : i % 2 === 1 ? 'bg-gray-50' : 'bg-white'} ${isZero ? 'text-gray-300' : ''} hover:bg-indigo-50/60`}
+                    style={isRep ? { background: 'var(--warning-bg)', fontWeight: 600 } : i % 2 === 1 ? { background: 'var(--bg-elevated)' } : undefined}
+                    className={isZero ? 'opacity-30' : ''}
                   >
-                    <td className="px-3 py-1.5 text-left border border-gray-200">
-                      {row.rank.name}{isRep && <span className="ml-1 text-[10px] text-amber-600">(代表)</span>}
+                    <td className="text-left">
+                      {row.rank.name}{isRep && <span className="ml-1 text-[10px]" style={{ color: 'var(--warning)' }}>(代表)</span>}
                     </td>
-                    <td className="px-3 py-1.5 text-right border border-gray-200">{row.normalPt.toLocaleString()}</td>
-                    <td className="px-3 py-1.5 text-right border border-gray-200">{row.bonusPt.toLocaleString()}</td>
-                    <td className="px-3 py-1.5 text-right border border-gray-200 text-green-700 font-medium">{fmt(row.income)}</td>
-                    <td className="px-3 py-1.5 text-right border border-gray-200 text-gray-600">{fmt(row.afterTax)}</td>
+                    <td className="text-right">{row.normalPt.toLocaleString()}</td>
+                    <td className="text-right">{row.bonusPt.toLocaleString()}</td>
+                    <td className="text-right font-medium" style={{ color: 'var(--positive)' }}>{fmt(row.income)}</td>
+                    <td className="text-right" style={{ color: 'var(--text-secondary)' }}>{fmt(row.afterTax)}</td>
                   </tr>
                 )
               })}
@@ -324,28 +329,28 @@ export function SalesSimulator() {
       </div>
 
       {/* LTV早見表 */}
-      <section className="bg-white rounded-lg shadow p-6">
-        <h3 className="font-semibold text-gray-700 mb-1">LTV早見表（継続率 × ARPPU）</h3>
-        <p className="text-xs text-gray-500 mb-4">現在のARPPU ¥{p.arppu.toLocaleString()} を中心に算出。色が濃いほど高LTV。</p>
+      <section className="card">
+        <h3 className="section-title">LTV早見表（継続率 × ARPPU）</h3>
+        <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>現在のARPPU ¥{p.arppu.toLocaleString()} を中心に算出。色が濃いほど高LTV。</p>
         <div className="overflow-x-auto">
-          <table className="text-xs border-collapse">
+          <table className="table-dark">
             <thead>
-              <tr className="bg-indigo-100 text-gray-700">
-                <th className="px-3 py-2 border border-gray-200">継続率＼ARPPU</th>
+              <tr>
+                <th>継続率＼ARPPU</th>
                 {ltvArppuCols.map((a) => (
-                  <th key={a} className="px-3 py-2 border border-gray-200 text-right">¥{a.toLocaleString()}</th>
+                  <th key={a} className="text-right">¥{a.toLocaleString()}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {ltvRetentionRows.map((ret) => (
                 <tr key={ret}>
-                  <td className="px-3 py-2 border border-gray-200 font-medium bg-gray-50">{(ret * 100).toFixed(0)}%</td>
+                  <td className="font-medium" style={{ background: 'var(--bg-elevated)' }}>{(ret * 100).toFixed(0)}%</td>
                   {ltvArppuCols.map((a) => {
                     const v = calcLTV(a, ret)
                     const isCurrent = Math.abs(ret - p.retentionRate) < 0.05 && a === p.arppu
                     return (
-                      <td key={a} className={`px-3 py-2 border border-gray-200 text-right ${isCurrent ? 'bg-indigo-200 font-bold' : ''}`}>
+                      <td key={a} className="text-right" style={isCurrent ? { background: 'rgba(99,102,241,0.25)', fontWeight: 700 } : undefined}>
                         ¥{Math.floor(v).toLocaleString()}
                       </td>
                     )
@@ -358,15 +363,15 @@ export function SalesSimulator() {
       </section>
 
       {/* 損益分岐グラフ */}
-      <section className="bg-white rounded-lg shadow p-6">
-        <h3 className="font-semibold text-gray-700 mb-1">損益分岐グラフ（1課金ユーザーあたり）</h3>
-        <p className="text-xs text-gray-500 mb-4">累積粗利が獲得コスト(CPA)ラインを超える月が回収完了の目安です。</p>
+      <section className="card">
+        <h3 className="section-title">損益分岐グラフ（1課金ユーザーあたり）</h3>
+        <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>累積粗利が獲得コスト(CPA)ラインを超える月が回収完了の目安です。</p>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={breakevenData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-            <YAxis tickFormatter={(v) => `${(v/10000).toFixed(1)}万`} tick={{ fontSize: 11 }} />
-            <Tooltip formatter={(v) => v != null ? `¥${Number(v).toLocaleString()}` : ''} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis dataKey="month" tick={{ fontSize: 12, fill: 'var(--text-muted)' }} />
+            <YAxis tickFormatter={(v) => `${(v/10000).toFixed(1)}万`} tick={{ fontSize: 11, fill: 'var(--text-muted)' }} />
+            <Tooltip formatter={(v) => v != null ? `¥${Number(v).toLocaleString()}` : ''} contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
             <Legend />
             <Line type="monotone" dataKey="累積粗利" stroke="#22c55e" strokeWidth={2} dot={false} />
             <Line type="monotone" dataKey="獲得コストCPA" stroke="#ef4444" strokeWidth={2} strokeDasharray="5 5" dot={false} />
@@ -375,14 +380,14 @@ export function SalesSimulator() {
       </section>
 
       {/* 12ヶ月グラフ */}
-      <section className="bg-white rounded-lg shadow p-6">
-        <h3 className="font-semibold text-gray-700 mb-4">12ヶ月推移予測</h3>
+      <section className="card">
+        <h3 className="section-title">12ヶ月推移予測</h3>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-            <YAxis tickFormatter={(v) => `${(v/10000).toFixed(0)}万`} tick={{ fontSize: 11 }} />
-            <Tooltip formatter={(v) => v != null ? `¥${Number(v).toLocaleString()}` : ''} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis dataKey="month" tick={{ fontSize: 12, fill: 'var(--text-muted)' }} />
+            <YAxis tickFormatter={(v) => `${(v/10000).toFixed(0)}万`} tick={{ fontSize: 11, fill: 'var(--text-muted)' }} />
+            <Tooltip formatter={(v) => v != null ? `¥${Number(v).toLocaleString()}` : ''} contentStyle={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
             <Legend />
             <Line type="monotone" dataKey="売上" stroke="#6366f1" strokeWidth={2} dot={false} />
             <Line type="monotone" dataKey="粗利" stroke="#22c55e" strokeWidth={2} dot={false} />
