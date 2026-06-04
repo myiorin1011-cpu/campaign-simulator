@@ -40,11 +40,12 @@ export function CohortForecast() {
       const secondCount = i >= 1 ? Math.floor(newCounts[i - 1] * r2) : 0
       const secondSales = secondCount * cp.secondMonthArppu
 
-      // 3ヶ月目以降: 各過去コホートの残存を合算（age=2が2ヶ月目）。age>=3 は r2 × r3^(age-2)
+      // 3ヶ月目以降: 各過去コホートの残存を合算。新規PUに3ヶ月目以降継続率を直接適用
+      //   age=3（3ヶ月目）は 新規PU × r3、以降は毎月 r3 で逓減（新規PU × r3^(age-2)）
       let continuousCount = 0
       for (let age = 3; age <= month; age++) {
         const idx = i - (age - 1)
-        if (idx >= 0) continuousCount += Math.floor(newCounts[idx] * r2 * Math.pow(r3, age - 2))
+        if (idx >= 0) continuousCount += Math.floor(newCounts[idx] * Math.pow(r3, age - 2))
       }
       const continuousSales = continuousCount * cp.continuousArppu
 
