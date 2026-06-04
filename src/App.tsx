@@ -18,10 +18,11 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white border border-gray-200 p-10 w-full max-w-sm text-center">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-1">Paigner</h1>
-        <p className="text-sm text-gray-500 mb-6">パスワードを入力してください</p>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-app)' }}>
+      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12 }}
+           className="p-10 w-full max-w-sm text-center">
+        <h1 className="font-brand text-2xl font-bold tracking-tight mb-1" style={{ color: 'var(--text-primary)' }}>Paigner</h1>
+        <p className="text-xs mb-6" style={{ color: 'var(--text-muted)' }}>パスワードを入力してください</p>
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
             type="password"
@@ -29,15 +30,10 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
             onChange={e => { setInput(e.target.value); setError(false) }}
             placeholder="パスワード"
             autoFocus
-            className="w-full border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:border-gray-900"
+            className="input-dark w-full"
           />
-          {error && <p className="text-red-500 text-xs">パスワードが違います</p>}
-          <button
-            type="submit"
-            className="w-full bg-gray-900 text-white py-2 text-sm font-medium hover:bg-gray-700"
-          >
-            ログイン
-          </button>
+          {error && <p className="text-xs" style={{ color: 'var(--negative)' }}>パスワードが違います</p>}
+          <button type="submit" className="btn-primary w-full">ログイン</button>
         </form>
       </div>
     </div>
@@ -57,15 +53,15 @@ import { CampaignPlanner } from './tabs/CampaignPlanner'
 import { BannerManager } from './tabs/BannerManager'
 
 const TABS = [
-  { id: 'point',     label: '① ポイント設定' },
-  { id: 'performer', label: '② パフォーマー設定' },
-  { id: 'simulator', label: '③ 売上シミュレーター' },
-  { id: 'cohort',    label: '④ コホート予測' },
-  { id: 'agency',    label: '⑤ 代理店回収率' },
-  { id: 'income',    label: '⑥ 目標月収逆算' },
-  { id: 'report',    label: '⑦ 結果報告書' },
-  { id: 'campaign',  label: '⑧ キャンペーン企画' },
-  { id: 'banner',    label: '⑨ バナー管理' },
+  { id: 'point',     label: 'ポイント設定',        icon: '◈', sub: 'Point Config' },
+  { id: 'performer', label: 'パフォーマー設定',     icon: '◉', sub: 'Performer' },
+  { id: 'simulator', label: '売上シミュレーター',   icon: '◐', sub: 'Sales Sim' },
+  { id: 'cohort',    label: 'コホート予測',         icon: '◑', sub: 'Cohort' },
+  { id: 'agency',    label: '代理店回収率',         icon: '◒', sub: 'Agency ROI' },
+  { id: 'income',    label: '目標月収逆算',         icon: '◓', sub: 'Income Calc' },
+  { id: 'report',    label: '結果報告書',           icon: '▣', sub: 'Report' },
+  { id: 'campaign',  label: 'キャンペーン企画',     icon: '▦', sub: 'Campaign' },
+  { id: 'banner',    label: 'バナー管理',           icon: '▤', sub: 'Banner' },
 ]
 
 export default function App() {
@@ -75,49 +71,125 @@ export default function App() {
 
   if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />
 
+  const activeTabInfo = TABS.find(t => t.id === activeTab)
+
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      {/* 左サイドバー（縦ナビ・フラット） */}
-      <aside className="w-56 shrink-0 bg-white border-r border-gray-200 flex flex-col min-h-screen sticky top-0 h-screen">
-        <div className="px-5 py-4 border-b border-gray-200">
-          <h1 className="text-xl font-bold tracking-tight text-gray-900">Paigner</h1>
+    <div className="min-h-screen flex" style={{ background: 'var(--bg-app)' }}>
+
+      {/* ── Sidebar ── */}
+      <aside
+        className="shrink-0 flex flex-col min-h-screen sticky top-0 h-screen"
+        style={{
+          width: 220,
+          background: 'var(--bg-card)',
+          borderRight: '1px solid var(--border)',
+        }}
+      >
+        {/* Brand */}
+        <div className="px-5 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
+          <div className="flex items-center gap-2.5">
+            <div style={{
+              width: 30, height: 30, borderRadius: 8,
+              background: 'linear-gradient(135deg, var(--accent) 0%, #a78bfa 100%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 14, color: '#fff', fontWeight: 700,
+              fontFamily: 'Sora, sans-serif',
+              flexShrink: 0,
+            }}>P</div>
+            <div>
+              <div className="font-brand font-bold text-sm tracking-wide" style={{ color: 'var(--text-primary)' }}>
+                Paigner
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
+                CAMPAIGN ANALYTICS
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-2">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`w-full text-left px-5 py-2.5 text-sm border-l-2 transition-colors ${
-                activeTab === tab.id
-                  ? 'border-gray-900 bg-gray-100 text-gray-900 font-medium'
-                  : 'border-transparent text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {TABS.map((tab) => {
+            const isActive = activeTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className="w-full text-left transition-all duration-150"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '9px 16px',
+                  borderLeft: `2px solid ${isActive ? 'var(--accent)' : 'transparent'}`,
+                  background: isActive ? 'var(--accent-dim)' : 'transparent',
+                  color: isActive ? 'var(--accent-light)' : 'var(--text-muted)',
+                  fontSize: 13,
+                }}
+                onMouseEnter={e => {
+                  if (!isActive) {
+                    (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'
+                    ;(e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!isActive) {
+                    (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'
+                    ;(e.currentTarget as HTMLElement).style.background = 'transparent'
+                  }
+                }}
+              >
+                <span style={{ fontSize: 14, opacity: 0.7 }}>{tab.icon}</span>
+                <span style={{ fontWeight: isActive ? 500 : 400 }}>{tab.label}</span>
+              </button>
+            )
+          })}
         </nav>
-        <div className="px-5 py-3 border-t border-gray-200">
+
+        {/* Footer */}
+        <div className="px-4 py-3" style={{ borderTop: '1px solid var(--border)' }}>
           <button
             onClick={() => { if (confirm('全設定を初期値にリセットしますか？')) resetToInitial() }}
-            className="text-xs text-gray-400 hover:text-gray-700"
+            style={{ fontSize: 11, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+            onMouseEnter={e => (e.currentTarget.style.color = 'var(--negative)')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
           >
-            初期値にリセット
+            ↺ 初期値にリセット
           </button>
         </div>
       </aside>
 
-      {/* メインコンテンツ */}
-      <main className="flex-1 p-8 overflow-x-auto">
-        {activeTab === 'point'     && <PointSettings />}
-        {activeTab === 'performer' && <PerformerSettings />}
-        {activeTab === 'simulator' && <SalesSimulator />}
-        {activeTab === 'cohort'    && <CohortForecast />}
-        {activeTab === 'agency'    && <AgencyROI />}
-        {activeTab === 'income'    && <IncomeCalculator />}
-        {activeTab === 'report'    && <ReportGenerator />}
-        {activeTab === 'campaign'  && <CampaignPlanner />}
-        {activeTab === 'banner'    && <BannerManager />}
+      {/* ── Main ── */}
+      <main className="flex-1 overflow-x-auto" style={{ minWidth: 0 }}>
+        {/* Top bar */}
+        <div
+          className="sticky top-0 z-10 px-8 py-3 flex items-center gap-3"
+          style={{
+            background: 'rgba(13,17,23,0.85)',
+            backdropFilter: 'blur(12px)',
+            borderBottom: '1px solid var(--border)',
+          }}
+        >
+          <span style={{ fontSize: 16, color: 'var(--accent-light)', opacity: 0.7 }}>{activeTabInfo?.icon}</span>
+          <span className="font-brand font-bold text-sm" style={{ color: 'var(--text-primary)' }}>
+            {activeTabInfo?.label}
+          </span>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 4 }}>
+            {activeTabInfo?.sub}
+          </span>
+        </div>
+
+        <div className="p-8">
+          {activeTab === 'point'     && <PointSettings />}
+          {activeTab === 'performer' && <PerformerSettings />}
+          {activeTab === 'simulator' && <SalesSimulator />}
+          {activeTab === 'cohort'    && <CohortForecast />}
+          {activeTab === 'agency'    && <AgencyROI />}
+          {activeTab === 'income'    && <IncomeCalculator />}
+          {activeTab === 'report'    && <ReportGenerator />}
+          {activeTab === 'campaign'  && <CampaignPlanner />}
+          {activeTab === 'banner'    && <BannerManager />}
+        </div>
       </main>
     </div>
   )

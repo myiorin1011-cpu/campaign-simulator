@@ -5,19 +5,41 @@ interface KPICardProps {
   color?: 'blue' | 'green' | 'purple' | 'orange'
 }
 
-const colorMap = {
-  blue:   'bg-blue-50 text-blue-700 border-blue-200',
-  green:  'bg-green-50 text-green-700 border-green-200',
-  purple: 'bg-purple-50 text-purple-700 border-purple-200',
-  orange: 'bg-orange-50 text-orange-700 border-orange-200',
+const colorMap: Record<string, { border: string; label: string; value: string; bg: string }> = {
+  blue:   { border: 'var(--accent)',    label: '#818cf8', value: '#c7d2fe', bg: 'rgba(99,102,241,0.08)' },
+  green:  { border: 'var(--positive)', label: '#6ee7b7', value: '#a7f3d0', bg: 'rgba(63,185,80,0.08)'  },
+  purple: { border: '#a78bfa',          label: '#c4b5fd', value: '#ddd6fe', bg: 'rgba(167,139,250,0.08)' },
+  orange: { border: 'var(--warning)',  label: '#fcd34d', value: '#fde68a', bg: 'rgba(210,153,34,0.08)'  },
 }
 
 export function KPICard({ label, value, sub, color = 'blue' }: KPICardProps) {
+  const c = colorMap[color]
   return (
-    <div className={`rounded-lg border p-4 ${colorMap[color]}`}>
-      <p className="text-xs font-medium opacity-70 mb-1">{label}</p>
-      <p className="text-2xl font-bold">{value}</p>
-      {sub && <p className="text-xs mt-1 opacity-60">{sub}</p>}
+    <div style={{
+      background: c.bg,
+      border: `1px solid ${c.border}`,
+      borderRadius: 10,
+      padding: '14px 16px',
+      borderLeftWidth: 3,
+      borderLeftColor: c.border,
+    }}>
+      <p style={{ fontSize: 11, fontWeight: 500, color: c.label, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+        {label}
+      </p>
+      <p style={{
+        fontFamily: "'JetBrains Mono', monospace",
+        fontVariantNumeric: 'tabular-nums',
+        fontSize: '1.375rem',
+        fontWeight: 500,
+        color: c.value,
+        letterSpacing: '-0.02em',
+        lineHeight: 1.2,
+      }}>
+        {value}
+      </p>
+      {sub && (
+        <p style={{ fontSize: 11, marginTop: 5, color: 'var(--text-muted)' }}>{sub}</p>
+      )}
     </div>
   )
 }

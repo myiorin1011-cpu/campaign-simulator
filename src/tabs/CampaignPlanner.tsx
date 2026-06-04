@@ -129,7 +129,7 @@ export function CampaignPlanner() {
       <section className="card overflow-x-auto" style={{ padding: 0 }}>
         <table className="table-dark text-xs whitespace-nowrap" style={{ borderCollapse: 'collapse', width: '100%' }}>
           <thead>
-            <tr style={{ background: audience === 'user' ? '#9d174d' : '#0f766e', color: '#fff' }}>
+            <tr style={{ background: 'var(--bg-elevated)', borderBottom: '2px solid var(--accent)', color: 'var(--text-muted)' }}>
               <th className="px-2 py-2 text-left">No</th>
               <th className="px-2 py-2 text-left w-20">種別</th>
               <th className="px-2 py-2 text-left min-w-[260px]">タイトル</th>

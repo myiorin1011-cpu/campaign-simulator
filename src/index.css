@@ -1,7 +1,295 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Sora:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* 全体フォントをメイリオに統一 */
-html,
-body {
-  font-family: "Meiryo", "メイリオ", "Hiragino Kaku Gothic ProN", sans-serif;
+/* ─── Design Tokens ───────────────────────────────────── */
+:root {
+  --bg-app:      #0d1117;
+  --bg-card:     #161b22;
+  --bg-elevated: #21262d;
+  --bg-hover:    #1c2230;
+  --border:      #30363d;
+  --border-subtle: #21262d;
+
+  --text-primary:   #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted:     #6e7681;
+
+  --accent:       #6366f1;
+  --accent-light: #818cf8;
+  --accent-glow:  rgba(99, 102, 241, 0.15);
+  --accent-dim:   rgba(99, 102, 241, 0.08);
+
+  --positive:      #3fb950;
+  --positive-bg:   rgba(63, 185, 80, 0.08);
+  --negative:      #f85149;
+  --negative-bg:   rgba(248, 81, 73, 0.08);
+  --warning:       #d29922;
+  --warning-bg:    rgba(210, 153, 34, 0.08);
+  --purple:        #a78bfa;
+  --purple-bg:     rgba(167, 139, 250, 0.08);
+}
+
+/* ─── Base ────────────────────────────────────────────── */
+html, body {
+  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Typography ──────────────────────────────────────── */
+.font-brand {
+  font-family: 'Sora', sans-serif;
+}
+
+.font-mono-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Scrollbar ───────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-app); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+/* ─── Card ────────────────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+}
+
+.card-elevated {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* ─── Section Heading ─────────────────────────────────── */
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+/* ─── Table ───────────────────────────────────────────── */
+.table-dark {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.table-dark thead tr {
+  border-bottom: 1px solid var(--border);
+}
+
+.table-dark thead th {
+  padding: 0.5rem 0.75rem;
+  text-align: right;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.table-dark thead th:first-child {
+  text-align: left;
+}
+
+.table-dark tbody tr {
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background 0.12s;
+}
+
+.table-dark tbody tr:last-child {
+  border-bottom: none;
+}
+
+.table-dark tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.table-dark tbody td {
+  padding: 0.5625rem 0.75rem;
+  color: var(--text-primary);
+  text-align: right;
+  vertical-align: middle;
+}
+
+.table-dark tbody td:first-child {
+  text-align: left;
+  color: var(--text-secondary);
+}
+
+/* ─── Input ───────────────────────────────────────────── */
+.input-dark {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  padding: 0.3125rem 0.625rem;
+  font-size: 0.8125rem;
+  transition: border-color 0.15s;
+  outline: none;
+}
+
+.input-dark:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* ─── Button ──────────────────────────────────────────── */
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.btn-primary:hover {
+  background: var(--accent-light);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-ghost:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+/* ─── Scenario Tabs ───────────────────────────────────── */
+.scenario-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.scenario-tab {
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.scenario-tab:hover {
+  color: var(--text-secondary);
+}
+
+.scenario-tab.active {
+  color: var(--accent-light);
+  border-bottom-color: var(--accent);
+  font-weight: 500;
+}
+
+/* ─── Badge / Tag ─────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+
+/* ─── KPI Number ──────────────────────────────────────── */
+.kpi-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(1rem, 2.5vw, 1.375rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Page header ─────────────────────────────────────── */
+.page-header {
+  margin-bottom: 1.75rem;
+}
+
+.page-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.page-subtitle {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+/* ─── Stat row ────────────────────────────────────────── */
+.stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.stat-row:last-child { border-bottom: none; }
+.stat-label { color: var(--text-secondary); font-size: 0.8125rem; }
+.stat-value { font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; color: var(--text-primary); }
+
+/* ─── Select ──────────────────────────────────────────── */
+select.input-dark option {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+/* ─── Recharts dark override ──────────────────────────── */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: var(--border) !important;
+}
+
+.recharts-text {
+  fill: var(--text-muted) !important;
+  font-size: 11px !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+}
+
+.recharts-tooltip-label {
+  color: var(--text-secondary) !important;
+  font-size: 12px !important;
 }
