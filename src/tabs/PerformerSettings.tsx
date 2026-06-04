@@ -89,10 +89,8 @@ export function PerformerSettings() {
     .map((rank) => {
       const m = rank.actions.find((a) => a.type === 'message')
       const c = rank.actions.find((a) => a.type === 'fortune_char')
-      // 通常獲得pt = P通常 / ボーナス獲得pt = Pボーナス
       const normalPt = sim.messages * (m?.performerNormal ?? 0) + sim.chars * (c?.performerNormal ?? 0)
       const bonusPt = sim.messages * (m?.performerBonus ?? 0) + sim.chars * (c?.performerBonus ?? 0)
-      // キャンペーン上乗せはボーナス側に加算
       const upliftPt = sim.messages * sim.addMsg + sim.chars * sim.addChar
       const cpBonusPt = bonusPt + upliftPt
 
@@ -106,61 +104,63 @@ export function PerformerSettings() {
 
   return (
     <div className="max-w-full">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">パフォーマーランク別獲得ポイント</h2>
+      <h2 className="page-title" style={{ marginBottom: '1rem' }}>パフォーマーランク別獲得ポイント</h2>
 
       {/* シナリオ切り替えタブ */}
-      <div className="flex gap-1 border-b border-gray-200 mb-4">
+      <div className="scenario-tabs" style={{ marginBottom: '1rem' }}>
         {RANK_SCENARIOS.map((s) => (
           <button
             key={s.field}
             onClick={() => setScenario(s.field)}
-            className={`px-4 py-2 text-sm -mb-px border-b-2 ${
-              scenario === s.field
-                ? 'border-gray-900 text-gray-900 font-medium'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
+            className={`scenario-tab ${scenario === s.field ? 'active' : ''}`}
           >
             {s.label}
           </button>
         ))}
       </div>
 
-      <p className="text-xs text-gray-500 mb-4">
+      <p className="text-xs" style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
         ※ セルをクリックして編集できます。通常pt単価:¥{pointConfig.normalPtCost} / ボーナスpt単価:¥{pointConfig.bonusPtCost}
       </p>
 
       <div className="overflow-x-auto">
-        <table className="text-xs border-collapse whitespace-nowrap">
+        <table className="text-xs border-collapse whitespace-nowrap" style={{ borderColor: 'var(--border)' }}>
           <thead>
-            <tr className="bg-indigo-700 text-white">
-              {/* 縦=ランク、横=アクション（スプレッドシートと同じ並び） */}
-              <th className="px-3 py-2 text-left sticky left-0 bg-indigo-700 z-10">ランク</th>
+            <tr style={{ background: 'var(--accent)', color: 'var(--text-primary)' }}>
+              <th className="px-3 py-2 text-left sticky left-0 z-10" style={{ background: 'var(--accent)' }}>ランク</th>
               {actionTypes.map((actionType) => (
-                <th key={actionType} className="px-2 py-2 text-center border-l border-indigo-500" colSpan={3}>
+                <th key={actionType} className="px-2 py-2 text-center" style={{ borderLeft: '1px solid rgba(99,102,241,0.4)' }} colSpan={3}>
                   {ACTION_LABELS[actionType]}
                 </th>
               ))}
             </tr>
-            <tr className="bg-indigo-100 text-gray-700">
-              <th className="px-3 py-1 sticky left-0 bg-indigo-100 z-10"></th>
+            <tr style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}>
+              <th className="px-3 py-1 sticky left-0 z-10" style={{ background: 'var(--bg-elevated)' }}></th>
               {actionTypes.map((actionType) => (
                 <React.Fragment key={actionType}>
-                  <th className="px-2 py-1 text-center text-indigo-700 border-l border-indigo-300">U消費</th>
-                  <th className="px-2 py-1 text-center text-green-700">P通常</th>
-                  <th className="px-2 py-1 text-center text-orange-600">Pボーナス</th>
+                  <th className="px-2 py-1 text-center" style={{ borderLeft: '1px solid var(--border)', color: 'var(--accent-light)' }}>U消費</th>
+                  <th className="px-2 py-1 text-center" style={{ color: 'var(--positive)' }}>P通常</th>
+                  <th className="px-2 py-1 text-center" style={{ color: 'var(--warning)' }}>Pボーナス</th>
                 </React.Fragment>
               ))}
             </tr>
           </thead>
           <tbody>
             {performerRanks.map((rank, rankIdx) => (
-              <tr key={rank.stage} className={`border-b border-gray-100 hover:bg-indigo-50/60 ${rankIdx % 2 === 1 ? 'bg-gray-50' : 'bg-white'}`}>
-                <td className={`px-3 py-1 font-medium text-gray-700 sticky left-0 z-10 border-r border-gray-300 ${rankIdx % 2 === 1 ? 'bg-gray-50' : 'bg-white'}`}>
+              <tr key={rank.stage} style={{
+                borderBottom: '1px solid var(--border-subtle)',
+                background: rankIdx % 2 === 1 ? 'var(--bg-elevated)' : 'var(--bg-card)',
+              }}>
+                <td className="px-3 py-1 font-medium sticky left-0 z-10" style={{
+                  color: 'var(--text-secondary)',
+                  borderRight: '1px solid var(--border)',
+                  background: rankIdx % 2 === 1 ? 'var(--bg-elevated)' : 'var(--bg-card)',
+                }}>
                   {rank.name}
                 </td>
                 {rank.actions.map((action, actionIdx) => (
                   <React.Fragment key={action.type}>
-                    <td className="px-2 py-1 text-right border-l border-gray-200">
+                    <td className="px-2 py-1 text-right" style={{ borderLeft: '1px solid var(--border-subtle)' }}>
                       <EditableCell value={action.userConsume} suffix="pt"
                         onChange={(v) => updateActionPt(rankIdx, actionIdx, 'userConsume', v)} />
                     </td>
@@ -181,56 +181,56 @@ export function PerformerSettings() {
       </div>
 
       {/* DAP稼働分布表 */}
-      <section className="bg-white rounded-lg shadow p-6 mt-8 max-w-3xl">
-        <h3 className="font-semibold text-gray-700 mb-1">DAP稼働分布・報酬集中度</h3>
-        <p className="text-xs text-gray-500 mb-4">
+      <section className="card mt-8 max-w-3xl" style={{ marginTop: '2rem' }}>
+        <h3 className="section-title" style={{ marginBottom: '0.25rem' }}>DAP稼働分布・報酬集中度</h3>
+        <p className="text-xs" style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
           上位パフォーマーへの報酬集中度と稼働率を分析します（数値はこの画面のみで保持）。
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3" style={{ marginBottom: '1.5rem' }}>
           {dapFields.map(({ key, label, money }) => (
             <div key={key}>
-              <label className="block text-xs text-gray-600 mb-1">{label}</label>
+              <label className="block text-xs" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>{label}</label>
               <input
                 type="number"
                 value={dap[key]}
                 onChange={(e) => setDap((d) => ({ ...d, [key]: parseFloat(e.target.value) || 0 }))}
-                className="w-full border border-gray-300 rounded px-2 py-1 text-sm text-right"
+                className="input-dark w-full text-right"
               />
-              <span className="text-[10px] text-gray-400">{money ? '円' : '人'}</span>
+              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{money ? '円' : '人'}</span>
             </div>
           ))}
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-indigo-50 rounded-lg p-4 text-center">
-            <div className="text-xs text-gray-500">上位10%の報酬占有率</div>
-            <div className="text-2xl font-bold text-indigo-700">{pct(dist.top10Share)}</div>
+          <div className="rounded-lg p-4 text-center" style={{ background: 'var(--accent-dim)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 6 }}>
+            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>上位10%の報酬占有率</div>
+            <div className="text-2xl font-bold font-mono-num" style={{ color: 'var(--accent-light)' }}>{pct(dist.top10Share)}</div>
           </div>
-          <div className="bg-green-50 rounded-lg p-4 text-center">
-            <div className="text-xs text-gray-500">上位50%の報酬占有率</div>
-            <div className="text-2xl font-bold text-green-700">{pct(dist.top50Share)}</div>
+          <div className="rounded-lg p-4 text-center" style={{ background: 'var(--positive-bg)', border: '1px solid rgba(63,185,80,0.25)', borderRadius: 6 }}>
+            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>上位50%の報酬占有率</div>
+            <div className="text-2xl font-bold font-mono-num" style={{ color: 'var(--positive)' }}>{pct(dist.top50Share)}</div>
           </div>
-          <div className="bg-orange-50 rounded-lg p-4 text-center">
-            <div className="text-xs text-gray-500">下位50%の報酬占有率</div>
-            <div className="text-2xl font-bold text-orange-600">{pct(dist.bottomShare)}</div>
+          <div className="rounded-lg p-4 text-center" style={{ background: 'var(--warning-bg)', border: '1px solid rgba(210,153,34,0.25)', borderRadius: 6 }}>
+            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>下位50%の報酬占有率</div>
+            <div className="text-2xl font-bold font-mono-num" style={{ color: 'var(--warning)' }}>{pct(dist.bottomShare)}</div>
           </div>
-          <div className="bg-purple-50 rounded-lg p-4 text-center">
-            <div className="text-xs text-gray-500">DAP稼働率</div>
-            <div className="text-2xl font-bold text-purple-700">{pct(dist.activeRate)}</div>
-            <div className="text-[10px] text-gray-400">{dap.activeDap}/{dap.totalDap}人</div>
+          <div className="rounded-lg p-4 text-center" style={{ background: 'var(--purple-bg)', border: '1px solid rgba(167,139,250,0.25)', borderRadius: 6 }}>
+            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>DAP稼働率</div>
+            <div className="text-2xl font-bold font-mono-num" style={{ color: 'var(--purple)' }}>{pct(dist.activeRate)}</div>
+            <div className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{dap.activeDap}/{dap.totalDap}人</div>
           </div>
         </div>
-        <p className="text-xs text-gray-500 mt-4">
-          ※ 稼働DAP1人あたり平均報酬: <strong>{yen(dap.activeDap > 0 ? dap.totalReward / dap.activeDap : 0)}</strong>
+        <p className="text-xs" style={{ color: 'var(--text-muted)', marginTop: '1rem' }}>
+          ※ 稼働DAP1人あたり平均報酬: <strong style={{ color: 'var(--text-primary)' }}>{yen(dap.activeDap > 0 ? dap.totalReward / dap.activeDap : 0)}</strong>
         </p>
       </section>
 
       {/* 1鑑定シミュレーター（基本 vs キャンペーン比較） */}
-      <section className="bg-white rounded-lg shadow p-6 mt-8">
-        <h3 className="font-semibold text-gray-700 mb-1">1鑑定シミュレーター（基本 vs キャンペーン比較）</h3>
-        <p className="text-xs text-gray-500 mb-4">
+      <section className="card" style={{ marginTop: '2rem' }}>
+        <h3 className="section-title" style={{ marginBottom: '0.25rem' }}>1鑑定シミュレーター（基本 vs キャンペーン比較）</h3>
+        <p className="text-xs" style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
           1鑑定あたりの通数・文字数を入力し、キャンペーンの上乗せpt（+pt/通・+pt/字）が各ランクの獲得pt・報酬にどう効くかを比較します。何ptアップが適正かの判断にお使いください。※通話など他の機能は含みません。
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5 max-w-2xl">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-2xl" style={{ marginBottom: '1.25rem' }}>
           {([
             { key: 'messages', label: '1鑑定の通数', unit: '通' },
             { key: 'chars', label: '1鑑定の文字数', unit: '字' },
@@ -238,46 +238,47 @@ export function PerformerSettings() {
             { key: 'addChar', label: 'CP: 1文字あたり +pt', unit: 'pt' },
           ] as { key: keyof typeof sim; label: string; unit: string }[]).map(({ key, label, unit }) => (
             <div key={key}>
-              <label className="block text-xs text-gray-600 mb-1">{label}</label>
+              <label className="block text-xs" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>{label}</label>
               <div className="flex items-center gap-1">
                 <input
                   type="number" min={0}
                   value={sim[key]}
                   onChange={(e) => setSim((s) => ({ ...s, [key]: parseFloat(e.target.value) || 0 }))}
-                  className={`w-full border rounded px-2 py-1 text-sm text-right ${key.startsWith('add') ? 'border-amber-300 text-amber-700' : 'border-gray-300'}`}
+                  className="input-dark w-full text-right"
+                  style={key.startsWith('add') ? { borderColor: 'rgba(210,153,34,0.5)', color: 'var(--warning)' } : {}}
                 />
-                <span className="text-[10px] text-gray-400">{unit}</span>
+                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{unit}</span>
               </div>
             </div>
           ))}
         </div>
         <div className="overflow-x-auto">
-          <table className="text-xs border-collapse w-full">
+          <table className="table-dark w-full text-xs">
             <thead>
-              <tr className="bg-indigo-100 text-gray-700">
-                <th className="px-3 py-2 text-left border border-gray-200">ランク</th>
-                <th className="px-3 py-2 text-right border border-gray-200">通常 獲得pt</th>
-                <th className="px-3 py-2 text-right border border-gray-200">ボーナス 獲得pt(基本)</th>
-                <th className="px-3 py-2 text-right border border-gray-200 bg-amber-100">ボーナス 獲得pt(CP)</th>
-                <th className="px-3 py-2 text-right border border-gray-200">通常報酬</th>
-                <th className="px-3 py-2 text-right border border-gray-200">ボーナス報酬(基本)</th>
-                <th className="px-3 py-2 text-right border border-gray-200 bg-amber-100">ボーナス報酬(CP)</th>
-                <th className="px-3 py-2 text-right border border-gray-200">増加額</th>
-                <th className="px-3 py-2 text-right border border-gray-200">増加率</th>
+              <tr>
+                <th className="text-left">ランク</th>
+                <th className="text-right">通常 獲得pt</th>
+                <th className="text-right">ボーナス 獲得pt(基本)</th>
+                <th className="text-right" style={{ background: 'var(--warning-bg)' }}>ボーナス 獲得pt(CP)</th>
+                <th className="text-right">通常報酬</th>
+                <th className="text-right">ボーナス報酬(基本)</th>
+                <th className="text-right" style={{ background: 'var(--warning-bg)' }}>ボーナス報酬(CP)</th>
+                <th className="text-right">増加額</th>
+                <th className="text-right">増加率</th>
               </tr>
             </thead>
             <tbody>
               {simRows.map(({ rank, normalPt, bonusPt, cpBonusPt, normalIncome, bonusIncome, cpBonusIncome, addIncome, addRate }) => (
-                <tr key={rank.stage} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="px-3 py-1.5 border border-gray-200 font-medium text-gray-700">{rank.name}</td>
-                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums text-gray-500">{Math.round(normalPt).toLocaleString()} pt</td>
-                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums">{Math.round(bonusPt).toLocaleString()} pt</td>
-                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums bg-amber-50 font-medium">{Math.round(cpBonusPt).toLocaleString()} pt</td>
-                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums text-gray-500">{yen(normalIncome)}</td>
-                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums">{yen(bonusIncome)}</td>
-                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums bg-amber-50 font-medium">{yen(cpBonusIncome)}</td>
-                  <td className="px-3 py-1.5 border border-gray-200 text-right tabular-nums text-green-700 font-bold">+{yen(addIncome)}</td>
-                  <td className={`px-3 py-1.5 border border-gray-200 text-right tabular-nums font-bold ${addRate != null && addRate >= 0.5 ? 'text-red-600' : 'text-gray-700'}`}>
+                <tr key={rank.stage}>
+                  <td className="font-medium" style={{ color: 'var(--text-secondary)' }}>{rank.name}</td>
+                  <td className="text-right tabular-nums" style={{ color: 'var(--text-muted)' }}>{Math.round(normalPt).toLocaleString()} pt</td>
+                  <td className="text-right tabular-nums">{Math.round(bonusPt).toLocaleString()} pt</td>
+                  <td className="text-right tabular-nums font-medium" style={{ background: 'var(--warning-bg)' }}>{Math.round(cpBonusPt).toLocaleString()} pt</td>
+                  <td className="text-right tabular-nums" style={{ color: 'var(--text-muted)' }}>{yen(normalIncome)}</td>
+                  <td className="text-right tabular-nums">{yen(bonusIncome)}</td>
+                  <td className="text-right tabular-nums font-medium" style={{ background: 'var(--warning-bg)' }}>{yen(cpBonusIncome)}</td>
+                  <td className="text-right tabular-nums font-bold" style={{ color: 'var(--positive)' }}>+{yen(addIncome)}</td>
+                  <td className="text-right tabular-nums font-bold" style={{ color: addRate != null && addRate >= 0.5 ? 'var(--negative)' : 'var(--text-secondary)' }}>
                     {addRate != null ? `+${(addRate * 100).toFixed(1)}%` : '—'}
                   </td>
                 </tr>
@@ -285,9 +286,9 @@ export function PerformerSettings() {
             </tbody>
           </table>
         </div>
-        <p className="text-[11px] text-gray-400 mt-3 leading-relaxed">
+        <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-muted)', marginTop: '0.75rem' }}>
           ※ 通常獲得pt＝P通常 / ボーナス獲得pt＝Pボーナス（表の値）。通常報酬＝通常pt×¥{pointConfig.normalPtCost}、ボーナス報酬＝ボーナスpt×¥{pointConfig.bonusPtCost}。<br />
-          ※ キャンペーンの上乗せ（+pt/通・+pt/字）は<strong>ボーナスpt</strong>に加算され、会社は¥{pointConfig.bonusPtCost}/ptを追加負担します。増加額・増加率はボーナス報酬に対する増分です。<br />
+          ※ キャンペーンの上乗せ（+pt/通・+pt/字）は<strong style={{ color: 'var(--text-primary)' }}>ボーナスpt</strong>に加算され、会社は¥{pointConfig.bonusPtCost}/ptを追加負担します。増加額・増加率はボーナス報酬に対する増分です。<br />
           ※ 増加率が高いランク（特に下位＝元のボーナス単価が低い）ほど同じ上乗せのインパクトが大きくなります。会社負担とインセンティブ効果のバランスで適正な上乗せ幅を判断できます。
         </p>
       </section>
