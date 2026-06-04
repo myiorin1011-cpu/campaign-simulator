@@ -90,7 +90,7 @@ export function CampaignPlanner() {
   const addRow = () => {
     updateCampaigns([
       ...campaigns,
-      { id: crypto.randomUUID(), audience, category: '', title: '', durationDays: 0, start: '', end: '', pattern: '', tag: '', status: '開始前', ptDesign: '未対応', banner: '作成前', ptSetting: '未対応' },
+      { id: crypto.randomUUID(), audience, category: '', title: '', durationDays: 0, start: '', end: '', pattern: '', tag: '', status: '開始前', ptDesign: '未対応', banner: '作成前', ptSetting: '未対応', scenarioRef: '' as const },
     ])
   }
 

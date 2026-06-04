@@ -80,7 +80,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     agencies: mergedAgencies,
     // 区分(audience)が全行に揃った新形式のみ採用。旧形式(区分なし)は新シードに入れ替え
     campaigns: (rawData.campaigns && rawData.campaigns.length > 0 && rawData.campaigns.every((c) => c.audience === 'user' || c.audience === 'performer'))
-      ? rawData.campaigns
+      ? rawData.campaigns.map((c) => ({ ...c, scenarioRef: (c.scenarioRef ?? '') as '' | 'campaign1' | 'campaign2' }))
       : initialData.campaigns,
     banners: (rawData.banners && rawData.banners.length > 0) ? rawData.banners : initialData.banners,
     rankingTiers: (rawData.rankingTiers && rawData.rankingTiers.length > 0) ? rawData.rankingTiers : initialData.rankingTiers,

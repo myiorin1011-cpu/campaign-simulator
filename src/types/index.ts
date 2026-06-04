@@ -187,6 +187,7 @@ export interface Campaign {
   ptDesign: string      // pt設計
   banner: string        // バナー
   ptSetting: string     // pt設定
+  scenarioRef: '' | 'campaign1' | 'campaign2'
 }
 
 // ─── キャンペーンバナー管理 ─────────────────────────

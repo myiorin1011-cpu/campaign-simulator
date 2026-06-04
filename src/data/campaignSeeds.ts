@@ -5,7 +5,7 @@ const mk = (audience: 'user' | 'performer') => (
   category: string, title: string, durationDays: number, start: string, end: string,
   pattern = '', tag = '', status = '開始前', ptDesign = '未対応', banner = '作成前', ptSetting = '未対応',
 ): Campaign => ({
-  id: `seed-c-${++cid}`, audience, category, title, durationDays, start, end, pattern, tag, status, ptDesign, banner, ptSetting,
+  id: `seed-c-${++cid}`, audience, category, title, durationDays, start, end, pattern, tag, status, ptDesign, banner, ptSetting, scenarioRef: '',
 })
 
 // ── イベント_User ──
