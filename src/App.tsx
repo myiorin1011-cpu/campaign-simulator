@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 // ─── パスワードゲート ───────────────────────────────
 const CORRECT_PASSWORD = import.meta.env.VITE_ACCESS_PASSWORD ?? ''
@@ -67,7 +67,15 @@ const TABS = [
 export default function App() {
   const [activeTab, setActiveTab] = useState('point')
   const [unlocked, setUnlocked] = useState(!CORRECT_PASSWORD)
+  const [theme, setTheme] = useState<'dark' | 'light'>(() =>
+    (localStorage.getItem('paigner-theme') as 'dark' | 'light') ?? 'dark'
+  )
   const { resetToInitial } = useAppContext()
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('paigner-theme', theme)
+  }, [theme])
 
   if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />
 
@@ -147,7 +155,23 @@ export default function App() {
         </nav>
 
         {/* Footer */}
-        <div className="px-4 py-3" style={{ borderTop: '1px solid var(--border)' }}>
+        <div className="px-4 py-3 space-y-2" style={{ borderTop: '1px solid var(--border)' }}>
+          {/* Theme toggle */}
+          <button
+            onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              width: '100%', padding: '5px 8px', borderRadius: 6,
+              background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+              cursor: 'pointer', fontSize: 12, color: 'var(--text-secondary)',
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg-elevated)')}
+          >
+            <span style={{ fontSize: 14 }}>{theme === 'dark' ? '☀️' : '🌙'}</span>
+            <span>{theme === 'dark' ? 'ライトモード' : 'ダークモード'}</span>
+          </button>
           <button
             onClick={() => { if (confirm('全設定を初期値にリセットしますか？')) resetToInitial() }}
             style={{ fontSize: 11, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}

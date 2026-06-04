@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=Sora:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ─── Design Tokens ───────────────────────────────────── */
+/* ─── Design Tokens: Dark (default) ──────────────────── */
 :root {
   --bg-app:      #0d1117;
   --bg-card:     #161b22;
@@ -27,6 +27,34 @@
   --warning-bg:    rgba(210, 153, 34, 0.08);
   --purple:        #a78bfa;
   --purple-bg:     rgba(167, 139, 250, 0.08);
+}
+
+/* ─── Design Tokens: Light ────────────────────────────── */
+[data-theme="light"] {
+  --bg-app:      #f2f4f8;
+  --bg-card:     #ffffff;
+  --bg-elevated: #f0f2f7;
+  --bg-hover:    #e8eaf0;
+  --border:      #dde1ec;
+  --border-subtle: #eceef5;
+
+  --text-primary:   #111827;
+  --text-secondary: #4b5563;
+  --text-muted:     #9ca3af;
+
+  --accent:       #4f46e5;
+  --accent-light: #6366f1;
+  --accent-glow:  rgba(79, 70, 229, 0.12);
+  --accent-dim:   rgba(79, 70, 229, 0.06);
+
+  --positive:      #16a34a;
+  --positive-bg:   rgba(22, 163, 74, 0.07);
+  --negative:      #dc2626;
+  --negative-bg:   rgba(220, 38, 38, 0.07);
+  --warning:       #b45309;
+  --warning-bg:    rgba(180, 83, 9, 0.07);
+  --purple:        #7c3aed;
+  --purple-bg:     rgba(124, 58, 237, 0.07);
 }
 
 /* ─── Base ────────────────────────────────────────────── */
