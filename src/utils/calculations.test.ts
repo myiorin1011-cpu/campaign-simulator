@@ -137,3 +137,142 @@ describe('calcDapDistribution', () => {
     expect(result.activeRate).toBeCloseTo(0.7)
   })
 })
+
+import {
+  calcCampaignImpact,
+  calcTargetPerformerBudget,
+  calcBonusPtEqualizationLoss,
+  inferCampaignIntent,
+} from './calculations'
+import type { PointConfig, PurchasePlan, PaymentMethod, Campaign } from '../types'
+
+// ─── フィクスチャ ──────────────────────────────────────────
+const testPointConfig: PointConfig = {
+  userPtRate: 2,
+  performerPtRate: 1,
+  normalPtCost: 0.67,
+  bonusPtCost: 0.22,
+  taxRate: 0.10,
+  withholdingIndividual: 0.1021,
+  withholdingCorporate: 0,
+  transferFee: 550,
+  minSettlementPt: 5550,
+}
+
+const makePlan = (normalPt: number, bonusPt: number, storeFeeRate = 0): PurchasePlan => ({
+  id: 1,
+  priceWithTax: 1000,
+  priceWithoutTax: 909,
+  normalPt,
+  bonusPt,
+  firstTimeBonusPt: 0,
+  secondTimeBonusPt: 0,
+  thirdTimeBonusPt: 0,
+  storeFeeRate,
+})
+
+const toAllPayments = (plan: PurchasePlan): Record<PaymentMethod, PurchasePlan[]> => ({
+  bank: [plan], credix: [], amazonpay: [], apple: [], google: [],
+})
+
+const basePlan     = makePlan(500, 0)
+const campaignPlan = makePlan(500, 200)  // ボーナスPTあり
+const feeBasePlan  = makePlan(500, 0, 0.04)  // 手数料4%
+
+const testAllPlans = {
+  base:      toAllPayments(basePlan),
+  campaign1: toAllPayments(campaignPlan),
+  campaign2: toAllPayments(basePlan),
+}
+
+// ─── calcCampaignImpact ────────────────────────────────────
+describe('calcCampaignImpact', () => {
+  it('基本シナリオの損失はゼロ', () => {
+    const result = calcCampaignImpact(1000000, 'base', testPointConfig, testAllPlans)
+    expect(result.loss).toBe(0)
+  })
+
+  it('キャンペーン1はボーナスPT分だけ報酬が増え、損失が発生する', () => {
+    const base = calcCampaignImpact(1000000, 'base',      testPointConfig, testAllPlans)
+    const camp = calcCampaignImpact(1000000, 'campaign1', testPointConfig, testAllPlans)
+    expect(camp.performerReward).toBeGreaterThan(base.performerReward)
+    expect(camp.loss).toBe(camp.performerReward - base.performerReward)
+    expect(camp.grossMargin).toBeLessThan(base.grossMargin)
+  })
+
+  it('粗利率は 0〜1 の範囲に収まる', () => {
+    const result = calcCampaignImpact(3200000, 'base', testPointConfig, testAllPlans)
+    expect(result.grossMarginRate).toBeGreaterThan(0)
+    expect(result.grossMarginRate).toBeLessThan(1)
+  })
+
+  it('手数料を含む場合に粗利が減る', () => {
+    const withFee    = { ...testAllPlans, base: toAllPayments(feeBasePlan) }
+    const withoutFee = testAllPlans
+    const r1 = calcCampaignImpact(1000000, 'base', testPointConfig, withFee)
+    const r2 = calcCampaignImpact(1000000, 'base', testPointConfig, withoutFee)
+    expect(r1.grossMargin).toBeLessThan(r2.grossMargin)
+  })
+})
+
+// ─── calcTargetPerformerBudget ────────────────────────────
+describe('calcTargetPerformerBudget', () => {
+  it('目標粗利率40%のとき報酬上限を正しく計算する（手数料なし）', () => {
+    // storeFeeRate=0, sales=1000000, target=0.4 → maxBudget = 1000000 × 0.6 = 600000
+    const result = calcTargetPerformerBudget(1000000, 0.4, testPointConfig, testAllPlans.base)
+    expect(result.maxPerformerBudget).toBe(600000)
+    expect(result.actualGrossMargin).toBe(400000)
+  })
+
+  it('手数料がある場合は上限が下がる', () => {
+    const withFee    = calcTargetPerformerBudget(1000000, 0.4, testPointConfig, toAllPayments(feeBasePlan))
+    const withoutFee = calcTargetPerformerBudget(1000000, 0.4, testPointConfig, testAllPlans.base)
+    expect(withFee.maxPerformerBudget).toBeLessThan(withoutFee.maxPerformerBudget)
+  })
+})
+
+// ─── calcBonusPtEqualizationLoss ─────────────────────────
+describe('calcBonusPtEqualizationLoss', () => {
+  it('ボーナスPTがないプランでは差分ゼロ', () => {
+    const result = calcBonusPtEqualizationLoss(1000000, testPointConfig, testAllPlans.base)
+    expect(result.lossDiff).toBe(0)
+    expect(result.currentCost).toBe(result.equalizedCost)
+  })
+
+  it('ボーナスPTがある場合は均等化でコストが増加する', () => {
+    const result = calcBonusPtEqualizationLoss(1000000, testPointConfig, testAllPlans.campaign1)
+    // bonusPt=200, 差分単価=(0.67-0.22)=0.45, 1プラン1000円に200pt
+    // 加重: 200 × 0.45 / 1000 × 1000000 = 90000
+    expect(result.lossDiff).toBe(90000)
+    expect(result.equalizedGrossMarginRate).toBeLessThan(result.currentGrossMarginRate)
+  })
+})
+
+// ─── inferCampaignIntent ─────────────────────────────────
+describe('inferCampaignIntent', () => {
+  const baseCampaign: Campaign = {
+    id: '1', audience: 'performer', category: 'test', title: 'test',
+    durationDays: 7, start: '', end: '', pattern: '', tag: '', status: '',
+    ptDesign: '', banner: '', ptSetting: '', scenarioRef: '',
+  }
+
+  it('scenarioRef が空のとき null を返す', () => {
+    expect(inferCampaignIntent(baseCampaign, testPointConfig, testAllPlans)).toBeNull()
+  })
+
+  it('基本と同じシナリオのとき「変化なし」の期待効果を返す', () => {
+    const campaign = { ...baseCampaign, scenarioRef: 'campaign2' as const }
+    const result = inferCampaignIntent(campaign, testPointConfig, testAllPlans)
+    expect(result).not.toBeNull()
+    expect(result!.expectedEffect).toBe('基本設定と変化なし')
+  })
+
+  it('ボーナスPT重視のシナリオで結果を返す', () => {
+    const campaign = { ...baseCampaign, scenarioRef: 'campaign1' as const }
+    const result = inferCampaignIntent(campaign, testPointConfig, testAllPlans)
+    expect(result).not.toBeNull()
+    expect(result!.intent).toBeTruthy()
+    expect(result!.purpose).toBeTruthy()
+    expect(result!.expectedEffect).toContain('%')
+  })
+})
