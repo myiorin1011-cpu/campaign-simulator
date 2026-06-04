@@ -32,7 +32,8 @@ export function CohortForecast() {
     return Array.from({ length: cp.months }, (_, i) => {
       const month = i + 1
       const adBudget = budgets[i]
-      const newCount = newCounts[i]
+      const installs = cpi > 0 ? Math.floor(adBudget / cpi) : 0   // 新規集客数 = 広告費 ÷ CPI
+      const newCount = newCounts[i]                                // PU(課金ユーザー) = 新規集客数 × 課金率
       const newSales = newCount * cp.newUserArppu
 
       // 2ヶ月目残存 = 前月の新規 × 2ヶ月目継続率
@@ -48,7 +49,7 @@ export function CohortForecast() {
       const continuousSales = continuousCount * cp.continuousArppu
 
       const totalSales = newSales + secondSales + continuousSales
-      return { month, adBudget, newCount, newSales, secondCount, secondSales, continuousCount, continuousSales, totalSales }
+      return { month, adBudget, installs, newCount, newSales, secondCount, secondSales, continuousCount, continuousSales, totalSales }
     })
   }, [cp, budgets])
 
@@ -160,6 +161,8 @@ export function CohortForecast() {
             <tr>
               <th>月</th>
               <th className="text-right">広告費</th>
+              <th className="text-right">新規集客数</th>
+              <th className="text-right">PU</th>
               <th className="text-center" colSpan={2}>新規（1ヶ月目）</th>
               <th className="text-center" colSpan={2}>継続候補（2ヶ月目）</th>
               <th className="text-center" colSpan={2}>継続（3ヶ月目〜）</th>
@@ -168,6 +171,8 @@ export function CohortForecast() {
             <tr>
               <th></th>
               <th className="text-right">（手動入力）</th>
+              <th className="text-right">÷CPI</th>
+              <th className="text-right">×課金率</th>
               <th className="text-right">人数</th>
               <th className="text-right">売上</th>
               <th className="text-right">人数</th>
@@ -190,6 +195,8 @@ export function CohortForecast() {
                     style={{ width: '7.5rem' }}
                   />
                 </td>
+                <td style={{ color: 'var(--text-secondary)' }}>{row.installs.toLocaleString()}人</td>
+                <td className="font-medium" style={{ color: 'var(--accent-light)' }}>{row.newCount.toLocaleString()}人</td>
                 <td>{row.newCount.toLocaleString()}人</td>
                 <td style={{ color: 'var(--accent-light)' }}>{fmt(row.newSales)}</td>
                 <td>{row.secondCount > 0 ? `${row.secondCount.toLocaleString()}人` : '-'}</td>
@@ -202,6 +209,8 @@ export function CohortForecast() {
             <tr className="font-bold text-right" style={{ background: 'var(--bg-elevated)', borderTop: '2px solid var(--border)' }}>
               <td className="text-center" style={{ color: 'var(--text-secondary)' }}>合計</td>
               <td style={{ color: 'var(--text-secondary)' }}>{fmt(rows.reduce((s, r) => s + r.adBudget, 0))}</td>
+              <td style={{ color: 'var(--text-secondary)' }}>{rows.reduce((s, r) => s + r.installs, 0).toLocaleString()}人</td>
+              <td style={{ color: 'var(--accent-light)' }}>{rows.reduce((s, r) => s + r.newCount, 0).toLocaleString()}人</td>
               <td colSpan={6}></td>
               <td style={{ color: 'var(--accent-light)' }}>
                 {fmt(rows.reduce((s, r) => s + r.totalSales, 0))}
