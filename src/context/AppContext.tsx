@@ -97,6 +97,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       // 2ヶ月目・3ヶ月目以降の継続率を補完（旧データは従来のretentionRate or 既定値）
       secondMonthRetention: rawData.cohortParams?.secondMonthRetention ?? initialData.cohortParams.secondMonthRetention,
       continuousRetention: rawData.cohortParams?.continuousRetention ?? initialData.cohortParams.continuousRetention,
+      continuousDecay: rawData.cohortParams?.continuousDecay ?? initialData.cohortParams.continuousDecay,
       cpi: rawData.cohortParams?.cpi ?? rawData.simulatorParams?.cpi ?? initialData.cohortParams.cpi,
       conversionRate: rawData.cohortParams?.conversionRate ?? rawData.simulatorParams?.conversionRate ?? initialData.cohortParams.conversionRate,
       monthlyAdBudgets: rawData.cohortParams?.monthlyAdBudgets ?? initialData.cohortParams.monthlyAdBudgets,

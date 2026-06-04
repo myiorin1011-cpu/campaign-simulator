@@ -41,11 +41,15 @@ export function CohortForecast() {
       const secondSales = secondCount * cp.secondMonthArppu
 
       // 3ヶ月目以降: 各過去コホートの残存を合算。新規PUに3ヶ月目以降継続率を直接適用
-      //   age=3（3ヶ月目）は 新規PU × r3、以降は毎月 r3 で逓減（新規PU × r3^(age-2)）
+      //   age=3 の継続率 = r3。逓減幅 decay があれば毎月 decay pt ずつ低下（0=一定）
+      const decay = cp.continuousDecay
       let continuousCount = 0
       for (let age = 3; age <= month; age++) {
         const idx = i - (age - 1)
-        if (idx >= 0) continuousCount += Math.floor(newCounts[idx] * Math.pow(r3, age - 2))
+        if (idx >= 0) {
+          const rate = Math.max(0, r3 - decay * (age - 3))
+          continuousCount += Math.floor(newCounts[idx] * rate)
+        }
       }
       const continuousSales = continuousCount * cp.continuousArppu
 
@@ -151,6 +155,17 @@ export function CohortForecast() {
               className="w-full accent-indigo-600"
             />
             <span className="text-sm font-bold font-mono-num" style={{ color: 'var(--accent-light)' }}>{(cp.continuousRetention * 100).toFixed(0)}%</span>
+            <div className="mt-3">
+              <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
+                逓減幅（pt/月） <span style={{ color: 'var(--text-muted)' }}>0=一定 / 例:2 → 20→18→16…</span>
+              </label>
+              <input
+                type="number" min={0} max={20} step={0.5}
+                value={+(cp.continuousDecay * 100).toFixed(1)}
+                onChange={(e) => updateCohortParams({ continuousDecay: (parseFloat(e.target.value) || 0) / 100 })}
+                className="input-dark w-full"
+              />
+            </div>
           </div>
         </div>
       </section>
