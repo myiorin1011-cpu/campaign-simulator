@@ -171,10 +171,10 @@ export function SalesSimulator() {
             <div className="text-xs text-gray-500 mb-1">パフォーマー報酬</div>
             <div className="text-lg font-bold text-purple-700">¥{fmt2(impact.performerReward)}</div>
           </div>
-          <div className={`rounded-lg p-3 text-center ${impact.loss > 0 ? 'bg-red-50' : 'bg-gray-50'}`}>
+          <div className={`rounded-lg p-3 text-center ${impact.loss > 0 ? 'bg-red-50' : impact.loss < 0 ? 'bg-green-50' : 'bg-gray-50'}`}>
             <div className="text-xs text-gray-500 mb-1">基本比損失</div>
-            <div className={`text-lg font-bold ${impact.loss > 0 ? 'text-red-600' : 'text-gray-500'}`}>
-              {impact.loss > 0 ? `+¥${fmt2(impact.loss)}` : '±0'}
+            <div className={`text-lg font-bold ${impact.loss > 0 ? 'text-red-600' : impact.loss < 0 ? 'text-green-600' : 'text-gray-500'}`}>
+              {impact.loss > 0 ? `+¥${fmt2(impact.loss)}` : impact.loss < 0 ? `-¥${fmt2(Math.abs(impact.loss))}` : '±0'}
             </div>
           </div>
         </div>
