@@ -139,6 +139,9 @@ const baseData: Omit<AppData, 'purchasePlans1' | 'purchasePlans2' | 'performerRa
     retentionRate: 0.40,
     secondMonthRetention: 0.30,   // 2ヶ月目継続率 30%
     continuousRetention: 0.20,    // 3ヶ月目以降継続率 20%
+    cpi: 500,
+    conversionRate: 0.05,
+    monthlyAdBudgets: Array.from({ length: 12 }, () => 1000000),
   },
 
   agencies: [

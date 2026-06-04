@@ -85,6 +85,9 @@ export interface CohortParams {
   retentionRate: number      // タブ3から引き継ぎ可（後方互換・代表値）
   secondMonthRetention: number   // 2ヶ月目継続率（1ヶ月目→2ヶ月目）
   continuousRetention: number    // 3ヶ月目以降の継続率
+  cpi: number                // Cost Per Install（基本入力）
+  conversionRate: number     // 課金率（基本入力）
+  monthlyAdBudgets: number[] // 月別広告費（手動入力・月数分）
 }
 
 // 代理店
