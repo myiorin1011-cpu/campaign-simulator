@@ -151,6 +151,7 @@ html, body {
   color: var(--text-primary);
   text-align: right;
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 .table-dark tbody td:first-child {

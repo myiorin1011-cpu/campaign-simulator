@@ -132,7 +132,7 @@ export function SalesSimulator() {
   const fmt = (n: number) => `¥${Math.floor(n).toLocaleString()}`
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6">
       {/* キャンペーン収益影響パネル */}
       <div className="card mb-6">
         <h2 className="section-title">キャンペーン収益影響シミュレーター</h2>

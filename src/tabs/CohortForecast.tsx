@@ -61,7 +61,7 @@ export function CohortForecast() {
   const fmt = (n: number) => `¥${Math.floor(n).toLocaleString()}`
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6">
       <h2 className="page-title">ユーザーコホート売上予測</h2>
 
       {/* パラメータ */}

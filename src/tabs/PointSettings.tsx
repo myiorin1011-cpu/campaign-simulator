@@ -76,7 +76,7 @@ export function PointSettings() {
   }
 
   return (
-    <div className="space-y-8 max-w-5xl">
+    <div className="space-y-8">
       <h2 className="page-title">ポイント設定</h2>
 
       {/* シナリオ切り替えタブ */}

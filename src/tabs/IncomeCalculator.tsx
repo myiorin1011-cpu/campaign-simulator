@@ -63,7 +63,7 @@ export function IncomeCalculator() {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6">
       <h2 className="page-title">目標月収逆算シミュレーター</h2>
       <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
         各ランクの「月間維持基準」を目標月収として、達成に必要な1日あたりのメッセージ通数・有料鑑定文字数を逆算します。
