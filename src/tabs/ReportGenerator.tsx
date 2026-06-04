@@ -71,9 +71,9 @@ function SectionToggleRow({
   alwaysOnInternal?: boolean
 }) {
   return (
-    <div className="flex items-center gap-6 py-2 border-b border-gray-100">
-      <span className="w-40 text-sm text-gray-700">{label}</span>
-      <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+    <div className="flex items-center gap-6 py-2" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+      <span className="w-40 text-sm" style={{ color: 'var(--text-secondary)' }}>{label}</span>
+      <label className="flex items-center gap-1 text-xs cursor-pointer" style={{ color: 'var(--text-muted)' }}>
         <input
           type="checkbox"
           checked={alwaysOnInternal || internalVal}
@@ -82,7 +82,7 @@ function SectionToggleRow({
         />
         社内
       </label>
-      <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+      <label className="flex items-center gap-1 text-xs cursor-pointer" style={{ color: 'var(--text-muted)' }}>
         <input
           type="checkbox"
           checked={performerVal}
@@ -163,18 +163,18 @@ export function ReportGenerator() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-800">結果報告書</h2>
+        <h2 className="page-title">結果報告書</h2>
         <div className="flex gap-2">
           <button
             onClick={() => setViewMode('edit')}
-            className={`px-3 py-1 text-sm rounded ${viewMode === 'edit' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'}`}
+            className={`px-3 py-1 text-sm rounded ${viewMode === 'edit' ? 'btn-primary' : 'btn-ghost'}`}
           >
             入力
           </button>
           <button
             onClick={() => setViewMode('preview')}
             disabled={!currentReport}
-            className={`px-3 py-1 text-sm rounded ${viewMode === 'preview' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'} disabled:opacity-40`}
+            className={`px-3 py-1 text-sm rounded ${viewMode === 'preview' ? 'btn-primary' : 'btn-ghost'} disabled:opacity-40`}
           >
             プレビュー
           </button>
@@ -182,13 +182,13 @@ export function ReportGenerator() {
       </div>
 
       {/* 月度選択・新規作成 */}
-      <section className="bg-white rounded-lg shadow p-4 flex flex-wrap gap-3 items-end">
+      <section className="card flex flex-wrap gap-3 items-end">
         <div>
-          <label className="block text-xs text-gray-500 mb-1">既存レポートを選択</label>
+          <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>既存レポートを選択</label>
           <select
             value={selectedId ?? ''}
             onChange={e => setSelectedId(e.target.value || null)}
-            className="border border-gray-300 rounded px-2 py-1 text-sm"
+            className="input-dark px-2 py-1 text-sm"
           >
             <option value="">-- 選択 --</option>
             {data.reports.map(r => (
@@ -198,41 +198,38 @@ export function ReportGenerator() {
         </div>
         <div className="flex gap-2 items-end">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">新規: 月度</label>
+            <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>新規: 月度</label>
             <input
               value={newMonth}
               onChange={e => setNewMonth(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleCreate()}
               placeholder="例: 2025年1月度"
-              className="border border-gray-300 rounded px-2 py-1 text-sm w-36"
+              className="input-dark px-2 py-1 text-sm w-36"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">サービス名</label>
+            <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>サービス名</label>
             <input
               value={newServiceName}
               onChange={e => setNewServiceName(e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1 text-sm w-24"
+              className="input-dark px-2 py-1 text-sm w-24"
             />
           </div>
-          <button
-            onClick={handleCreate}
-            className="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700"
-          >
+          <button onClick={handleCreate} className="btn-primary px-3 py-1 text-sm">
             作成
           </button>
         </div>
       </section>
 
       {!currentReport && (
-        <p className="text-gray-400 text-sm">月度を選択または新規作成してください</p>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>月度を選択または新規作成してください</p>
       )}
 
       {currentReport && viewMode === 'edit' && (
         <>
           {/* セクション表示設定 */}
-          <section className="bg-white rounded-lg shadow p-4">
-            <h3 className="font-semibold text-gray-700 mb-3 text-sm">セクション表示設定</h3>
+          <section className="card">
+            <h3 className="section-title mb-3">セクション表示設定</h3>
             <SectionToggleRow
               label="売上着地"
               internalVal={currentReport.sections.sales.showInInternal}
@@ -262,8 +259,8 @@ export function ReportGenerator() {
           </section>
 
           {/* 売上着地 */}
-          <section className="bg-white rounded-lg shadow p-4 space-y-3">
-            <h3 className="font-semibold text-gray-700 text-sm">売上着地</h3>
+          <section className="card space-y-3">
+            <h3 className="section-title">売上着地</h3>
             <div className="grid grid-cols-2 gap-3">
               {(
                 [
@@ -272,7 +269,7 @@ export function ReportGenerator() {
                 ] as { label: string; key: 'target' | 'actual' }[]
               ).map(({ label, key }) => (
                 <div key={key}>
-                  <label className="block text-xs text-gray-500 mb-1">{label}</label>
+                  <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>{label}</label>
                   <input
                     type="number"
                     min={0}
@@ -280,26 +277,26 @@ export function ReportGenerator() {
                     onChange={e =>
                       updateSection('sales', { [key]: parseInt(e.target.value) || 0 })
                     }
-                    className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                    className="input-dark w-full px-2 py-1 text-sm"
                   />
                 </div>
               ))}
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">コメント</label>
+              <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>コメント</label>
               <textarea
                 rows={2}
                 value={currentReport.sections.sales.memo}
                 onChange={e => updateSection('sales', { memo: e.target.value })}
-                className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                className="input-dark w-full px-2 py-1 text-sm"
               />
             </div>
           </section>
 
           {/* ユーザー関連 */}
           {currentReport.sections.user.showInInternal && (
-            <section className="bg-white rounded-lg shadow p-4 space-y-3">
-              <h3 className="font-semibold text-gray-700 text-sm">ユーザー関連</h3>
+            <section className="card space-y-3">
+              <h3 className="section-title">ユーザー関連</h3>
               <div className="grid grid-cols-3 gap-3">
                 {(
                   [
@@ -314,7 +311,7 @@ export function ReportGenerator() {
                   const raw = currentReport.sections.user[key] as number
                   return (
                     <div key={String(key)}>
-                      <label className="block text-xs text-gray-500 mb-1">{label}</label>
+                      <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>{label}</label>
                       <input
                         type="number"
                         min={0}
@@ -327,19 +324,19 @@ export function ReportGenerator() {
                               : parseInt(e.target.value) || 0,
                           })
                         }
-                        className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                        className="input-dark w-full px-2 py-1 text-sm"
                       />
                     </div>
                   )
                 })}
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">コメント</label>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>コメント</label>
                 <textarea
                   rows={2}
                   value={currentReport.sections.user.memo}
                   onChange={e => updateSection('user', { memo: e.target.value })}
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                  className="input-dark w-full px-2 py-1 text-sm"
                 />
               </div>
             </section>
@@ -347,21 +344,21 @@ export function ReportGenerator() {
 
           {/* 広告成果 */}
           {currentReport.sections.ad.showInInternal && (
-            <section className="bg-white rounded-lg shadow p-4 space-y-3">
-              <h3 className="font-semibold text-gray-700 text-sm">広告成果</h3>
+            <section className="card space-y-3">
+              <h3 className="section-title">広告成果</h3>
               <div className="overflow-x-auto">
-                <table className="w-full text-xs border-collapse">
+                <table className="table-dark w-full text-xs" style={{ borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr className="bg-gray-50">
-                      <th className="px-2 py-1 text-left text-gray-600">代理店名</th>
-                      <th className="px-2 py-1 text-right text-gray-600">広告費 (¥)</th>
-                      <th className="px-2 py-1 text-right text-gray-600">売上 (¥)</th>
-                      <th className="px-2 py-1 text-right text-gray-600">ROAS</th>
+                    <tr style={{ background: 'var(--bg-elevated)' }}>
+                      <th className="px-2 py-1 text-left" style={{ color: 'var(--text-secondary)' }}>代理店名</th>
+                      <th className="px-2 py-1 text-right" style={{ color: 'var(--text-secondary)' }}>広告費 (¥)</th>
+                      <th className="px-2 py-1 text-right" style={{ color: 'var(--text-secondary)' }}>売上 (¥)</th>
+                      <th className="px-2 py-1 text-right" style={{ color: 'var(--text-secondary)' }}>ROAS</th>
                     </tr>
                   </thead>
                   <tbody>
                     {currentReport.sections.ad.agencies.map((agency, i) => (
-                      <tr key={i} className="border-b border-gray-100">
+                      <tr key={i} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                         <td className="px-2 py-1">
                           <input
                             value={agency.name}
@@ -370,7 +367,7 @@ export function ReportGenerator() {
                               agencies[i] = { ...agencies[i], name: e.target.value }
                               updateSection('ad', { agencies })
                             }}
-                            className="w-full border border-gray-200 rounded px-1 py-0.5 text-xs"
+                            className="input-dark w-full px-1 py-0.5 text-xs"
                           />
                         </td>
                         {(['adBudget', 'sales'] as const).map(field => (
@@ -396,11 +393,11 @@ export function ReportGenerator() {
                                   totalRoas: totalBudget > 0 ? totalSales / totalBudget : 0,
                                 })
                               }}
-                              className="w-24 border border-gray-200 rounded px-1 py-0.5 text-xs text-right"
+                              className="input-dark w-24 px-1 py-0.5 text-xs text-right"
                             />
                           </td>
                         ))}
-                        <td className="px-2 py-1 text-right text-gray-500">
+                        <td className="px-2 py-1 text-right" style={{ color: 'var(--text-muted)' }}>
                           {(agency.roas * 100).toFixed(0)}%
                         </td>
                       </tr>
@@ -416,17 +413,17 @@ export function ReportGenerator() {
                   ]
                   updateSection('ad', { agencies })
                 }}
-                className="text-xs text-indigo-600 hover:underline"
+                className="text-xs hover:underline" style={{ color: 'var(--accent-light)' }}
               >
                 + 代理店を追加
               </button>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">コメント</label>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>コメント</label>
                 <textarea
                   rows={2}
                   value={currentReport.sections.ad.memo}
                   onChange={e => updateSection('ad', { memo: e.target.value })}
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                  className="input-dark w-full px-2 py-1 text-sm"
                 />
               </div>
             </section>
@@ -434,8 +431,8 @@ export function ReportGenerator() {
 
           {/* DAP関連 */}
           {currentReport.sections.dap.showInInternal && (
-            <section className="bg-white rounded-lg shadow p-4 space-y-3">
-              <h3 className="font-semibold text-gray-700 text-sm">DAP関連</h3>
+            <section className="card space-y-3">
+              <h3 className="section-title">DAP関連</h3>
               <div className="grid grid-cols-3 gap-3">
                 {(
                   [
@@ -445,7 +442,7 @@ export function ReportGenerator() {
                   ] as { label: string; key: 'activeCount' | 'totalReward' | 'avgRewardPerDap' }[]
                 ).map(({ label, key }) => (
                   <div key={key}>
-                    <label className="block text-xs text-gray-500 mb-1">{label}</label>
+                    <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>{label}</label>
                     <input
                       type="number"
                       min={0}
@@ -453,18 +450,18 @@ export function ReportGenerator() {
                       onChange={e =>
                         updateSection('dap', { [key]: parseInt(e.target.value) || 0 })
                       }
-                      className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                      className="input-dark w-full px-2 py-1 text-sm"
                     />
                   </div>
                 ))}
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">コメント</label>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>コメント</label>
                 <textarea
                   rows={2}
                   value={currentReport.sections.dap.memo}
                   onChange={e => updateSection('dap', { memo: e.target.value })}
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                  className="input-dark w-full px-2 py-1 text-sm"
                 />
               </div>
             </section>
@@ -472,10 +469,10 @@ export function ReportGenerator() {
 
           {/* コンサル関連 */}
           {currentReport.sections.consult.showInInternal && (
-            <section className="bg-white rounded-lg shadow p-4 space-y-3">
-              <h3 className="font-semibold text-gray-700 text-sm">コンサル関連</h3>
+            <section className="card space-y-3">
+              <h3 className="section-title">コンサル関連</h3>
               {currentReport.sections.consult.entries.map((entry, i) => (
-                <div key={i} className="space-y-2 border border-gray-100 rounded p-3">
+                <div key={i} className="space-y-2 rounded p-3" style={{ border: '1px solid var(--border)' }}>
                   <input
                     placeholder="担当者名"
                     value={entry.managerName}
@@ -484,7 +481,7 @@ export function ReportGenerator() {
                       entries[i] = { ...entries[i], managerName: e.target.value }
                       updateSection('consult', { entries } as Partial<ReportSectionConsult>)
                     }}
-                    className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                    className="input-dark w-full px-2 py-1 text-sm"
                   />
                   <textarea
                     rows={3}
@@ -495,7 +492,7 @@ export function ReportGenerator() {
                       entries[i] = { ...entries[i], comment: e.target.value }
                       updateSection('consult', { entries } as Partial<ReportSectionConsult>)
                     }}
-                    className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                    className="input-dark w-full px-2 py-1 text-sm"
                   />
                 </div>
               ))}
@@ -507,7 +504,7 @@ export function ReportGenerator() {
                   ]
                   updateSection('consult', { entries } as Partial<ReportSectionConsult>)
                 }}
-                className="text-xs text-indigo-600 hover:underline"
+                className="text-xs hover:underline" style={{ color: 'var(--accent-light)' }}
               >
                 + 担当者を追加
               </button>
@@ -516,10 +513,10 @@ export function ReportGenerator() {
 
           {/* 求人広告 */}
           {currentReport.sections.recruit.showInInternal && (
-            <section className="bg-white rounded-lg shadow p-4 space-y-3">
-              <h3 className="font-semibold text-gray-700 text-sm">求人広告</h3>
+            <section className="card space-y-3">
+              <h3 className="section-title">求人広告</h3>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">月間デビュー数</label>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>月間デビュー数</label>
                 <input
                   type="number"
                   min={0}
@@ -527,16 +524,16 @@ export function ReportGenerator() {
                   onChange={e =>
                     updateSection('recruit', { debutCount: parseInt(e.target.value) || 0 })
                   }
-                  className="w-32 border border-gray-300 rounded px-2 py-1 text-sm"
+                  className="input-dark w-32 px-2 py-1 text-sm"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">コメント</label>
+                <label className="block text-xs mb-1" style={{ color: 'var(--text-muted)' }}>コメント</label>
                 <textarea
                   rows={2}
                   value={currentReport.sections.recruit.memo}
                   onChange={e => updateSection('recruit', { memo: e.target.value })}
-                  className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                  className="input-dark w-full px-2 py-1 text-sm"
                 />
               </div>
             </section>
@@ -546,18 +543,18 @@ export function ReportGenerator() {
 
       {/* プレビューモード */}
       {currentReport && viewMode === 'preview' && (
-        <section className="bg-white rounded-lg shadow p-4 space-y-4">
+        <section className="card space-y-4">
           <div className="flex items-center gap-4">
             <div className="flex gap-2">
               <button
                 onClick={() => setOutputMode('internal')}
-                className={`px-3 py-1 text-sm rounded ${outputMode === 'internal' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'}`}
+                className={`px-3 py-1 text-sm rounded ${outputMode === 'internal' ? 'btn-primary' : 'btn-ghost'}`}
               >
                 社内向け
               </button>
               <button
                 onClick={() => setOutputMode('performer')}
-                className={`px-3 py-1 text-sm rounded ${outputMode === 'performer' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'}`}
+                className={`px-3 py-1 text-sm rounded ${outputMode === 'performer' ? 'btn-primary' : 'btn-ghost'}`}
               >
                 パフォーマー向け
               </button>
@@ -565,7 +562,7 @@ export function ReportGenerator() {
             <PDFDownloadLink
               document={<ReportDocument report={currentReport} mode={outputMode} />}
               fileName={fileName}
-              className="bg-green-600 text-white px-4 py-1.5 rounded text-sm hover:bg-green-700"
+              className="btn-primary px-4 py-1.5 rounded text-sm"
             >
               {({ loading }) => (loading ? '生成中...' : '📄 PDFダウンロード')}
             </PDFDownloadLink>
@@ -576,12 +573,13 @@ export function ReportGenerator() {
                 finally { setPptxBusy(false) }
               }}
               disabled={pptxBusy}
-              className="bg-amber-500 text-white px-4 py-1.5 rounded text-sm hover:bg-amber-600 disabled:opacity-50"
+              className="btn-primary px-4 py-1.5 rounded text-sm disabled:opacity-50"
+              style={{ background: 'var(--warning)', borderColor: 'var(--warning)' }}
             >
               {pptxBusy ? '生成中...' : '📊 Googleスライド用に書き出し (.pptx)'}
             </button>
           </div>
-          <p className="text-xs text-gray-500 bg-amber-50 border border-amber-200 rounded p-2">
+          <p className="text-xs rounded p-2" style={{ color: 'var(--text-secondary)', background: 'var(--warning-bg)', border: '1px solid var(--warning)' }}>
             💡 「Googleスライド用に書き出し」で <strong>.pptx</strong> ファイルがダウンロードされます。これを
             <strong>Googleドライブにアップロード → 右クリック →「アプリで開く」→「Googleスライド」</strong>
             で、そのまま編集可能なスライドとして開けます。
