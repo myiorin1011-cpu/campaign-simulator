@@ -5,11 +5,18 @@ import type { Agency, AgencyMonthData } from '../types'
 
 const DISPLAY_MONTHS = 12
 
-function roiColor(roi: number) {
-  if (roi >= 1.5) return 'bg-green-200 text-green-800'
-  if (roi >= 1.0) return 'bg-yellow-100 text-yellow-800'
-  if (roi >= 0.5) return 'bg-orange-100 text-orange-800'
-  return 'bg-red-100 text-red-700'
+function roiStyle(roi: number): React.CSSProperties {
+  if (roi >= 1.5) return { background: 'var(--positive-bg)', border: '1px solid rgba(63,185,80,0.25)', color: 'var(--positive)', borderRadius: 4, padding: '1px 6px' }
+  if (roi >= 1.0) return { background: 'var(--warning-bg)', border: '1px solid rgba(210,153,34,0.25)', color: 'var(--warning)', borderRadius: 4, padding: '1px 6px' }
+  if (roi >= 0.5) return { background: 'var(--warning-bg)', border: '1px solid rgba(210,153,34,0.25)', color: 'var(--warning)', borderRadius: 4, padding: '1px 6px' }
+  return { background: 'var(--negative-bg)', border: '1px solid rgba(248,81,73,0.25)', color: 'var(--negative)', borderRadius: 4, padding: '1px 6px' }
+}
+
+function roiCellStyle(roi: number): React.CSSProperties {
+  if (roi >= 1.5) return { background: 'var(--positive-bg)', color: 'var(--positive)', fontWeight: 700 }
+  if (roi >= 1.0) return { background: 'var(--warning-bg)', color: 'var(--warning)', fontWeight: 700 }
+  if (roi >= 0.5) return { background: 'var(--warning-bg)', color: 'var(--warning)', fontWeight: 700 }
+  return { background: 'var(--negative-bg)', color: 'var(--negative)', fontWeight: 700 }
 }
 
 export function AgencyROI() {
@@ -51,14 +58,14 @@ export function AgencyROI() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-800">代理店別 月別回収率表</h2>
+        <h2 className="page-title">代理店別 月別回収率表</h2>
         <div className="flex gap-2">
           <button onClick={() => setViewMode('input')}
-            className={`px-3 py-1 text-sm rounded ${viewMode === 'input' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+            className={`scenario-tab${viewMode === 'input' ? ' active' : ''}`}>
             入力モード
           </button>
           <button onClick={() => setViewMode('roi')}
-            className={`px-3 py-1 text-sm rounded ${viewMode === 'roi' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+            className={`scenario-tab${viewMode === 'roi' ? ' active' : ''}`}>
             回収率モード
           </button>
         </div>
@@ -71,42 +78,42 @@ export function AgencyROI() {
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addAgency()}
           placeholder="代理店名を入力してEnter"
-          className="border border-gray-300 rounded px-3 py-1 text-sm flex-1 max-w-xs"
+          className="input-dark text-sm flex-1 max-w-xs"
         />
-        <button onClick={addAgency}
-          className="bg-indigo-600 text-white px-4 py-1 rounded text-sm hover:bg-indigo-700">
+        <button onClick={addAgency} className="btn-primary text-sm px-4 py-1">
           追加
         </button>
       </div>
 
       {agencies.length === 0 && (
-        <p className="text-gray-400 text-sm">代理店を追加してください</p>
+        <p style={{ color: 'var(--text-muted)' }} className="text-sm">代理店を追加してください</p>
       )}
 
       {/* 代理店ごとのテーブル */}
       {agencies.map((agency) => {
         const roi = calcAgencyROI(agency.months)
         return (
-          <section key={agency.id} className="bg-white rounded-lg shadow overflow-x-auto">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+          <section key={agency.id} className="card overflow-x-auto" style={{ padding: 0 }}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid var(--border)' }}>
               <input
                 value={agency.name}
                 onChange={(e) => updateAgencyName(agency.id, e.target.value)}
-                className="font-semibold text-gray-800 border-none outline-none bg-transparent text-base"
+                className="font-semibold border-none outline-none bg-transparent text-base"
+                style={{ color: 'var(--text-primary)' }}
               />
-              <div className="flex items-center gap-4 text-xs text-gray-500">
+              <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--text-muted)' }}>
                 <span>累計広告費: ¥{roi.cumulativeAdBudget.toLocaleString()}</span>
                 <span>累計売上: ¥{roi.cumulativeSales.toLocaleString()}</span>
-                <span className={`px-2 py-0.5 rounded font-bold ${roiColor(roi.cumulativeROI)}`}>
+                <span style={roiStyle(roi.cumulativeROI)} className="font-bold">
                   累計回収率: {(roi.cumulativeROI * 100).toFixed(1)}%
                 </span>
-                <button onClick={() => removeAgency(agency.id)} className="text-red-400 hover:text-red-600">削除</button>
+                <button onClick={() => removeAgency(agency.id)} className="btn-ghost text-xs px-2 py-0.5" style={{ color: 'var(--negative)' }}>削除</button>
               </div>
             </div>
-            <table className="text-xs border-collapse whitespace-nowrap w-full">
+            <table className="table-dark text-xs whitespace-nowrap w-full">
               <thead>
-                <tr className="bg-gray-50 text-gray-600">
-                  <th className="px-3 py-2 text-left sticky left-0 bg-gray-50">項目</th>
+                <tr>
+                  <th className="px-3 py-2 text-left sticky left-0" style={{ background: 'var(--bg-elevated)' }}>項目</th>
                   {agency.months.map((m) => (
                     <th key={m.month} className="px-3 py-2 text-center">{m.month}月目</th>
                   ))}
@@ -121,24 +128,24 @@ export function AgencyROI() {
                       { label: 'デビュー数', field: 'debuts' as const },
                       { label: '売上 (¥)', field: 'sales' as const },
                     ] as { label: string; field: keyof AgencyMonthData }[]).map(({ label, field }) => (
-                      <tr key={field} className="border-b border-gray-100">
-                        <td className="px-3 py-2 font-medium text-gray-600 sticky left-0 bg-white">{label}</td>
+                      <tr key={field} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                        <td className="px-3 py-2 font-medium sticky left-0" style={{ color: 'var(--text-secondary)', background: 'var(--bg-card)' }}>{label}</td>
                         {agency.months.map((m, mi) => (
                           <td key={m.month} className="px-2 py-1 text-center">
                             <input
                               type="number" min={0}
                               value={m[field]}
                               onChange={(e) => updateMonthData(agency.id, mi, field, parseInt(e.target.value) || 0)}
-                              className="w-20 border border-gray-200 rounded px-1 text-right text-xs"
+                              className="input-dark w-20 px-1 text-right text-xs"
                             />
                           </td>
                         ))}
                       </tr>
                     ))}
-                    <tr className="border-b border-gray-100 bg-blue-50">
-                      <td className="px-3 py-2 font-medium text-blue-700 sticky left-0 bg-blue-50">デビュー単価 (¥)</td>
+                    <tr style={{ borderBottom: '1px solid var(--border-subtle)', background: 'var(--accent-dim)' }}>
+                      <td className="px-3 py-2 font-medium sticky left-0" style={{ color: 'var(--accent-light)', background: 'var(--accent-dim)' }}>デビュー単価 (¥)</td>
                       {agency.months.map((m) => (
-                        <td key={m.month} className="px-3 py-2 text-center text-blue-700 font-medium">
+                        <td key={m.month} className="px-3 py-2 text-center font-medium" style={{ color: 'var(--accent-light)' }}>
                           {m.debuts > 0 ? `¥${Math.floor(m.adBudget / m.debuts).toLocaleString()}` : '-'}
                         </td>
                       ))}
@@ -146,32 +153,34 @@ export function AgencyROI() {
                   </>
                 ) : (
                   <>
-                    <tr className="border-b border-gray-100">
-                      <td className="px-3 py-2 font-medium text-gray-600 sticky left-0 bg-white">月次回収率</td>
+                    <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                      <td className="px-3 py-2 font-medium sticky left-0" style={{ color: 'var(--text-secondary)', background: 'var(--bg-card)' }}>月次回収率</td>
                       {agency.months.map((m) => {
                         const monthROI = m.adBudget > 0 ? m.sales / m.adBudget : 0
                         return (
-                          <td key={m.month} className={`px-3 py-2 text-center font-medium ${roiColor(monthROI)}`}>
-                            {m.adBudget > 0 ? `${(monthROI * 100).toFixed(1)}%` : '-'}
+                          <td key={m.month} className="px-3 py-2 text-center">
+                            {m.adBudget > 0 ? (
+                              <span style={roiStyle(monthROI)}>{(monthROI * 100).toFixed(1)}%</span>
+                            ) : '-'}
                           </td>
                         )
                       })}
                     </tr>
-                    <tr className="border-b border-gray-100">
-                      <td className="px-3 py-2 font-medium text-gray-600 sticky left-0 bg-white">累計回収率</td>
+                    <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                      <td className="px-3 py-2 font-medium sticky left-0" style={{ color: 'var(--text-secondary)', background: 'var(--bg-card)' }}>累計回収率</td>
                       {agency.months.map((_, mi) => {
                         const cumData = calcAgencyROI(agency.months.slice(0, mi + 1))
                         return (
-                          <td key={mi} className={`px-3 py-2 text-center font-bold ${roiColor(cumData.cumulativeROI)}`}>
+                          <td key={mi} className="px-3 py-2 text-center" style={cumData.cumulativeAdBudget > 0 ? roiCellStyle(cumData.cumulativeROI) : {}}>
                             {cumData.cumulativeAdBudget > 0 ? `${(cumData.cumulativeROI * 100).toFixed(1)}%` : '-'}
                           </td>
                         )
                       })}
                     </tr>
-                    <tr className="border-b border-gray-100">
-                      <td className="px-3 py-2 font-medium text-gray-600 sticky left-0 bg-white">デビュー単価</td>
+                    <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                      <td className="px-3 py-2 font-medium sticky left-0" style={{ color: 'var(--text-secondary)', background: 'var(--bg-card)' }}>デビュー単価</td>
                       {agency.months.map((m) => (
-                        <td key={m.month} className="px-3 py-2 text-center text-blue-700">
+                        <td key={m.month} className="px-3 py-2 text-center" style={{ color: 'var(--accent-light)' }}>
                           {m.debuts > 0 ? `¥${Math.floor(m.adBudget / m.debuts).toLocaleString()}` : '-'}
                         </td>
                       ))}
