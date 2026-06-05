@@ -70,12 +70,41 @@ export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
     (localStorage.getItem('paigner-theme') as 'dark' | 'light') ?? 'dark'
   )
-  const { resetToInitial } = useAppContext()
+  const { data, setData, resetToInitial } = useAppContext()
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem('paigner-theme', theme)
   }, [theme])
+
+  // 現在の全設定をクリップボードにコピー（AIに貼って質問できる）
+  const exportData = async () => {
+    const json = JSON.stringify(data)
+    try {
+      await navigator.clipboard.writeText(json)
+      alert('現在の全設定をクリップボードにコピーしました。\nそのままチャットに貼り付けて質問できます。')
+    } catch {
+      // クリップボード不可時はダウンロード
+      const blob = new Blob([json], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url; a.download = 'paigner-data.json'; a.click()
+      URL.revokeObjectURL(url)
+    }
+  }
+
+  // JSONを貼り付けて設定を復元
+  const importData = () => {
+    const text = prompt('エクスポートしたJSONを貼り付けてください')
+    if (!text) return
+    try {
+      const parsed = JSON.parse(text)
+      setData(parsed)
+      alert('設定を読み込みました。')
+    } catch {
+      alert('JSONの形式が正しくありません。')
+    }
+  }
 
   if (!unlocked) return <PasswordGate onUnlock={() => setUnlocked(true)} />
 
@@ -172,6 +201,22 @@ export default function App() {
             <span style={{ fontSize: 14 }}>{theme === 'dark' ? '☀️' : '🌙'}</span>
             <span>{theme === 'dark' ? 'ライトモード' : 'ダークモード'}</span>
           </button>
+          <div className="flex gap-2">
+            <button
+              onClick={exportData}
+              style={{ flex: 1, fontSize: 11, color: 'var(--text-secondary)', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer', padding: '5px 6px' }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent-light)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
+              title="現在の全設定をコピー（AIに貼って質問できます）"
+            >📋 コピー</button>
+            <button
+              onClick={importData}
+              style={{ flex: 1, fontSize: 11, color: 'var(--text-secondary)', background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer', padding: '5px 6px' }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent-light)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
+              title="JSONを貼り付けて設定を復元"
+            >📥 読込</button>
+          </div>
           <button
             onClick={() => { if (confirm('全設定を初期値にリセットしますか？')) resetToInitial() }}
             style={{ fontSize: 11, color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
