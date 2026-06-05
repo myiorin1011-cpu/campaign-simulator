@@ -4,7 +4,7 @@ import { useAppContext } from '../context/AppContext'
 export function CohortForecast() {
   const { data, updateCohortParams, updateSimulatorParams } = useAppContext()
   const { simulatorParams: sp, cohortParams: cp } = data
-  const [orient, setOrient] = useState<'vertical' | 'horizontal'>('vertical')
+  const [orient, setOrient] = useState<'vertical' | 'horizontal'>('horizontal')
 
   // 月数分の広告費（不足分は末尾値で補完）
   const budgets = useMemo(

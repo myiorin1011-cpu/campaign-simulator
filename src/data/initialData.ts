@@ -133,15 +133,15 @@ const baseData: Omit<AppData, 'purchasePlans1' | 'purchasePlans2' | 'performerRa
 
   cohortParams: {
     months: 12,
-    newUserArppu: 15000,
-    secondMonthArppu: 12000,
-    continuousArppu: 10000,
+    newUserArppu: 20000,
+    secondMonthArppu: 35000,
+    continuousArppu: 50000,
     retentionRate: 0.40,
     secondMonthRetention: 0.30,   // 2ヶ月目継続率 30%
     continuousRetention: 0.20,    // 3ヶ月目以降継続率 20%（開始値）
     continuousDecay: 0,           // 逓減幅 0=一定
-    cpi: 500,
-    conversionRate: 0.05,
+    cpi: 2500,
+    conversionRate: 0.10,
     monthlyAdBudgets: Array.from({ length: 12 }, () => 1000000),
   },
 
