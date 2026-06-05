@@ -1,4 +1,4 @@
-name = "paigner"
+name = "campaign-simulator"
 compatibility_date = "2025-01-01"
 
 # Vite のビルド成果物(dist)を静的アセットとして配信（SPA対応）
