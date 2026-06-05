@@ -205,7 +205,7 @@ export function CohortForecast() {
             </thead>
             <tbody>
               {([
-                { label: '広告費', get: (r: typeof rows[0]) => fmt(r.adBudget), total: () => fmt(rows.reduce((s, r) => s + r.adBudget, 0)), color: 'var(--text-secondary)' },
+                { label: '広告費', get: (r: typeof rows[0]) => fmt(r.adBudget), total: () => fmt(rows.reduce((s, r) => s + r.adBudget, 0)), color: 'var(--text-secondary)', input: true },
                 { label: '新規集客数', get: (r: typeof rows[0]) => `${r.installs.toLocaleString()}人`, total: () => `${rows.reduce((s, r) => s + r.installs, 0).toLocaleString()}人`, color: 'var(--text-secondary)' },
                 { label: 'PU（課金）', get: (r: typeof rows[0]) => `${r.newCount.toLocaleString()}人`, total: () => `${rows.reduce((s, r) => s + r.newCount, 0).toLocaleString()}人`, color: 'var(--accent-light)' },
                 { label: '新規 売上', get: (r: typeof rows[0]) => fmt(r.newSales), total: () => fmt(rows.reduce((s, r) => s + r.newSales, 0)), color: 'var(--accent-light)' },
@@ -218,7 +218,17 @@ export function CohortForecast() {
                 <tr key={m.label} className="text-right" style={m.bold ? { background: 'var(--bg-elevated)', borderTop: '2px solid var(--border)' } : undefined}>
                   <td className="text-left font-medium" style={{ color: 'var(--text-secondary)' }}>{m.label}</td>
                   {rows.map((r) => (
-                    <td key={r.month} style={{ color: m.color, fontWeight: m.bold ? 700 : undefined }}>{m.get(r)}</td>
+                    <td key={r.month} style={{ color: m.color, fontWeight: m.bold ? 700 : undefined }}>
+                      {'input' in m && m.input ? (
+                        <input
+                          type="number" min={0} step={100000}
+                          value={r.adBudget}
+                          onChange={(e) => updateBudget(r.month - 1, parseInt(e.target.value) || 0)}
+                          className="input-dark text-right"
+                          style={{ width: '7rem' }}
+                        />
+                      ) : m.get(r)}
+                    </td>
                   ))}
                   <td style={{ color: m.color, fontWeight: 700 }}>{m.total()}</td>
                 </tr>
