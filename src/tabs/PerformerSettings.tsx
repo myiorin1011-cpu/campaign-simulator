@@ -102,6 +102,39 @@ export function PerformerSettings() {
       return { rank, normalPt, bonusPt, cpBonusPt, normalIncome, bonusIncome, cpBonusIncome, addIncome, addRate }
     })
 
+  // ─── キャンペーン予算逆算 & 長期ROI ───
+  const [camp, setCamp] = useState({
+    budget: 1000000,         // 月間キャンペーン予算（上乗せptの会社負担）
+    totalMessages: 1000000,  // 月間メッセージ総数（全パフォーマー）
+    totalChars: 3000000,     // 月間有料鑑定文字総数（全パフォーマー）
+    msgShare: 0.6,           // 予算のメッセージ配分（残りは文字）
+    monthlySales: 20000000,  // 現状の月間売上
+    extraSalesRate: 0.05,    // 想定の売上アップ率
+    grossMargin: 0.62,       // 粗利率
+    effectMonths: 6,         // 効果が続く月数
+  })
+  const bonusCost = pointConfig.bonusPtCost
+  // 逆算：予算 ÷ (¥0.22 × 総量) で +pt/通・+pt/字
+  const addMsgPt = camp.totalMessages > 0 ? (camp.budget * camp.msgShare) / (bonusCost * camp.totalMessages) : 0
+  const addCharPt = camp.totalChars > 0 ? (camp.budget * (1 - camp.msgShare)) / (bonusCost * camp.totalChars) : 0
+  // 長期ROI
+  const extraSales = camp.monthlySales * camp.extraSalesRate
+  const extraGP = extraSales * camp.grossMargin             // 月間の追加粗利（効果）
+  const monthBalance = extraGP - camp.budget                // 初月の収支（投資込み）
+  const breakevenMonths = extraGP > 0 ? camp.budget / extraGP : Infinity  // 投資回収月数
+  const cumNet = extraGP * camp.effectMonths - camp.budget  // 効果継続期間の累計純利益
+  const roi = camp.budget > 0 ? cumNet / camp.budget : 0
+  const campFields: { key: keyof typeof camp; label: string; pct?: boolean; suffix?: string }[] = [
+    { key: 'budget', label: '月間キャンペーン予算 (¥)', suffix: '円' },
+    { key: 'totalMessages', label: '月間メッセージ総数 (通)', suffix: '通' },
+    { key: 'totalChars', label: '月間有料鑑定文字総数 (字)', suffix: '字' },
+    { key: 'msgShare', label: '予算配分: メッセージ (%)', pct: true },
+    { key: 'monthlySales', label: '現状の月間売上 (¥)', suffix: '円' },
+    { key: 'extraSalesRate', label: '想定 売上アップ率 (%)', pct: true },
+    { key: 'grossMargin', label: '粗利率 (%)', pct: true },
+    { key: 'effectMonths', label: '効果が続く月数', suffix: 'ヶ月' },
+  ]
+
   return (
     <div className="max-w-full">
       <h2 className="page-title" style={{ marginBottom: '1rem' }}>パフォーマーランク別獲得ポイント</h2>
@@ -281,6 +314,82 @@ export function PerformerSettings() {
           ※ 通常獲得pt＝P通常 / ボーナス獲得pt＝Pボーナス（表の値）。通常報酬＝通常pt×¥{pointConfig.normalPtCost}、ボーナス報酬＝ボーナスpt×¥{pointConfig.bonusPtCost}。<br />
           ※ キャンペーンの上乗せ（+pt/通・+pt/字）は<strong style={{ color: 'var(--text-primary)' }}>ボーナスpt</strong>に加算され、会社は¥{pointConfig.bonusPtCost}/ptを追加負担します。増加額・増加率はボーナス報酬に対する増分です。<br />
           ※ 増加率が高いランク（特に下位＝元のボーナス単価が低い）ほど同じ上乗せのインパクトが大きくなります。会社負担とインセンティブ効果のバランスで適正な上乗せ幅を判断できます。
+        </p>
+      </section>
+
+      {/* キャンペーン予算逆算 & 長期ROI */}
+      <section className="card" style={{ marginTop: '2rem' }}>
+        <h3 className="section-title">キャンペーン予算 → 最適な上乗せpt 逆算 ＆ 長期ROI</h3>
+        <p className="text-[12px]" style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
+          月間のキャンペーン予算と全パフォーマーの想定稼働量から、適正な「+pt/通・+pt/字」を逆算します。短期は赤字でも、効果（売上アップ）が続けば長期で回収できるかを判定します。
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3" style={{ marginBottom: '1.25rem' }}>
+          {campFields.map(({ key, label, pct, suffix }) => (
+            <div key={key}>
+              <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>{label}</label>
+              <input
+                type="number" min={0} step={pct ? 1 : (key === 'budget' || key === 'monthlySales' ? 100000 : 1000)}
+                value={pct ? +(camp[key] * 100).toFixed(1) : camp[key]}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value) || 0
+                  setCamp((c) => ({ ...c, [key]: pct ? v / 100 : v }))
+                }}
+                className="input-dark w-full text-right"
+              />
+              {suffix && <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{suffix}</span>}
+            </div>
+          ))}
+        </div>
+
+        {/* 逆算結果 */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4" style={{ marginBottom: '1rem' }}>
+          <div className="card-elevated" style={{ padding: '1rem', textAlign: 'center' }}>
+            <div className="text-[12px]" style={{ color: 'var(--text-muted)' }}>推奨 +pt / 通（ボーナス）</div>
+            <div className="kpi-value" style={{ color: 'var(--accent-light)' }}>+{addMsgPt.toFixed(1)} pt</div>
+          </div>
+          <div className="card-elevated" style={{ padding: '1rem', textAlign: 'center' }}>
+            <div className="text-[12px]" style={{ color: 'var(--text-muted)' }}>推奨 +pt / 文字（ボーナス）</div>
+            <div className="kpi-value" style={{ color: 'var(--accent-light)' }}>+{addCharPt.toFixed(2)} pt</div>
+          </div>
+          <div className="card-elevated" style={{ padding: '1rem', textAlign: 'center' }}>
+            <div className="text-[12px]" style={{ color: 'var(--text-muted)' }}>月間 会社負担（予算）</div>
+            <div className="kpi-value" style={{ color: 'var(--text-primary)' }}>{yen(camp.budget)}</div>
+          </div>
+        </div>
+
+        {/* 長期ROI */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="card-elevated" style={{ padding: '1rem', textAlign: 'center' }}>
+            <div className="text-[12px]" style={{ color: 'var(--text-muted)' }}>月間 追加粗利（効果）</div>
+            <div className="kpi-value" style={{ color: 'var(--positive)' }}>{yen(extraGP)}</div>
+          </div>
+          <div className="card-elevated" style={{ padding: '1rem', textAlign: 'center' }}>
+            <div className="text-[12px]" style={{ color: 'var(--text-muted)' }}>初月の収支</div>
+            <div className="kpi-value" style={{ color: monthBalance >= 0 ? 'var(--positive)' : 'var(--negative)' }}>
+              {monthBalance >= 0 ? '' : '▲'}{yen(Math.abs(monthBalance))}
+            </div>
+            <div className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{monthBalance >= 0 ? '初月から黒字' : '短期は赤字'}</div>
+          </div>
+          <div className="card-elevated" style={{ padding: '1rem', textAlign: 'center' }}>
+            <div className="text-[12px]" style={{ color: 'var(--text-muted)' }}>投資回収月数</div>
+            <div className="kpi-value" style={{ color: 'var(--text-primary)' }}>
+              {isFinite(breakevenMonths) ? `${breakevenMonths.toFixed(1)}ヶ月` : '—'}
+            </div>
+            <div className="text-[10px]" style={{ color: breakevenMonths <= camp.effectMonths ? 'var(--positive)' : 'var(--negative)' }}>
+              {isFinite(breakevenMonths) ? (breakevenMonths <= camp.effectMonths ? '効果期間内に回収' : '回収には期間不足') : '効果なし'}
+            </div>
+          </div>
+          <div className="card-elevated" style={{ padding: '1rem', textAlign: 'center' }}>
+            <div className="text-[12px]" style={{ color: 'var(--text-muted)' }}>{camp.effectMonths}ヶ月 累計ROI</div>
+            <div className="kpi-value" style={{ color: roi >= 0 ? 'var(--positive)' : 'var(--negative)' }}>{(roi * 100).toFixed(0)}%</div>
+            <div className="text-[10px]" style={{ color: 'var(--text-muted)' }}>純利益 {yen(cumNet)}</div>
+          </div>
+        </div>
+
+        <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-muted)', marginTop: '1rem' }}>
+          ※ +pt逆算 = 予算 × 配分 ÷（ボーナスpt原価¥{bonusCost} × 総量）。この値を②上部やキャンペーン設定の単価に上乗せしてください。<br />
+          ※ 追加粗利 = 現状売上 × 売上アップ率 × 粗利率。<strong style={{ color: 'var(--text-primary)' }}>初月は予算（投資）を引くため赤字でも、効果が続けば「投資回収月数」で黒字転換</strong>します。回収月数が「効果が続く月数」以内ならGOの目安。<br />
+          ※ 売上アップ率は「キャンペーンでパフォーマー稼働が増え、結果ユーザー消費が伸びる効果」の想定値です。実績が出たら調整してください。
         </p>
       </section>
     </div>
