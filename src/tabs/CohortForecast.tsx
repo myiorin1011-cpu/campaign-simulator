@@ -55,7 +55,22 @@ export function CohortForecast() {
       const continuousSales = continuousCount * cp.continuousArppu
 
       const totalSales = newSales + secondSales + continuousSales
-      return { month, adBudget, installs, newCount, newSales, secondCount, secondSales, continuousCount, continuousSales, totalSales }
+
+      // ── パフォーマー報酬原価計 ──
+      const bonusPtCost = cp.bonusPtCost ?? 0.22
+      const payers = newCount + secondCount + continuousCount
+      // ① 通常報酬原価 = 売上 × 1/3（0.67円/pt 相当）
+      const normalReward = totalSales * (cp.normalRewardRate ?? 1 / 3)
+      // ② 登録特典原価 = 新規集客数 × 7000pt × 0.22円 × 消化率0.7
+      const regBonusCost = installs * (cp.registrationBonusPt ?? 7000) * bonusPtCost * (cp.registrationBonusConsume ?? 0.7)
+      // ③ 通常ボーナス原価 = 課金者数 ×（代表プラン11000 × 付与率3.64%）× 0.22円
+      const normalBonusCost = payers * (cp.credixRepPlan ?? 11000) * (cp.avgBonusGrantRate ?? 0.0364) * bonusPtCost
+      // ④ 初回ボーナス原価 = 新規PU × 300pt × 0.22円 × 消化率
+      const firstBonusCost = newCount * (cp.firstBonusPt ?? 300) * bonusPtCost * (cp.firstBonusConsume ?? 1.0)
+      const performerCost = normalReward + regBonusCost + normalBonusCost + firstBonusCost
+
+      return { month, adBudget, installs, newCount, newSales, secondCount, secondSales, continuousCount, continuousSales, totalSales,
+        normalReward, regBonusCost, normalBonusCost, firstBonusCost, performerCost }
     })
   }, [cp, budgets])
 
@@ -171,6 +186,43 @@ export function CohortForecast() {
         </div>
       </section>
 
+      {/* パフォーマー報酬原価 親パラメータ */}
+      <section className="card">
+        <h3 className="section-title" style={{ marginTop: 0 }}>パフォーマー報酬原価 パラメータ（親データ）</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          {([
+            { label: '登録特典 (pt)', key: 'registrationBonusPt' as const, step: 100 },
+            { label: '登録特典消化率 (%)', key: 'registrationBonusConsume' as const, pct: true, step: 1 },
+            { label: 'Credix代表購入プラン (¥)', key: 'credixRepPlan' as const, step: 100 },
+            { label: '購入平均ボーナス付与率 (%)', key: 'avgBonusGrantRate' as const, pct: true, step: 0.01 },
+            { label: 'Credix初回ボーナス (pt)', key: 'firstBonusPt' as const, step: 10 },
+            { label: '初回ボーナス消化率 (%)', key: 'firstBonusConsume' as const, pct: true, step: 1 },
+            { label: 'ボーナスpt原価 (¥/pt)', key: 'bonusPtCost' as const, step: 0.01 },
+            { label: '通常報酬原価率 (%)', key: 'normalRewardRate' as const, pct: true, step: 0.1 },
+          ]).map(({ label, key, pct, step }) => (
+            <div key={key}>
+              <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>{label}</label>
+              <input
+                type="number" step={step} min={0}
+                value={pct ? +(((cp[key] as number) ?? 0) * 100).toFixed(4) : ((cp[key] as number) ?? 0)}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value) || 0
+                  updateCohortParams({ [key]: pct ? v / 100 : v })
+                }}
+                className="input-dark w-full"
+              />
+            </div>
+          ))}
+        </div>
+        <div className="text-[11px] mt-3 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+          <div style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>パフォーマー報酬原価計 ＝ ①＋②＋③＋④</div>
+          ① 通常報酬原価 ＝ 合計売上 × {((cp.normalRewardRate ?? 1/3) * 100).toFixed(1)}%（0.67円/pt 相当・売上の1/3）<br />
+          ② 登録特典原価 ＝ 新規集客数 × {cp.registrationBonusPt ?? 7000}pt × {cp.bonusPtCost ?? 0.22}円 × 消化率{((cp.registrationBonusConsume ?? 0.7) * 100).toFixed(0)}%<br />
+          ③ 通常ボーナス原価 ＝ 課金者数(新規+継続候補+継続) ×（{(cp.credixRepPlan ?? 11000).toLocaleString()}円 × 付与率{((cp.avgBonusGrantRate ?? 0.0364) * 100).toFixed(2)}%）× {cp.bonusPtCost ?? 0.22}円<br />
+          ④ 初回ボーナス原価 ＝ 新規PU × {cp.firstBonusPt ?? 300}pt × {cp.bonusPtCost ?? 0.22}円 × 消化率{((cp.firstBonusConsume ?? 1.0) * 100).toFixed(0)}%
+        </div>
+      </section>
+
       {/* 表示切替 */}
       <div className="flex items-center gap-2">
         <span className="text-sm" style={{ color: 'var(--text-muted)' }}>表の向き</span>
@@ -214,6 +266,7 @@ export function CohortForecast() {
                 { label: '継続 人数', get: (r: typeof rows[0]) => r.continuousCount > 0 ? `${r.continuousCount.toLocaleString()}人` : '-', total: () => `${rows.reduce((s, r) => s + r.continuousCount, 0).toLocaleString()}人`, color: 'var(--text-secondary)' },
                 { label: '継続 売上', get: (r: typeof rows[0]) => r.continuousCount > 0 ? fmt(r.continuousSales) : '-', total: () => fmt(rows.reduce((s, r) => s + r.continuousSales, 0)), color: 'var(--positive)' },
                 { label: '合計売上', get: (r: typeof rows[0]) => fmt(r.totalSales), total: () => fmt(rows.reduce((s, r) => s + r.totalSales, 0)), color: 'var(--text-primary)', bold: true },
+                { label: 'パフォーマー報酬原価計', get: (r: typeof rows[0]) => fmt(r.performerCost), total: () => fmt(rows.reduce((s, r) => s + r.performerCost, 0)), color: 'var(--negative)', bold: true },
               ]).map((m) => (
                 <tr key={m.label} className="text-right" style={m.bold ? { background: 'var(--bg-elevated)', borderTop: '2px solid var(--border)' } : undefined}>
                   <td className="text-left font-medium" style={{ color: 'var(--text-secondary)' }}>{m.label}</td>
@@ -252,6 +305,7 @@ export function CohortForecast() {
               <th className="text-center" colSpan={2}>継続候補（2ヶ月目）</th>
               <th className="text-center" colSpan={2}>継続（3ヶ月目〜）</th>
               <th className="text-right">合計売上</th>
+              <th className="text-right">報酬原価計</th>
             </tr>
             <tr>
               <th></th>
@@ -265,6 +319,7 @@ export function CohortForecast() {
               <th className="text-right">人数</th>
               <th className="text-right">売上</th>
               <th className="text-right">合計</th>
+              <th className="text-right">原価</th>
             </tr>
           </thead>
           <tbody>
@@ -289,6 +344,7 @@ export function CohortForecast() {
                 <td>{row.continuousCount > 0 ? `${row.continuousCount.toLocaleString()}人` : '-'}</td>
                 <td style={{ color: 'var(--positive)' }}>{row.continuousCount > 0 ? fmt(row.continuousSales) : '-'}</td>
                 <td className="font-bold" style={{ color: 'var(--text-primary)' }}>{fmt(row.totalSales)}</td>
+                <td className="font-bold" style={{ color: 'var(--negative)' }}>{fmt(row.performerCost)}</td>
               </tr>
             ))}
             <tr className="font-bold text-right" style={{ background: 'var(--bg-elevated)', borderTop: '2px solid var(--border)' }}>
@@ -299,6 +355,9 @@ export function CohortForecast() {
               <td colSpan={6}></td>
               <td style={{ color: 'var(--accent-light)' }}>
                 {fmt(rows.reduce((s, r) => s + r.totalSales, 0))}
+              </td>
+              <td style={{ color: 'var(--negative)' }}>
+                {fmt(rows.reduce((s, r) => s + r.performerCost, 0))}
               </td>
             </tr>
           </tbody>

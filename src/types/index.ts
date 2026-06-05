@@ -89,6 +89,16 @@ export interface CohortParams {
   cpi: number                // Cost Per Install（基本入力）
   conversionRate: number     // 課金率（基本入力）
   monthlyAdBudgets: number[] // 月別広告費（手動入力・月数分）
+
+  // パフォーマー報酬原価 計算用パラメータ（親データ）
+  registrationBonusPt?: number      // 登録特典pt（例:7000）
+  registrationBonusConsume?: number // 登録特典消化率（例:0.7）
+  credixRepPlan?: number            // Credix代表購入プラン（例:11000）
+  avgBonusGrantRate?: number        // 購入平均ボーナス付与率（例:0.0364）
+  firstBonusPt?: number             // Credix初回ボーナスpt（例:300）
+  firstBonusConsume?: number        // 初回ボーナス消化率（例:1.0）
+  bonusPtCost?: number              // ボーナスpt原価 円/pt（例:0.22）
+  normalRewardRate?: number         // 通常報酬原価率（売上比・例:0.3333）
 }
 
 // 代理店
