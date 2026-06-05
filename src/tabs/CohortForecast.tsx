@@ -1,9 +1,10 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 
 export function CohortForecast() {
   const { data, updateCohortParams, updateSimulatorParams } = useAppContext()
   const { simulatorParams: sp, cohortParams: cp } = data
+  const [orient, setOrient] = useState<'vertical' | 'horizontal'>('vertical')
 
   // 月数分の広告費（不足分は末尾値で補完）
   const budgets = useMemo(
@@ -170,7 +171,65 @@ export function CohortForecast() {
         </div>
       </section>
 
-      {/* テーブル */}
+      {/* 表示切替 */}
+      <div className="flex items-center gap-2">
+        <span className="text-sm" style={{ color: 'var(--text-muted)' }}>表の向き</span>
+        {([
+          { id: 'vertical' as const, label: '縦（月＝行）' },
+          { id: 'horizontal' as const, label: '横（月＝列）' },
+        ]).map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => setOrient(id)}
+            style={{
+              padding: '4px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer',
+              background: orient === id ? 'var(--accent-dim)' : 'var(--bg-elevated)',
+              border: `1px solid ${orient === id ? 'rgba(99,102,241,0.4)' : 'var(--border)'}`,
+              color: orient === id ? 'var(--accent-light)' : 'var(--text-secondary)',
+              fontWeight: orient === id ? 600 : 400,
+            }}
+          >{label}</button>
+        ))}
+      </div>
+
+      {/* テーブル（横向き：月＝列、指標＝行） */}
+      {orient === 'horizontal' && (
+        <section className="card overflow-x-auto" style={{ padding: 0 }}>
+          <table className="table-dark w-full text-sm">
+            <thead>
+              <tr>
+                <th className="text-left">項目</th>
+                {rows.map((r) => <th key={r.month} className="text-right">{r.month}月</th>)}
+                <th className="text-right">合計</th>
+              </tr>
+            </thead>
+            <tbody>
+              {([
+                { label: '広告費', get: (r: typeof rows[0]) => fmt(r.adBudget), total: () => fmt(rows.reduce((s, r) => s + r.adBudget, 0)), color: 'var(--text-secondary)' },
+                { label: '新規集客数', get: (r: typeof rows[0]) => `${r.installs.toLocaleString()}人`, total: () => `${rows.reduce((s, r) => s + r.installs, 0).toLocaleString()}人`, color: 'var(--text-secondary)' },
+                { label: 'PU（課金）', get: (r: typeof rows[0]) => `${r.newCount.toLocaleString()}人`, total: () => `${rows.reduce((s, r) => s + r.newCount, 0).toLocaleString()}人`, color: 'var(--accent-light)' },
+                { label: '新規 売上', get: (r: typeof rows[0]) => fmt(r.newSales), total: () => fmt(rows.reduce((s, r) => s + r.newSales, 0)), color: 'var(--accent-light)' },
+                { label: '継続候補 人数', get: (r: typeof rows[0]) => r.secondCount > 0 ? `${r.secondCount.toLocaleString()}人` : '-', total: () => `${rows.reduce((s, r) => s + r.secondCount, 0).toLocaleString()}人`, color: 'var(--text-secondary)' },
+                { label: '継続候補 売上', get: (r: typeof rows[0]) => r.secondCount > 0 ? fmt(r.secondSales) : '-', total: () => fmt(rows.reduce((s, r) => s + r.secondSales, 0)), color: 'var(--purple)' },
+                { label: '継続 人数', get: (r: typeof rows[0]) => r.continuousCount > 0 ? `${r.continuousCount.toLocaleString()}人` : '-', total: () => `${rows.reduce((s, r) => s + r.continuousCount, 0).toLocaleString()}人`, color: 'var(--text-secondary)' },
+                { label: '継続 売上', get: (r: typeof rows[0]) => r.continuousCount > 0 ? fmt(r.continuousSales) : '-', total: () => fmt(rows.reduce((s, r) => s + r.continuousSales, 0)), color: 'var(--positive)' },
+                { label: '合計売上', get: (r: typeof rows[0]) => fmt(r.totalSales), total: () => fmt(rows.reduce((s, r) => s + r.totalSales, 0)), color: 'var(--text-primary)', bold: true },
+              ]).map((m) => (
+                <tr key={m.label} className="text-right" style={m.bold ? { background: 'var(--bg-elevated)', borderTop: '2px solid var(--border)' } : undefined}>
+                  <td className="text-left font-medium" style={{ color: 'var(--text-secondary)' }}>{m.label}</td>
+                  {rows.map((r) => (
+                    <td key={r.month} style={{ color: m.color, fontWeight: m.bold ? 700 : undefined }}>{m.get(r)}</td>
+                  ))}
+                  <td style={{ color: m.color, fontWeight: 700 }}>{m.total()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+
+      {/* テーブル（縦向き：月＝行） */}
+      {orient === 'vertical' && (
       <section className="card overflow-x-auto" style={{ padding: 0 }}>
         <table className="table-dark w-full text-sm">
           <thead>
@@ -235,6 +294,7 @@ export function CohortForecast() {
           </tbody>
         </table>
       </section>
+      )}
     </div>
   )
 }
