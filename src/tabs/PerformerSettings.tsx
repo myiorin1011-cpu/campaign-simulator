@@ -75,32 +75,48 @@ export function PerformerSettings() {
   // ─── 1鑑定シミュレーター（基本 vs キャンペーン比較）───
   // ※常に「基本設定」のランクを基準にキャンペーン上乗せを比較
   const [sim, setSim] = useState({
-    messages: 30,    // 1鑑定あたりの通数
-    chars: 400,      // 1鑑定あたりの文字数
+    messages: 3,     // 1鑑定あたりの通数（目安: 3通）
+    chars: 400,      // 1鑑定あたりの文字数（目安: 400字）
     addMsg: 10,      // キャンペーン: 1通あたり +pt
     addChar: 1,      // キャンペーン: 1文字あたり +pt
   })
-  const simRows = data.performerRanks
-    .filter((r) => {
-      const m = r.actions.find((a) => a.type === 'message')
-      const c = r.actions.find((a) => a.type === 'fortune_char')
-      return (m && (m.performerNormal || m.performerBonus)) || (c && (c.performerNormal || c.performerBonus))
-    })
-    .map((rank) => {
-      const m = rank.actions.find((a) => a.type === 'message')
-      const c = rank.actions.find((a) => a.type === 'fortune_char')
-      const normalPt = sim.messages * (m?.performerNormal ?? 0) + sim.chars * (c?.performerNormal ?? 0)
-      const bonusPt = sim.messages * (m?.performerBonus ?? 0) + sim.chars * (c?.performerBonus ?? 0)
-      const upliftPt = sim.messages * sim.addMsg + sim.chars * sim.addChar
-      const cpBonusPt = bonusPt + upliftPt
+  const simBaseRanks = data.performerRanks.filter((r) => {
+    const m = r.actions.find((a) => a.type === 'message')
+    const c = r.actions.find((a) => a.type === 'fortune_char')
+    return (m && (m.performerNormal || m.performerBonus)) || (c && (c.performerNormal || c.performerBonus))
+  })
+  const simRows = simBaseRanks.map((rank) => {
+    const m = rank.actions.find((a) => a.type === 'message')
+    const c = rank.actions.find((a) => a.type === 'fortune_char')
+    const normalPt = sim.messages * (m?.performerNormal ?? 0) + sim.chars * (c?.performerNormal ?? 0)
+    const bonusPt = sim.messages * (m?.performerBonus ?? 0) + sim.chars * (c?.performerBonus ?? 0)
+    const upliftPt = sim.messages * sim.addMsg + sim.chars * sim.addChar
+    const cpBonusPt = bonusPt + upliftPt
 
-      const normalIncome = normalPt * pointConfig.normalPtCost
-      const bonusIncome = bonusPt * pointConfig.bonusPtCost
-      const cpBonusIncome = cpBonusPt * pointConfig.bonusPtCost
-      const addIncome = upliftPt * pointConfig.bonusPtCost
-      const addRate = bonusIncome > 0 ? addIncome / bonusIncome : null
-      return { rank, normalPt, bonusPt, cpBonusPt, normalIncome, bonusIncome, cpBonusIncome, addIncome, addRate }
-    })
+    const normalIncome = normalPt * pointConfig.normalPtCost
+    const bonusIncome = bonusPt * pointConfig.bonusPtCost
+    const cpBonusIncome = cpBonusPt * pointConfig.bonusPtCost
+    const addIncome = upliftPt * pointConfig.bonusPtCost
+    const addRate = bonusIncome > 0 ? addIncome / bonusIncome : null
+    return { rank, normalPt, bonusPt, cpBonusPt, normalIncome, bonusIncome, cpBonusIncome, addIncome, addRate }
+  })
+
+  // 1鑑定あたり 総合損益指標（U消費・売上・粗利・キャンペーン後）
+  const econRows = simBaseRanks.map((rank) => {
+    const m = rank.actions.find((a) => a.type === 'message')
+    const c = rank.actions.find((a) => a.type === 'fortune_char')
+    const userPt = sim.messages * (m?.userConsume ?? 0) + sim.chars * (c?.userConsume ?? 0)  // U消費pt
+    const revenue = userPt * pointConfig.userPtRate                                            // 売上(¥)
+    const pNormalPt = sim.messages * (m?.performerNormal ?? 0) + sim.chars * (c?.performerNormal ?? 0)
+    const rewardCost = pNormalPt * pointConfig.normalPtCost                                    // 報酬原価(通常)
+    const grossProfit = revenue - rewardCost
+    const grossMargin = revenue > 0 ? grossProfit / revenue : 0
+    // キャンペーン上乗せ（ボーナスpt）のコスト増
+    const cpCost = (sim.messages * sim.addMsg + sim.chars * sim.addChar) * pointConfig.bonusPtCost
+    const cpGrossProfit = grossProfit - cpCost
+    const cpGrossMargin = revenue > 0 ? cpGrossProfit / revenue : 0
+    return { rank, userPt, revenue, pNormalPt, rewardCost, grossProfit, grossMargin, cpCost, cpGrossProfit, cpGrossMargin }
+  })
 
   // ─── キャンペーン予算逆算 & 長期ROI ───
   const [camp, setCamp] = useState({
@@ -314,6 +330,53 @@ export function PerformerSettings() {
           ※ 通常獲得pt＝P通常 / ボーナス獲得pt＝Pボーナス（表の値）。通常報酬＝通常pt×¥{pointConfig.normalPtCost}、ボーナス報酬＝ボーナスpt×¥{pointConfig.bonusPtCost}。<br />
           ※ キャンペーンの上乗せ（+pt/通・+pt/字）は<strong style={{ color: 'var(--text-primary)' }}>ボーナスpt</strong>に加算され、会社は¥{pointConfig.bonusPtCost}/ptを追加負担します。増加額・増加率はボーナス報酬に対する増分です。<br />
           ※ 増加率が高いランク（特に下位＝元のボーナス単価が低い）ほど同じ上乗せのインパクトが大きくなります。会社負担とインセンティブ効果のバランスで適正な上乗せ幅を判断できます。
+        </p>
+      </section>
+
+      {/* 1鑑定あたり 総合損益指標 */}
+      <section className="card" style={{ marginTop: '2rem' }}>
+        <h3 className="section-title">1鑑定あたり 総合損益指標（{sim.messages}通 ＋ {sim.chars}字）</h3>
+        <p className="text-[12px]" style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
+          上の入力（通数・文字数・上乗せpt）と連動。1鑑定でユーザーがいくら消費し、会社にいくら残るか（売上・報酬原価・粗利・粗利率）と、キャンペーン上乗せ後の粗利をランク別に表示します。
+        </p>
+        <div className="overflow-x-auto">
+          <table className="table-dark w-full">
+            <thead>
+              <tr>
+                <th className="text-left">ランク</th>
+                <th>U消費pt</th>
+                <th>売上(¥)</th>
+                <th>P獲得pt(通常)</th>
+                <th>報酬原価(¥)</th>
+                <th>粗利(¥)</th>
+                <th>粗利率</th>
+                <th>CP上乗せ原価</th>
+                <th>CP後 粗利</th>
+                <th>CP後 粗利率</th>
+              </tr>
+            </thead>
+            <tbody>
+              {econRows.map((r) => (
+                <tr key={r.rank.stage}>
+                  <td className="text-left font-medium" style={{ color: 'var(--text-secondary)' }}>{r.rank.name}</td>
+                  <td>{Math.round(r.userPt).toLocaleString()} pt</td>
+                  <td style={{ color: 'var(--accent-light)' }}>{yen(r.revenue)}</td>
+                  <td style={{ color: 'var(--text-muted)' }}>{Math.round(r.pNormalPt).toLocaleString()} pt</td>
+                  <td>{yen(r.rewardCost)}</td>
+                  <td className="font-medium" style={{ color: 'var(--positive)' }}>{yen(r.grossProfit)}</td>
+                  <td className="font-bold">{(r.grossMargin * 100).toFixed(1)}%</td>
+                  <td style={{ color: 'var(--negative)' }}>▲{yen(r.cpCost)}</td>
+                  <td className="font-medium" style={{ color: r.cpGrossProfit >= 0 ? 'var(--positive)' : 'var(--negative)' }}>{yen(r.cpGrossProfit)}</td>
+                  <td className="font-bold" style={{ color: r.cpGrossMargin >= 0.4 ? 'var(--text-primary)' : 'var(--warning)' }}>{(r.cpGrossMargin * 100).toFixed(1)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-muted)', marginTop: '0.75rem' }}>
+          ※ U消費pt = 通数×メッセージU消費 ＋ 文字数×有料鑑定U消費。売上 = U消費pt × User販売単価¥{pointConfig.userPtRate}。<br />
+          ※ 報酬原価 = P獲得pt(通常) × ¥{pointConfig.normalPtCost}。粗利 = 売上 − 報酬原価。CP上乗せ原価 = 上乗せpt × ¥{pointConfig.bonusPtCost}（ボーナス）。<br />
+          ※ CP後粗利率が大きく下がらない範囲で上乗せ幅を決めるのが目安です。
         </p>
       </section>
 
