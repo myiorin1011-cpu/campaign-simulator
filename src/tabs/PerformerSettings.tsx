@@ -29,8 +29,8 @@ const RANK_SCENARIOS = [
 type RanksField = typeof RANK_SCENARIOS[number]['field']
 
 export function PerformerSettings() {
-  const { data, updateRanksScenario } = useAppContext()
-  const { pointConfig } = data
+  const { data, updateRanksScenario, updateCohortParams } = useAppContext()
+  const { pointConfig, cohortParams: cp } = data
   const [scenario, setScenario] = useState<RanksField>('performerRanks')
   const performerRanks = data[scenario]
 
@@ -154,6 +154,47 @@ export function PerformerSettings() {
   return (
     <div className="max-w-full">
       <h2 className="page-title" style={{ marginBottom: '1rem' }}>パフォーマーランク別獲得ポイント</h2>
+
+      {/* キャンペーン登録：無償消化分ボーナスpt上乗せ */}
+      <section className="card" style={{ marginBottom: '1rem' }}>
+        <div className="flex items-center gap-3 mb-3">
+          <h3 className="section-title" style={{ margin: 0 }}>キャンペーン登録（ボーナスpt上乗せ・無償消化分）</h3>
+          <label className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={!!cp.campaignEnabled}
+              onChange={(e) => updateCohortParams({ campaignEnabled: e.target.checked })} />
+            有効
+          </label>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div>
+            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>実施月</label>
+            <input type="number" min={1} value={cp.campaignMonth ?? 1}
+              onChange={(e) => updateCohortParams({ campaignMonth: parseInt(e.target.value) || 1 })}
+              className="input-dark w-full" />
+          </div>
+          <div>
+            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>+pt/通（P獲得ボ）</label>
+            <input type="number" min={0} step={1} value={cp.campaignAddMsgBonusPt ?? 0}
+              onChange={(e) => updateCohortParams({ campaignAddMsgBonusPt: parseFloat(e.target.value) || 0 })}
+              className="input-dark w-full" />
+          </div>
+          <div>
+            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>+pt/字（P獲得ボ）</label>
+            <input type="number" min={0} step={1} value={cp.campaignAddCharBonusPt ?? 0}
+              onChange={(e) => updateCohortParams({ campaignAddCharBonusPt: parseFloat(e.target.value) || 0 })}
+              className="input-dark w-full" />
+          </div>
+          <div className="flex flex-col justify-end">
+            <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>1鑑定あたり上乗せ</span>
+            <span className="font-bold font-mono-num" style={{ color: 'var(--purple)', fontSize: '1.05rem' }}>
+              +{3 * (cp.campaignAddMsgBonusPt ?? 0) + 400 * (cp.campaignAddCharBonusPt ?? 0)} pt / +¥{(3 * (cp.campaignAddMsgBonusPt ?? 0) + 400 * (cp.campaignAddCharBonusPt ?? 0)).toLocaleString()}
+            </span>
+          </div>
+        </div>
+        <p className="text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>
+          ※ ゴールド基準・1鑑定＝3通＋400字。対象は登録特典(無償)の消化分のみ。月次の施策原価・採算は「コホート予測」「予算P/L」に反映されます。
+        </p>
+      </section>
 
       {/* シナリオ切り替えタブ */}
       <div className="scenario-tabs" style={{ marginBottom: '1rem' }}>

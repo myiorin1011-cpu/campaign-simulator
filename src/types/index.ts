@@ -99,6 +99,12 @@ export interface CohortParams {
   firstBonusConsume?: number        // 初回ボーナス消化率（例:1.0）
   bonusPtCost?: number              // ボーナスpt原価 円/pt（例:0.22）
   normalRewardRate?: number         // 通常報酬原価率（売上比・例:0.3333）
+
+  // キャンペーン施策：無償(登録特典)消化分のボーナスpt上乗せ
+  campaignEnabled?: boolean         // 施策ON/OFF
+  campaignMonth?: number            // 実施月（1始まり・例:1）
+  campaignAddMsgBonusPt?: number    // +pt/通（ボ）（例:10）
+  campaignAddCharBonusPt?: number   // +pt/字（ボ）（例:1）
 }
 
 // 代理店

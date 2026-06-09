@@ -152,6 +152,11 @@ const baseData: Omit<AppData, 'purchasePlans1' | 'purchasePlans2' | 'performerRa
     firstBonusConsume: 1.0,
     bonusPtCost: 0.22,
     normalRewardRate: 1 / 3,
+    // キャンペーン施策（無償消化分のボーナスpt上乗せ）
+    campaignEnabled: true,
+    campaignMonth: 1,
+    campaignAddMsgBonusPt: 10,
+    campaignAddCharBonusPt: 1,
   },
 
   agencies: [

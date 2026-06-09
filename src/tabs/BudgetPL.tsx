@@ -150,10 +150,17 @@ function computeCohortMonthly(cp: CohortParams) {
     const regBonusCost = installs * (cp.registrationBonusPt ?? 7000) * bonusPtCost * (cp.registrationBonusConsume ?? 0.7)
     const normalBonusCost = payers * (cp.credixRepPlan ?? 11000) * (cp.avgBonusGrantRate ?? 0.0364) * bonusPtCost
     const firstBonusCost = newCount * (cp.firstBonusPt ?? 300) * bonusPtCost * (cp.firstBonusConsume ?? 1.0)
+    // キャンペーン施策原価（無償消化分・1鑑定=3通+400字, ゴールド U消費 通150/字9 → 4050pt/鑑定）
+    let campaignCost = 0
+    if (cp.campaignEnabled && (cp.campaignMonth ?? 1) === month) {
+      const bonusConsumedPt = installs * (cp.registrationBonusPt ?? 7000) * (cp.registrationBonusConsume ?? 0.7)
+      const bonusReadings = bonusConsumedPt / (3 * 150 + 400 * 9)
+      campaignCost = bonusReadings * (3 * (cp.campaignAddMsgBonusPt ?? 0) + 400 * (cp.campaignAddCharBonusPt ?? 0))
+    }
 
     shinki.push(newSales); kouho.push(secondSales); keizoku.push(continuousSales)
     adUser.push(budgets[i])
-    performer.push(normalReward + regBonusCost + normalBonusCost + firstBonusCost)
+    performer.push(normalReward + regBonusCost + normalBonusCost + firstBonusCost + campaignCost)
   }
   // P/L は12ヶ月固定列。長さを N に合わせる（不足は0埋め・超過は切り捨て）
   const pad = (a: number[]) => Array.from({ length: N }, (_, i) => a[i] ?? 0)

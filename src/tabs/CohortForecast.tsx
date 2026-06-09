@@ -67,10 +67,22 @@ export function CohortForecast() {
       const normalBonusCost = payers * (cp.credixRepPlan ?? 11000) * (cp.avgBonusGrantRate ?? 0.0364) * bonusPtCost
       // ④ 初回ボーナス原価 = 新規PU × 300pt × 0.22円 × 消化率
       const firstBonusCost = newCount * (cp.firstBonusPt ?? 300) * bonusPtCost * (cp.firstBonusConsume ?? 1.0)
-      const performerCost = normalReward + regBonusCost + normalBonusCost + firstBonusCost
+      const performerCostBase = normalReward + regBonusCost + normalBonusCost + firstBonusCost
+
+      // ⑤ キャンペーン施策原価（無償=登録特典 消化分のボーナスpt上乗せ）
+      //   ゴールド基準: 1鑑定 = 3通 + 400字, U消費 通150pt/字9pt → 1鑑定 = 4050pt
+      const PT_PER_READING = 3 * 150 + 400 * 9   // = 4050
+      let campaignCost = 0
+      if (cp.campaignEnabled && (cp.campaignMonth ?? 1) === month) {
+        const bonusConsumedPt = installs * (cp.registrationBonusPt ?? 7000) * (cp.registrationBonusConsume ?? 0.7)
+        const bonusReadings = bonusConsumedPt / PT_PER_READING
+        const addPerReading = 3 * (cp.campaignAddMsgBonusPt ?? 0) + 400 * (cp.campaignAddCharBonusPt ?? 0)
+        campaignCost = bonusReadings * addPerReading   // pt = 円（P:1pt=1円）
+      }
+      const performerCost = performerCostBase + campaignCost
 
       return { month, adBudget, installs, newCount, newSales, secondCount, secondSales, continuousCount, continuousSales, totalSales,
-        normalReward, regBonusCost, normalBonusCost, firstBonusCost, performerCost }
+        normalReward, regBonusCost, normalBonusCost, firstBonusCost, performerCostBase, campaignCost, performerCost }
     })
   }, [cp, budgets])
 
@@ -223,6 +235,48 @@ export function CohortForecast() {
         </div>
       </section>
 
+      {/* キャンペーン施策（無償消化分ボーナスpt上乗せ） */}
+      <section className="card">
+        <div className="flex items-center gap-3 mb-3">
+          <h3 className="section-title" style={{ margin: 0 }}>キャンペーン施策（ボーナスpt上乗せ・無償消化分）</h3>
+          <label className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={!!cp.campaignEnabled}
+              onChange={(e) => updateCohortParams({ campaignEnabled: e.target.checked })} />
+            有効
+          </label>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div>
+            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>実施月</label>
+            <input type="number" min={1} max={cp.months} value={cp.campaignMonth ?? 1}
+              onChange={(e) => updateCohortParams({ campaignMonth: parseInt(e.target.value) || 1 })}
+              className="input-dark w-full" />
+          </div>
+          <div>
+            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>+pt/通（ボ）</label>
+            <input type="number" min={0} step={1} value={cp.campaignAddMsgBonusPt ?? 0}
+              onChange={(e) => updateCohortParams({ campaignAddMsgBonusPt: parseFloat(e.target.value) || 0 })}
+              className="input-dark w-full" />
+          </div>
+          <div>
+            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>+pt/字（ボ）</label>
+            <input type="number" min={0} step={1} value={cp.campaignAddCharBonusPt ?? 0}
+              onChange={(e) => updateCohortParams({ campaignAddCharBonusPt: parseFloat(e.target.value) || 0 })}
+              className="input-dark w-full" />
+          </div>
+          <div className="flex flex-col justify-end">
+            <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>実施月の施策原価</span>
+            <span className="font-bold font-mono-num" style={{ color: 'var(--purple)', fontSize: '1.1rem' }}>
+              {fmt(rows.find((r) => r.month === (cp.campaignMonth ?? 1))?.campaignCost ?? 0)}
+            </span>
+          </div>
+        </div>
+        <p className="text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>
+          ※ 対象＝登録特典の無償消化分のみ。1鑑定＝3通＋400字、ゴールド基準 U消費 通150pt・字9pt（＝4,050pt/鑑定）。
+          施策原価 ＝（無償消化pt ÷ 4,050）×（3×+pt/通 ＋ 400×+pt/字）。パフォーマー報酬原価計に加算されます。
+        </p>
+      </section>
+
       {/* 表示切替 */}
       <div className="flex items-center gap-2">
         <span className="text-sm" style={{ color: 'var(--text-muted)' }}>表の向き</span>
@@ -266,6 +320,7 @@ export function CohortForecast() {
                 { label: '継続 人数', get: (r: typeof rows[0]) => r.continuousCount > 0 ? `${r.continuousCount.toLocaleString()}人` : '-', total: () => `${rows.reduce((s, r) => s + r.continuousCount, 0).toLocaleString()}人`, color: 'var(--text-secondary)' },
                 { label: '継続 売上', get: (r: typeof rows[0]) => r.continuousCount > 0 ? fmt(r.continuousSales) : '-', total: () => fmt(rows.reduce((s, r) => s + r.continuousSales, 0)), color: 'var(--positive)' },
                 { label: '合計売上', get: (r: typeof rows[0]) => fmt(r.totalSales), total: () => fmt(rows.reduce((s, r) => s + r.totalSales, 0)), color: 'var(--text-primary)', bold: true },
+                { label: '　うちキャンペーン施策', get: (r: typeof rows[0]) => r.campaignCost > 0 ? fmt(r.campaignCost) : '-', total: () => fmt(rows.reduce((s, r) => s + r.campaignCost, 0)), color: 'var(--purple)' },
                 { label: 'パフォーマー報酬原価計', get: (r: typeof rows[0]) => fmt(r.performerCost), total: () => fmt(rows.reduce((s, r) => s + r.performerCost, 0)), color: 'var(--negative)', bold: true },
               ]).map((m) => (
                 <tr key={m.label} className="text-right" style={m.bold ? { background: 'var(--bg-elevated)', borderTop: '2px solid var(--border)' } : undefined}>
