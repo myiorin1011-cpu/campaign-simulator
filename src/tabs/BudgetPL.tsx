@@ -1,4 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { useAppContext } from '../context/AppContext'
+import type { CohortParams } from '../types'
 
 // ───────────────────────────────────────────────
 // 2026年 想定予算（P/L）データ  期間: 2026年4月 〜 2027年3月
@@ -55,15 +57,15 @@ const resolve = (node: Node): number[] => {
   return sumNodes((node.children ?? []).map(resolve))
 }
 
-const revenueTree: Node = {
+const buildRevenueTree = (shinki: number[], kouho: number[], keizoku: number[]): Node => ({
   label: '売上', children: [
-    { label: '新規（利用初月）', monthly: rev_shinki },
-    { label: '継続候補（2ヶ月目）', monthly: rev_kouho },
-    { label: '継続（3ヶ月目以降）', monthly: rev_keizoku },
+    { label: '新規（利用初月）', monthly: shinki },
+    { label: '継続候補（2ヶ月目）', monthly: kouho },
+    { label: '継続（3ヶ月目以降）', monthly: keizoku },
   ],
-}
+})
 
-const costTree: Node = {
+const buildCostTree = (adUser: number[], performerArr: number[]): Node => ({
   label: '費用', children: [
     {
       label: 'システム', children: [
@@ -93,10 +95,10 @@ const costTree: Node = {
         {
           label: '広告費', children: [
             { label: '占い師', monthly: ad_uranaishi },
-            { label: 'ユーザ', monthly: ad_user },
+            { label: 'ユーザ', monthly: adUser },
           ],
         },
-        { label: 'パフォーマー報酬（占い師）', monthly: performer },
+        { label: 'パフォーマー報酬（占い師）', monthly: performerArr },
         {
           label: '決済利用料', children: [
             { label: 'クレジット（Credix）', monthly: pay_credix },
@@ -112,6 +114,55 @@ const costTree: Node = {
       ],
     },
   ],
+})
+
+// ── コホート連動: cohortParams から月次の売上/広告費/報酬原価を算出 ──
+function computeCohortMonthly(cp: CohortParams) {
+  const months = Math.max(0, cp.months || 0)
+  const budgets = Array.from({ length: months }, (_, i) =>
+    cp.monthlyAdBudgets[i] ?? cp.monthlyAdBudgets[cp.monthlyAdBudgets.length - 1] ?? 0)
+  const r2 = cp.secondMonthRetention
+  const r3 = cp.continuousRetention
+  const decay = cp.continuousDecay
+  const cpi = cp.cpi
+  const cr = cp.conversionRate
+  const newCounts = budgets.map((b) => Math.floor((cpi > 0 ? Math.floor(b / cpi) : 0) * cr))
+  const bonusPtCost = cp.bonusPtCost ?? 0.22
+
+  const shinki: number[] = [], kouho: number[] = [], keizoku: number[] = []
+  const adUser: number[] = [], performer: number[] = []
+  for (let i = 0; i < months; i++) {
+    const month = i + 1
+    const installs = cpi > 0 ? Math.floor(budgets[i] / cpi) : 0
+    const newCount = newCounts[i]
+    const secondCount = i >= 1 ? Math.floor(newCounts[i - 1] * r2) : 0
+    let continuousCount = 0
+    for (let age = 3; age <= month; age++) {
+      const idx = i - (age - 1)
+      if (idx >= 0) continuousCount += Math.floor(newCounts[idx] * Math.max(0, r3 - decay * (age - 3)))
+    }
+    const newSales = newCount * cp.newUserArppu
+    const secondSales = secondCount * cp.secondMonthArppu
+    const continuousSales = continuousCount * cp.continuousArppu
+    const totalSales = newSales + secondSales + continuousSales
+    const payers = newCount + secondCount + continuousCount
+    const normalReward = totalSales * (cp.normalRewardRate ?? 1 / 3)
+    const regBonusCost = installs * (cp.registrationBonusPt ?? 7000) * bonusPtCost * (cp.registrationBonusConsume ?? 0.7)
+    const normalBonusCost = payers * (cp.credixRepPlan ?? 11000) * (cp.avgBonusGrantRate ?? 0.0364) * bonusPtCost
+    const firstBonusCost = newCount * (cp.firstBonusPt ?? 300) * bonusPtCost * (cp.firstBonusConsume ?? 1.0)
+
+    shinki.push(newSales); kouho.push(secondSales); keizoku.push(continuousSales)
+    adUser.push(budgets[i])
+    performer.push(normalReward + regBonusCost + normalBonusCost + firstBonusCost)
+  }
+  // P/L は12ヶ月固定列。長さを N に合わせる（不足は0埋め・超過は切り捨て）
+  const pad = (a: number[]) => Array.from({ length: N }, (_, i) => a[i] ?? 0)
+  return { shinki: pad(shinki), kouho: pad(kouho), keizoku: pad(keizoku), adUser: pad(adUser), performer: pad(performer) }
+}
+
+// 原本（固定）の配列
+const FIXED = {
+  shinki: rev_shinki, kouho: rev_kouho, keizoku: rev_keizoku, adUser: ad_user, performer,
 }
 
 // 表示用にツリーを行へ平坦化（level=インデント, kind=見た目）
@@ -124,7 +175,14 @@ function flatten(node: Node, level: number, out: Row[]) {
 }
 
 export function BudgetPL() {
+  const { data } = useAppContext()
+  const [mode, setMode] = useState<'fixed' | 'linked'>('fixed')
+
   const { revenue, costTotal, costRows, revRows, monthlyProfit, cumulative, yobi } = useMemo(() => {
+    const src = mode === 'linked' ? computeCohortMonthly(data.cohortParams) : FIXED
+    const revenueTree = buildRevenueTree(src.shinki, src.kouho, src.keizoku)
+    const costTree = buildCostTree(src.adUser, src.performer)
+
     const revRowsArr: Row[] = []
     revenueTree.children!.forEach((c) => flatten(c, 1, revRowsArr))
     const revenue = resolve(revenueTree)
@@ -141,7 +199,7 @@ export function BudgetPL() {
       revenue, costTotal, costRows: costRowsArr, revRows: revRowsArr,
       monthlyProfit, cumulative, yobi: memo_yobi,
     }
-  }, [])
+  }, [mode, data.cohortParams])
 
   const total = (a: number[]) => a.reduce((s, v) => s + v, 0)
   const fmt = (n: number) => {
@@ -177,6 +235,32 @@ export function BudgetPL() {
       <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
         期間: 2026年4月 〜 2027年3月　／　出典: スプレッドシート「2026年_想定予算」
       </p>
+
+      {/* モード切替 */}
+      <div className="flex items-center gap-2">
+        <span className="text-sm" style={{ color: 'var(--text-muted)' }}>データソース</span>
+        {([
+          { id: 'fixed' as const, label: '原本（固定予算）' },
+          { id: 'linked' as const, label: 'コホート連動' },
+        ]).map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => setMode(id)}
+            style={{
+              padding: '4px 12px', borderRadius: 6, fontSize: 12, cursor: 'pointer',
+              background: mode === id ? 'var(--accent-dim)' : 'var(--bg-elevated)',
+              border: `1px solid ${mode === id ? 'rgba(99,102,241,0.4)' : 'var(--border)'}`,
+              color: mode === id ? 'var(--accent-light)' : 'var(--text-secondary)',
+              fontWeight: mode === id ? 600 : 400,
+            }}
+          >{label}</button>
+        ))}
+        <span className="text-[11px]" style={{ color: 'var(--text-muted)', marginLeft: 6 }}>
+          {mode === 'linked'
+            ? '※ 売上(新規/候補/継続)・広告費(ユーザ)・パフォーマー報酬 をコホート予測タブの値で算出。他の費用は原本固定。'
+            : '※ スプレッドシート原本の固定値を表示中。'}
+        </span>
+      </div>
 
       {/* サマリーKPI */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
