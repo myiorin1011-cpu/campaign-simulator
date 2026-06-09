@@ -142,7 +142,7 @@ const baseData: Omit<AppData, 'purchasePlans1' | 'purchasePlans2' | 'performerRa
     continuousDecay: 0,           // 逓減幅 0=一定
     cpi: 2500,
     conversionRate: 0.10,
-    monthlyAdBudgets: Array.from({ length: 12 }, () => 1000000),
+    monthlyAdBudgets: Array.from({ length: 12 }, (_, i) => 4000000 + i * 2000000),
     // パフォーマー報酬原価 親パラメータ
     registrationBonusPt: 7000,
     registrationBonusConsume: 0.70,
