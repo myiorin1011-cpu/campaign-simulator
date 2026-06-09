@@ -51,6 +51,7 @@ import { useAppContext } from './context/AppContext'
 import { ReportGenerator } from './tabs/ReportGenerator'
 import { CampaignPlanner } from './tabs/CampaignPlanner'
 import { BannerManager } from './tabs/BannerManager'
+import { BudgetPL } from './tabs/BudgetPL'
 
 const TABS = [
   { id: 'point',     label: 'ポイント設定',        icon: '◈', sub: 'Point Config' },
@@ -62,6 +63,7 @@ const TABS = [
   { id: 'report',    label: '結果報告書',           icon: '▣', sub: 'Report' },
   { id: 'campaign',  label: 'キャンペーン企画',     icon: '▦', sub: 'Campaign' },
   { id: 'banner',    label: 'バナー管理',           icon: '▤', sub: 'Banner' },
+  { id: 'budget',    label: '予算P/L',              icon: '▥', sub: 'Budget P/L' },
 ]
 
 export default function App() {
@@ -258,6 +260,7 @@ export default function App() {
           {activeTab === 'report'    && <ReportGenerator />}
           {activeTab === 'campaign'  && <CampaignPlanner />}
           {activeTab === 'banner'    && <BannerManager />}
+          {activeTab === 'budget'    && <BudgetPL />}
         </div>
       </main>
     </div>
