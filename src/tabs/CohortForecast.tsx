@@ -356,8 +356,8 @@ export function CohortForecast() {
                 { label: '継続 人数', get: (r: typeof rows[0]) => r.continuousCount > 0 ? `${r.continuousCount.toLocaleString()}人` : '-', total: () => `${rows.reduce((s, r) => s + r.continuousCount, 0).toLocaleString()}人`, color: 'var(--text-secondary)' },
                 { label: '継続 売上', get: (r: typeof rows[0]) => r.continuousCount > 0 ? fmt(r.continuousSales) : '-', total: () => fmt(rows.reduce((s, r) => s + r.continuousSales, 0)), color: 'var(--positive)' },
                 { label: '合計売上', get: (r: typeof rows[0]) => fmt(r.totalSales), total: () => fmt(rows.reduce((s, r) => s + r.totalSales, 0)), color: 'var(--text-primary)', bold: true },
-                { label: '　うちキャンペーン施策', get: (r: typeof rows[0]) => r.campaignCost > 0 ? fmt(r.campaignCost) : '-', total: () => fmt(rows.reduce((s, r) => s + r.campaignCost, 0)), color: 'var(--purple)' },
                 { label: 'パフォーマー報酬原価計', get: (r: typeof rows[0]) => fmt(r.performerCost), total: () => fmt(rows.reduce((s, r) => s + r.performerCost, 0)), color: 'var(--negative)', bold: true },
+                { label: '　└ うちキャンペーン施策', get: (r: typeof rows[0]) => r.campaignCost > 0 ? fmt(r.campaignCost) : '-', total: () => fmt(rows.reduce((s, r) => s + r.campaignCost, 0)), color: 'var(--purple)' },
               ]).map((m) => (
                 <tr key={m.label} className="text-right" style={m.bold ? { background: 'var(--bg-elevated)', borderTop: '2px solid var(--border)' } : undefined}>
                   <td className="text-left font-medium" style={{ color: 'var(--text-secondary)' }}>{m.label}</td>
