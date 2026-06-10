@@ -164,6 +164,16 @@ export function PerformerSettings() {
               onChange={(e) => updateCohortParams({ campaignEnabled: e.target.checked })} />
             有効
           </label>
+          <label className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={cp.campaignApplyBonus ?? true}
+              onChange={(e) => updateCohortParams({ campaignApplyBonus: e.target.checked })} />
+            ボ（無償）に付与
+          </label>
+          <label className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={cp.campaignApplyNormal ?? false}
+              onChange={(e) => updateCohortParams({ campaignApplyNormal: e.target.checked })} />
+            通（有償）に付与
+          </label>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           <div>

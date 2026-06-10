@@ -103,8 +103,10 @@ export interface CohortParams {
   // キャンペーン施策：無償(登録特典)消化分のボーナスpt上乗せ
   campaignEnabled?: boolean         // 施策ON/OFF
   campaignMonth?: number            // 実施月（1始まり・例:1）
-  campaignAddMsgBonusPt?: number    // +pt/通（ボ）（例:10）
-  campaignAddCharBonusPt?: number   // +pt/字（ボ）（例:1）
+  campaignAddMsgBonusPt?: number    // +pt/通（例:10）
+  campaignAddCharBonusPt?: number   // +pt/字（例:1）
+  campaignApplyBonus?: boolean      // ボーナスpt消化（無償）に付与
+  campaignApplyNormal?: boolean     // 通常pt消化（有料）に付与
 }
 
 // 代理店

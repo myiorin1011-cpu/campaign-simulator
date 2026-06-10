@@ -157,6 +157,8 @@ const baseData: Omit<AppData, 'purchasePlans1' | 'purchasePlans2' | 'performerRa
     campaignMonth: 1,
     campaignAddMsgBonusPt: 10,
     campaignAddCharBonusPt: 1,
+    campaignApplyBonus: true,
+    campaignApplyNormal: false,
   },
 
   agencies: [

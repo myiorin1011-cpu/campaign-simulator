@@ -153,9 +153,15 @@ function computeCohortMonthly(cp: CohortParams) {
     // キャンペーン施策原価（無償消化分・1鑑定=3通+400字, ゴールド U消費 通150/字9 → 4050pt/鑑定）
     let campaignCost = 0
     if (cp.campaignEnabled && (cp.campaignMonth ?? 1) === month) {
-      const bonusConsumedPt = installs * (cp.registrationBonusPt ?? 7000) * (cp.registrationBonusConsume ?? 0.7)
-      const bonusReadings = bonusConsumedPt / (3 * 150 + 400 * 9)
-      campaignCost = bonusReadings * (3 * (cp.campaignAddMsgBonusPt ?? 0) + 400 * (cp.campaignAddCharBonusPt ?? 0))
+      const PPR = 3 * 150 + 400 * 9
+      const addPerReading = 3 * (cp.campaignAddMsgBonusPt ?? 0) + 400 * (cp.campaignAddCharBonusPt ?? 0)
+      if (cp.campaignApplyBonus ?? true) {
+        const bonusConsumedPt = installs * (cp.registrationBonusPt ?? 7000) * (cp.registrationBonusConsume ?? 0.7)
+        campaignCost += (bonusConsumedPt / PPR) * addPerReading
+      }
+      if (cp.campaignApplyNormal ?? false) {
+        campaignCost += (totalSales / 2 / PPR) * addPerReading
+      }
     }
 
     shinki.push(newSales); kouho.push(secondSales); keizoku.push(continuousSales)

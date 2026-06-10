@@ -74,10 +74,17 @@ export function CohortForecast() {
       const PT_PER_READING = 3 * 150 + 400 * 9   // = 4050
       let campaignCost = 0
       if (cp.campaignEnabled && (cp.campaignMonth ?? 1) === month) {
-        const bonusConsumedPt = installs * (cp.registrationBonusPt ?? 7000) * (cp.registrationBonusConsume ?? 0.7)
-        const bonusReadings = bonusConsumedPt / PT_PER_READING
         const addPerReading = 3 * (cp.campaignAddMsgBonusPt ?? 0) + 400 * (cp.campaignAddCharBonusPt ?? 0)
-        campaignCost = bonusReadings * addPerReading   // pt = 円（P:1pt=1円）
+        // 無償(登録特典ボーナス)消化分
+        if (cp.campaignApplyBonus ?? true) {
+          const bonusConsumedPt = installs * (cp.registrationBonusPt ?? 7000) * (cp.registrationBonusConsume ?? 0.7)
+          campaignCost += (bonusConsumedPt / PT_PER_READING) * addPerReading
+        }
+        // 有償(通常pt)消化分 = 売上 ÷ 2円（U:2円=1pt）
+        if (cp.campaignApplyNormal ?? false) {
+          const normalConsumedPt = totalSales / 2
+          campaignCost += (normalConsumedPt / PT_PER_READING) * addPerReading
+        }
       }
       const performerCost = performerCostBase + campaignCost
 
@@ -243,6 +250,16 @@ export function CohortForecast() {
             <input type="checkbox" checked={!!cp.campaignEnabled}
               onChange={(e) => updateCohortParams({ campaignEnabled: e.target.checked })} />
             有効
+          </label>
+          <label className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={cp.campaignApplyBonus ?? true}
+              onChange={(e) => updateCohortParams({ campaignApplyBonus: e.target.checked })} />
+            ボ（無償）に付与
+          </label>
+          <label className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={cp.campaignApplyNormal ?? false}
+              onChange={(e) => updateCohortParams({ campaignApplyNormal: e.target.checked })} />
+            通（有償）に付与
           </label>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
