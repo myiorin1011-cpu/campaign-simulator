@@ -270,13 +270,13 @@ export function CohortForecast() {
               className="input-dark w-full" />
           </div>
           <div>
-            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>+pt/通（ボ）</label>
+            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>+pt/通</label>
             <input type="number" min={0} step={1} value={cp.campaignAddMsgBonusPt ?? 0}
               onChange={(e) => updateCohortParams({ campaignAddMsgBonusPt: parseFloat(e.target.value) || 0 })}
               className="input-dark w-full" />
           </div>
           <div>
-            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>+pt/字（ボ）</label>
+            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>+pt/字</label>
             <input type="number" min={0} step={1} value={cp.campaignAddCharBonusPt ?? 0}
               onChange={(e) => updateCohortParams({ campaignAddCharBonusPt: parseFloat(e.target.value) || 0 })}
               className="input-dark w-full" />
