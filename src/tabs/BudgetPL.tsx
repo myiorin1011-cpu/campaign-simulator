@@ -245,6 +245,27 @@ export function BudgetPL() {
     </>
   )
 
+  // 行の背景（グループ＝濃い／小計＝中／明細＝ゼブラ）
+  const rowBg = (kind: Row['kind'], idx: number) =>
+    kind === 'group' ? 'var(--bg-elevated)'
+      : kind === 'sub' ? 'var(--bg-hover)'
+        : idx % 2 === 1 ? 'var(--bg-app)' : 'var(--bg-card)'
+
+  const PLRow = ({ r, idx }: { r: Row; idx: number }) => {
+    const bg = rowBg(r.kind, idx)
+    const accent = r.kind === 'group' ? 'var(--accent)' : r.kind === 'sub' ? 'var(--border-strong, var(--border))' : 'transparent'
+    return (
+      <tr style={{ ...rowStyle(r.kind), background: bg }}>
+        <td style={{
+          ...labelStyle(r.level, r.kind),
+          position: 'sticky', left: 0, background: bg,
+          borderLeft: `3px solid ${accent}`,
+        }}>{r.label}</td>
+        <Cells arr={r.monthly} />
+      </tr>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <h2 className="page-title">2026年 想定予算（P/L）</h2>
@@ -311,23 +332,13 @@ export function BudgetPL() {
               <td style={{ paddingLeft: 8, color: 'var(--accent-light)', whiteSpace: 'nowrap', position: 'sticky', left: 0, background: 'var(--accent-dim)' }}>売上</td>
               <Cells arr={revenue} color="var(--accent-light)" bold />
             </tr>
-            {revRows.map((r, idx) => (
-              <tr key={`r${idx}`} style={rowStyle(r.kind)}>
-                <td style={{ ...labelStyle(r.level, r.kind), position: 'sticky', left: 0, background: r.kind === 'group' ? 'var(--bg-elevated)' : 'var(--bg-card)' }}>{r.label}</td>
-                <Cells arr={r.monthly} />
-              </tr>
-            ))}
+            {revRows.map((r, idx) => <PLRow key={`r${idx}`} r={r} idx={idx} />)}
 
             {/* 区切り */}
             <tr><td colSpan={N + 2} style={{ height: 6, background: 'var(--bg-app)' }}></td></tr>
 
             {/* 費用 */}
-            {costRows.map((r, idx) => (
-              <tr key={`c${idx}`} style={rowStyle(r.kind)}>
-                <td style={{ ...labelStyle(r.level, r.kind), position: 'sticky', left: 0, background: r.kind === 'group' ? 'var(--bg-elevated)' : 'var(--bg-card)' }}>{r.label}</td>
-                <Cells arr={r.monthly} />
-              </tr>
-            ))}
+            {costRows.map((r, idx) => <PLRow key={`c${idx}`} r={r} idx={idx} />)}
             <tr style={{ background: 'var(--bg-elevated)', fontWeight: 700, borderTop: '2px solid var(--border)' }}>
               <td style={{ paddingLeft: 8, color: 'var(--negative)', whiteSpace: 'nowrap', position: 'sticky', left: 0, background: 'var(--bg-elevated)' }}>費用合計</td>
               <Cells arr={costTotal} color="var(--negative)" bold />
