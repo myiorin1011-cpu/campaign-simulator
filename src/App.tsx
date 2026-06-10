@@ -21,7 +21,7 @@ function PasswordGate({ onUnlock }: { onUnlock: () => void }) {
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-app)' }}>
       <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12 }}
            className="p-10 w-full max-w-sm text-center">
-        <h1 className="font-brand text-2xl font-bold tracking-tight mb-1" style={{ color: 'var(--text-primary)' }}>Paigner</h1>
+        <h1 className="brand-wordmark brand-wordmark--lg mb-1">Paigner</h1>
         <p className="text-xs mb-6" style={{ color: 'var(--text-muted)' }}>パスワードを入力してください</p>
         <form onSubmit={handleSubmit} className="space-y-3">
           <input
@@ -128,18 +128,18 @@ export default function App() {
         <div className="px-5 py-5" style={{ borderBottom: '1px solid var(--border)' }}>
           <div className="flex items-center gap-2.5">
             <div style={{
-              width: 30, height: 30, borderRadius: 8,
-              background: 'linear-gradient(135deg, var(--accent) 0%, #a78bfa 100%)',
+              width: 34, height: 34, borderRadius: 10,
+              background: 'linear-gradient(135deg, #6366f1 0%, #a78bfa 55%, #ec4899 100%)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 14, color: '#fff', fontWeight: 700,
+              fontSize: 17, color: '#fff', fontWeight: 800,
               fontFamily: 'Sora, sans-serif',
               flexShrink: 0,
+              boxShadow: '0 4px 14px -2px rgba(99,102,241,0.55), inset 0 1px 0 rgba(255,255,255,0.25)',
+              letterSpacing: '-0.02em',
             }}>P</div>
             <div>
-              <div className="font-brand font-bold text-sm tracking-wide" style={{ color: 'var(--text-primary)' }}>
-                Paigner
-              </div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: '0.05em' }}>
+              <div className="brand-wordmark">Paigner</div>
+              <div style={{ fontSize: 9.5, color: 'var(--text-muted)', letterSpacing: '0.22em', marginTop: 1 }}>
                 CAMPAIGN ANALYTICS
               </div>
             </div>

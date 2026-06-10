@@ -72,6 +72,23 @@ html, body {
   font-family: 'Sora', sans-serif;
 }
 
+/* ブランドロゴ ワードマーク */
+.brand-wordmark {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.18rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  background: linear-gradient(100deg, #818cf8 0%, #a78bfa 45%, #ec4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+.brand-wordmark--lg {
+  font-size: 2.1rem;
+}
+
 .font-mono-num {
   font-family: 'JetBrains Mono', monospace;
   font-variant-numeric: tabular-nums;
