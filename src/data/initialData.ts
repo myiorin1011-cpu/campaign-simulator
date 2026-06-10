@@ -154,11 +154,14 @@ const baseData: Omit<AppData, 'purchasePlans1' | 'purchasePlans2' | 'performerRa
     normalRewardRate: 1 / 3,
     // キャンペーン施策（無償消化分のボーナスpt上乗せ）
     campaignEnabled: true,
-    campaignMonth: 1,
+    campaignStart: '2026-06-29',
+    campaignEnd: '2026-07-31',
     campaignAddMsgBonusPt: 10,
     campaignAddCharBonusPt: 1,
     campaignApplyBonus: true,
-    campaignApplyNormal: false,
+    campaignApplyNormal: true,
+    startYear: 2026,
+    startMonth: 6,
   },
 
   agencies: [

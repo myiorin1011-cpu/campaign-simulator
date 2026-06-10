@@ -158,7 +158,7 @@ export function PerformerSettings() {
       {/* キャンペーン登録：無償消化分ボーナスpt上乗せ */}
       <section className="card" style={{ marginBottom: '1rem' }}>
         <div className="flex items-center gap-3 mb-3">
-          <h3 className="section-title" style={{ margin: 0 }}>キャンペーン登録（ボーナスpt上乗せ・無償消化分）</h3>
+          <h3 className="section-title" style={{ margin: 0 }}>キャンペーン登録（pt上乗せ・期間指定）</h3>
           <label className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
             <input type="checkbox" checked={!!cp.campaignEnabled}
               onChange={(e) => updateCohortParams({ campaignEnabled: e.target.checked })} />
@@ -177,9 +177,15 @@ export function PerformerSettings() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           <div>
-            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>実施月</label>
-            <input type="number" min={1} value={cp.campaignMonth ?? 1}
-              onChange={(e) => updateCohortParams({ campaignMonth: parseInt(e.target.value) || 1 })}
+            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>開始日</label>
+            <input type="date" value={cp.campaignStart ?? ''}
+              onChange={(e) => updateCohortParams({ campaignStart: e.target.value })}
+              className="input-dark w-full" />
+          </div>
+          <div>
+            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>終了日</label>
+            <input type="date" value={cp.campaignEnd ?? ''}
+              onChange={(e) => updateCohortParams({ campaignEnd: e.target.value })}
               className="input-dark w-full" />
           </div>
           <div>
@@ -202,7 +208,7 @@ export function PerformerSettings() {
           </div>
         </div>
         <p className="text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>
-          ※ ゴールド基準・1鑑定＝3通＋400字。対象は登録特典(無償)の消化分のみ。月次の施策原価・採算は「コホート予測」「予算P/L」に反映されます。
+          ※ ゴールド基準・1鑑定＝3通＋400字。付与先は上のチェック（ボ＝無償／通＝有償）で選択。開始〜終了日を各月で日割り按分。月次の施策原価・採算は「コホート予測」「予算P/L」に反映されます。
         </p>
       </section>
 

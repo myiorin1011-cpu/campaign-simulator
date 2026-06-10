@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
+import { monthLabel, monthInfo, campaignFactor } from '../utils/campaign'
 
 export function CohortForecast() {
   const { data, updateCohortParams, updateSimulatorParams } = useAppContext()
@@ -72,23 +73,22 @@ export function CohortForecast() {
       // ⑤ キャンペーン施策原価（無償=登録特典 消化分のボーナスpt上乗せ）
       //   ゴールド基準: 1鑑定 = 3通 + 400字, U消費 通150pt/字9pt → 1鑑定 = 4050pt
       const PT_PER_READING = 3 * 150 + 400 * 9   // = 4050
+      const { year: calYear, month: calMonth } = monthInfo(cp.startYear ?? 2026, cp.startMonth ?? 6, i)
+      const label = monthLabel(cp.startYear ?? 2026, cp.startMonth ?? 6, i)
       let campaignCost = 0
-      if (cp.campaignEnabled && (cp.campaignMonth ?? 1) === month) {
-        const addPerReading = 3 * (cp.campaignAddMsgBonusPt ?? 0) + 400 * (cp.campaignAddCharBonusPt ?? 0)
-        // 無償(登録特典ボーナス)消化分
-        if (cp.campaignApplyBonus ?? true) {
-          const bonusConsumedPt = installs * (cp.registrationBonusPt ?? 7000) * (cp.registrationBonusConsume ?? 0.7)
-          campaignCost += (bonusConsumedPt / PT_PER_READING) * addPerReading
-        }
-        // 有償(通常pt)消化分 = 売上 ÷ 2円（U:2円=1pt）
-        if (cp.campaignApplyNormal ?? false) {
-          const normalConsumedPt = totalSales / 2
-          campaignCost += (normalConsumedPt / PT_PER_READING) * addPerReading
+      if (cp.campaignEnabled) {
+        const factor = campaignFactor(calYear, calMonth, cp.campaignStart, cp.campaignEnd) // 日割り係数(0〜1)
+        if (factor > 0) {
+          const addPerReading = 3 * (cp.campaignAddMsgBonusPt ?? 0) + 400 * (cp.campaignAddCharBonusPt ?? 0)
+          let pt = 0
+          if (cp.campaignApplyBonus ?? true) pt += installs * (cp.registrationBonusPt ?? 7000) * (cp.registrationBonusConsume ?? 0.7)
+          if (cp.campaignApplyNormal ?? false) pt += totalSales / 2
+          campaignCost = (pt / PT_PER_READING) * addPerReading * factor
         }
       }
       const performerCost = performerCostBase + campaignCost
 
-      return { month, adBudget, installs, newCount, newSales, secondCount, secondSales, continuousCount, continuousSales, totalSales,
+      return { month, label, adBudget, installs, newCount, newSales, secondCount, secondSales, continuousCount, continuousSales, totalSales,
         normalReward, regBonusCost, normalBonusCost, firstBonusCost, performerCostBase, campaignCost, performerCost }
     })
   }, [cp, budgets])
@@ -152,6 +152,18 @@ export function CohortForecast() {
               onChange={(e) => updateCohortParams({ conversionRate: (parseFloat(e.target.value) || 0) / 100 })}
               className="input-dark w-full"
             />
+          </div>
+          <div>
+            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>起点 年</label>
+            <input type="number" min={2020} max={2100} value={cp.startYear ?? 2026}
+              onChange={(e) => updateCohortParams({ startYear: parseInt(e.target.value) || 2026 })}
+              className="input-dark w-full" />
+          </div>
+          <div>
+            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>起点 月</label>
+            <input type="number" min={1} max={12} value={cp.startMonth ?? 6}
+              onChange={(e) => updateCohortParams({ startMonth: parseInt(e.target.value) || 1 })}
+              className="input-dark w-full" />
           </div>
         </div>
         <p className="text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>
@@ -245,7 +257,7 @@ export function CohortForecast() {
       {/* キャンペーン施策（無償消化分ボーナスpt上乗せ） */}
       <section className="card">
         <div className="flex items-center gap-3 mb-3">
-          <h3 className="section-title" style={{ margin: 0 }}>キャンペーン施策（ボーナスpt上乗せ・無償消化分）</h3>
+          <h3 className="section-title" style={{ margin: 0 }}>キャンペーン施策（pt上乗せ・期間指定）</h3>
           <label className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
             <input type="checkbox" checked={!!cp.campaignEnabled}
               onChange={(e) => updateCohortParams({ campaignEnabled: e.target.checked })} />
@@ -264,9 +276,15 @@ export function CohortForecast() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           <div>
-            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>実施月</label>
-            <input type="number" min={1} max={cp.months} value={cp.campaignMonth ?? 1}
-              onChange={(e) => updateCohortParams({ campaignMonth: parseInt(e.target.value) || 1 })}
+            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>開始日</label>
+            <input type="date" value={cp.campaignStart ?? ''}
+              onChange={(e) => updateCohortParams({ campaignStart: e.target.value })}
+              className="input-dark w-full" />
+          </div>
+          <div>
+            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>終了日</label>
+            <input type="date" value={cp.campaignEnd ?? ''}
+              onChange={(e) => updateCohortParams({ campaignEnd: e.target.value })}
               className="input-dark w-full" />
           </div>
           <div>
@@ -281,16 +299,17 @@ export function CohortForecast() {
               onChange={(e) => updateCohortParams({ campaignAddCharBonusPt: parseFloat(e.target.value) || 0 })}
               className="input-dark w-full" />
           </div>
-          <div className="flex flex-col justify-end">
-            <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>実施月の施策原価</span>
-            <span className="font-bold font-mono-num" style={{ color: 'var(--purple)', fontSize: '1.1rem' }}>
-              {fmt(rows.find((r) => r.month === (cp.campaignMonth ?? 1))?.campaignCost ?? 0)}
-            </span>
-          </div>
+        </div>
+        <div className="flex items-center gap-2 mt-3">
+          <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>期間中の施策原価合計</span>
+          <span className="font-bold font-mono-num" style={{ color: 'var(--purple)', fontSize: '1.15rem' }}>
+            {fmt(rows.reduce((s, r) => s + r.campaignCost, 0))}
+          </span>
         </div>
         <p className="text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>
-          ※ 対象＝登録特典の無償消化分のみ。1鑑定＝3通＋400字、ゴールド基準 U消費 通150pt・字9pt（＝4,050pt/鑑定）。
-          施策原価 ＝（無償消化pt ÷ 4,050）×（3×+pt/通 ＋ 400×+pt/字）。パフォーマー報酬原価計に加算されます。
+          ※ 開始〜終了日を各月で日割り按分。付与先は上のチェック（ボ＝無償／通＝有償）で選択。
+          1鑑定＝3通＋400字、ゴールド基準 U消費 通150pt・字9pt（＝4,050pt/鑑定）。<br />
+          施策原価 ＝（対象消化pt ÷ 4,050）×（3×+pt/通 ＋ 400×+pt/字）×（実施日数÷その月の日数）。
         </p>
       </section>
 
@@ -322,7 +341,7 @@ export function CohortForecast() {
             <thead>
               <tr>
                 <th className="text-left">項目</th>
-                {rows.map((r) => <th key={r.month} className="text-right">{r.month}月</th>)}
+                {rows.map((r) => <th key={r.month} className="text-right">{r.label}</th>)}
                 <th className="text-right">合計</th>
               </tr>
             </thead>
@@ -397,7 +416,7 @@ export function CohortForecast() {
           <tbody>
             {rows.map((row) => (
               <tr key={row.month} className="text-right">
-                <td className="text-center font-medium" style={{ color: 'var(--text-secondary)' }}>{row.month}月</td>
+                <td className="text-center font-medium" style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{row.label}</td>
                 <td className="text-right">
                   <input
                     type="number" min={0} step={100000}

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import type { CohortParams } from '../types'
+import { monthInfo, campaignFactor } from '../utils/campaign'
 
 // ───────────────────────────────────────────────
 // 2026年 想定予算（P/L）データ  期間: 2026年4月 〜 2027年3月
@@ -150,17 +151,18 @@ function computeCohortMonthly(cp: CohortParams) {
     const regBonusCost = installs * (cp.registrationBonusPt ?? 7000) * bonusPtCost * (cp.registrationBonusConsume ?? 0.7)
     const normalBonusCost = payers * (cp.credixRepPlan ?? 11000) * (cp.avgBonusGrantRate ?? 0.0364) * bonusPtCost
     const firstBonusCost = newCount * (cp.firstBonusPt ?? 300) * bonusPtCost * (cp.firstBonusConsume ?? 1.0)
-    // キャンペーン施策原価（無償消化分・1鑑定=3通+400字, ゴールド U消費 通150/字9 → 4050pt/鑑定）
+    // キャンペーン施策原価（期間日割り・1鑑定=3通+400字, ゴールド U消費 通150/字9 → 4050pt/鑑定）
     let campaignCost = 0
-    if (cp.campaignEnabled && (cp.campaignMonth ?? 1) === month) {
-      const PPR = 3 * 150 + 400 * 9
-      const addPerReading = 3 * (cp.campaignAddMsgBonusPt ?? 0) + 400 * (cp.campaignAddCharBonusPt ?? 0)
-      if (cp.campaignApplyBonus ?? true) {
-        const bonusConsumedPt = installs * (cp.registrationBonusPt ?? 7000) * (cp.registrationBonusConsume ?? 0.7)
-        campaignCost += (bonusConsumedPt / PPR) * addPerReading
-      }
-      if (cp.campaignApplyNormal ?? false) {
-        campaignCost += (totalSales / 2 / PPR) * addPerReading
+    if (cp.campaignEnabled) {
+      const { year, month: calMonth } = monthInfo(cp.startYear ?? 2026, cp.startMonth ?? 6, i)
+      const factor = campaignFactor(year, calMonth, cp.campaignStart, cp.campaignEnd)
+      if (factor > 0) {
+        const PPR = 3 * 150 + 400 * 9
+        const addPerReading = 3 * (cp.campaignAddMsgBonusPt ?? 0) + 400 * (cp.campaignAddCharBonusPt ?? 0)
+        let pt = 0
+        if (cp.campaignApplyBonus ?? true) pt += installs * (cp.registrationBonusPt ?? 7000) * (cp.registrationBonusConsume ?? 0.7)
+        if (cp.campaignApplyNormal ?? false) pt += totalSales / 2
+        campaignCost = (pt / PPR) * addPerReading * factor
       }
     }
 
@@ -168,8 +170,9 @@ function computeCohortMonthly(cp: CohortParams) {
     adUser.push(budgets[i])
     performer.push(normalReward + regBonusCost + normalBonusCost + firstBonusCost + campaignCost)
   }
-  // P/L は12ヶ月固定列。長さを N に合わせる（不足は0埋め・超過は切り捨て）
-  const pad = (a: number[]) => Array.from({ length: N }, (_, i) => a[i] ?? 0)
+  // P/L列は2026年4月始まり。コホートは startMonth(既定6月)始まり → offset分ずらして配置
+  const offset = (cp.startMonth ?? 6) - 4
+  const pad = (a: number[]) => Array.from({ length: N }, (_, i) => a[i - offset] ?? 0)
   return { shinki: pad(shinki), kouho: pad(kouho), keizoku: pad(keizoku), adUser: pad(adUser), performer: pad(performer) }
 }
 
