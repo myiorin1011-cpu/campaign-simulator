@@ -162,6 +162,24 @@ const baseData: Omit<AppData, 'purchasePlans1' | 'purchasePlans2' | 'performerRa
     campaignApplyNormal: true,
     startYear: 2026,
     startMonth: 7,
+    // ランク別 構成比による精密計算（デフォルト無効＝従来どおりゴールド基準で計算）
+    rankMixEnabled: false,
+    // 単価はゴールド値のプレースホルダ。実値判明後に更新。
+    // share はゴールドのみ 1.0、他は 0（performerRanks の stage順・全ランク）。
+    rankMix: [
+      { label: 'ブロンズ',           share: 0,   uMsgPt: 150, uCharPt: 9, pMsgNormalPt: 100, pMsgBonusPt: 30, pCharNormalPt: 6, pCharBonusPt: 2 },
+      { label: 'シルバー',           share: 0,   uMsgPt: 150, uCharPt: 9, pMsgNormalPt: 100, pMsgBonusPt: 30, pCharNormalPt: 6, pCharBonusPt: 2 },
+      { label: 'ゴールド',           share: 1.0, uMsgPt: 150, uCharPt: 9, pMsgNormalPt: 100, pMsgBonusPt: 30, pCharNormalPt: 6, pCharBonusPt: 2 },
+      { label: 'プラチナ',           share: 0,   uMsgPt: 150, uCharPt: 9, pMsgNormalPt: 100, pMsgBonusPt: 30, pCharNormalPt: 6, pCharBonusPt: 2 },
+      { label: 'サファイア',         share: 0,   uMsgPt: 150, uCharPt: 9, pMsgNormalPt: 100, pMsgBonusPt: 30, pCharNormalPt: 6, pCharBonusPt: 2 },
+      { label: 'エメラルド',         share: 0,   uMsgPt: 150, uCharPt: 9, pMsgNormalPt: 100, pMsgBonusPt: 30, pCharNormalPt: 6, pCharBonusPt: 2 },
+      { label: 'ロイヤルエメラルド', share: 0,   uMsgPt: 150, uCharPt: 9, pMsgNormalPt: 100, pMsgBonusPt: 30, pCharNormalPt: 6, pCharBonusPt: 2 },
+      { label: 'ルビー',             share: 0,   uMsgPt: 150, uCharPt: 9, pMsgNormalPt: 100, pMsgBonusPt: 30, pCharNormalPt: 6, pCharBonusPt: 2 },
+      { label: 'ロイヤルルビー',     share: 0,   uMsgPt: 150, uCharPt: 9, pMsgNormalPt: 100, pMsgBonusPt: 30, pCharNormalPt: 6, pCharBonusPt: 2 },
+      { label: 'ダイヤモンド',       share: 0,   uMsgPt: 150, uCharPt: 9, pMsgNormalPt: 100, pMsgBonusPt: 30, pCharNormalPt: 6, pCharBonusPt: 2 },
+      { label: 'ロイヤルダイヤモンド', share: 0, uMsgPt: 150, uCharPt: 9, pMsgNormalPt: 100, pMsgBonusPt: 30, pCharNormalPt: 6, pCharBonusPt: 2 },
+      { label: 'シュプリーム',       share: 0,   uMsgPt: 150, uCharPt: 9, pMsgNormalPt: 100, pMsgBonusPt: 30, pCharNormalPt: 6, pCharBonusPt: 2 },
+    ],
   },
 
   agencies: [

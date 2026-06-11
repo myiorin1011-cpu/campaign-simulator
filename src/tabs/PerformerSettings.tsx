@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { EditableCell } from '../components/EditableCell'
 import { calcDapDistribution } from '../utils/calculations'
-import type { ActionType } from '../types'
+import { blendReading } from '../utils/rankMix'
+import type { ActionType, RankMixRow } from '../types'
 
 const ACTION_LABELS: Record<ActionType, string> = {
   message:         'メッセージ(1通)',
@@ -211,6 +212,88 @@ export function PerformerSettings() {
           ※ ゴールド基準・1鑑定＝3通＋400字。付与先は上のチェック（ボ＝無償／通＝有償）で選択。開始〜終了日を各月で日割り按分。月次の施策原価・採算は「コホート予測」「予算P/L」に反映されます。
         </p>
       </section>
+
+      {/* ランク別 構成比（報酬原価の精密計算・任意） */}
+      {(() => {
+        const mix: RankMixRow[] = cp.rankMix ?? []
+        const updateMixCell = (idx: number, field: keyof RankMixRow, value: number) => {
+          const next = mix.map((r, i) => (i !== idx ? r : { ...r, [field]: value }))
+          updateCohortParams({ rankMix: next })
+        }
+        const shareTotal = mix.reduce((s, r) => s + (r.share || 0), 0)
+        const shareTotalPct = shareTotal * 100
+        const shareWarn = Math.abs(shareTotalPct - 100) > 0.01
+        const blend = blendReading(cp)
+        const numCols: { field: keyof RankMixRow; label: string }[] = [
+          { field: 'uMsgPt', label: 'U消費 pt/通' },
+          { field: 'uCharPt', label: 'U消費 pt/字' },
+          { field: 'pMsgNormalPt', label: 'P通 pt/通' },
+          { field: 'pMsgBonusPt', label: 'Pボ pt/通' },
+          { field: 'pCharNormalPt', label: 'P通 pt/字' },
+          { field: 'pCharBonusPt', label: 'Pボ pt/字' },
+        ]
+        return (
+          <section className="card" style={{ marginBottom: '1rem' }}>
+            <div className="flex items-center gap-3 mb-3">
+              <h3 className="section-title" style={{ margin: 0 }}>ランク別 構成比（報酬原価の精密計算・任意）</h3>
+              <label className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                <input type="checkbox" checked={!!cp.rankMixEnabled}
+                  onChange={(e) => updateCohortParams({ rankMixEnabled: e.target.checked })} />
+                有効
+              </label>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="table-dark w-full text-sm">
+                <thead>
+                  <tr>
+                    <th className="text-left">ランク</th>
+                    <th className="text-right">構成比%</th>
+                    {numCols.map((c) => <th key={c.field} className="text-right">{c.label}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {mix.map((row, idx) => (
+                    <tr key={row.label}>
+                      <td className="text-left font-medium" style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{row.label}</td>
+                      <td className="text-right">
+                        <input
+                          type="number" min={0} step={0.1}
+                          value={+(row.share * 100).toFixed(4)}
+                          onChange={(e) => updateMixCell(idx, 'share', (parseFloat(e.target.value) || 0) / 100)}
+                          className="input-dark text-right" style={{ width: '5.5rem' }}
+                        />
+                      </td>
+                      {numCols.map((c) => (
+                        <td key={c.field} className="text-right">
+                          <input
+                            type="number" min={0} step={1}
+                            value={row[c.field] as number}
+                            onChange={(e) => updateMixCell(idx, c.field, parseFloat(e.target.value) || 0)}
+                            className="input-dark text-right" style={{ width: '5.5rem' }}
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-1 mt-3 text-sm">
+              <span style={{ color: shareWarn ? 'var(--negative)' : 'var(--text-secondary)' }}>
+                構成比合計: <strong className="font-mono-num">{shareTotalPct.toFixed(2)}%</strong>
+                {shareWarn && <span style={{ marginLeft: 6 }}>（100%になるよう調整してください）</span>}
+              </span>
+              <span style={{ color: 'var(--text-secondary)' }}>
+                ブレンドプレビュー: 1鑑定 U消費 <strong className="font-mono-num" style={{ color: 'var(--accent-light)' }}>{Math.round(blend.uPtPerReading).toLocaleString()} pt</strong>
+                　／　通常報酬原価率 <strong className="font-mono-num" style={{ color: 'var(--purple)' }}>{(blend.normalRewardRate * 100).toFixed(1)}%</strong>
+              </span>
+            </div>
+            <p className="text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>
+              ※ 無効のときは従来どおりゴールド基準（4,050pt/鑑定・原価率33.3%）で計算。単価は実値が判明したランクから順次更新してください。構成比の人数データが揃ったら有効化。
+            </p>
+          </section>
+        )
+      })()}
 
       {/* シナリオ切り替えタブ */}
       <div className="scenario-tabs" style={{ marginBottom: '1rem' }}>

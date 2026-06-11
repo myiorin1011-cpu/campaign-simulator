@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { monthLabel, monthInfo, campaignFactor } from '../utils/campaign'
+import { blendReading } from '../utils/rankMix'
 
 export function CohortForecast() {
   const { data, updateCohortParams, updateSimulatorParams } = useAppContext()
@@ -22,6 +23,8 @@ export function CohortForecast() {
   }
 
   const rows = useMemo(() => {
+    // ランク別構成比が有効なときだけブレンド値を使用（無効時は従来どおりゴールド基準）
+    const blend = cp.rankMixEnabled ? blendReading(cp) : null
     const r2 = cp.secondMonthRetention   // 1ヶ月目→2ヶ月目
     const r3 = cp.continuousRetention    // 3ヶ月目以降の毎月継続率
     const cpi = cp.cpi
@@ -61,7 +64,7 @@ export function CohortForecast() {
       const bonusPtCost = cp.bonusPtCost ?? 0.22
       const payers = newCount + secondCount + continuousCount
       // ① 通常報酬原価 = 売上 × 1/3（0.67円/pt 相当）
-      const normalReward = totalSales * (cp.normalRewardRate ?? 1 / 3)
+      const normalReward = totalSales * (blend?.normalRewardRate ?? (cp.normalRewardRate ?? 1 / 3))
       // ② 登録特典原価 = 新規集客数 × 7000pt × 0.22円 × 消化率0.7
       const regBonusCost = installs * (cp.registrationBonusPt ?? 7000) * bonusPtCost * (cp.registrationBonusConsume ?? 0.7)
       // ③ 通常ボーナス原価 = 課金者数 ×（代表プラン11000 × 付与率3.64%）× 0.22円
@@ -72,7 +75,7 @@ export function CohortForecast() {
 
       // ⑤ キャンペーン施策原価（無償=登録特典 消化分のボーナスpt上乗せ）
       //   ゴールド基準: 1鑑定 = 3通 + 400字, U消費 通150pt/字9pt → 1鑑定 = 4050pt
-      const PT_PER_READING = 3 * 150 + 400 * 9   // = 4050
+      const PT_PER_READING = blend?.uPtPerReading ?? 4050   // ゴールド基準 3*150+400*9 = 4050
       const { year: calYear, month: calMonth } = monthInfo(cp.startYear ?? 2026, cp.startMonth ?? 6, i)
       const label = monthLabel(cp.startYear ?? 2026, cp.startMonth ?? 6, i)
       let campaignBonus = 0, campaignNormal = 0

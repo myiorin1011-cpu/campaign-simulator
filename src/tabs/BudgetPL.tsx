@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import type { CohortParams } from '../types'
 import { monthInfo, campaignFactor } from '../utils/campaign'
+import { blendReading } from '../utils/rankMix'
 
 // ───────────────────────────────────────────────
 // 2026年 想定予算（P/L）データ  期間: 2026年4月 〜 2027年3月
@@ -129,6 +130,8 @@ function computeCohortMonthly(cp: CohortParams) {
   const cr = cp.conversionRate
   const newCounts = budgets.map((b) => Math.floor((cpi > 0 ? Math.floor(b / cpi) : 0) * cr))
   const bonusPtCost = cp.bonusPtCost ?? 0.22
+  // ランク別構成比が有効なときだけブレンド値を使用（無効時は従来どおりゴールド基準）
+  const blend = cp.rankMixEnabled ? blendReading(cp) : null
 
   const shinki: number[] = [], kouho: number[] = [], keizoku: number[] = []
   const adUser: number[] = [], performer: number[] = []
@@ -147,7 +150,7 @@ function computeCohortMonthly(cp: CohortParams) {
     const continuousSales = continuousCount * cp.continuousArppu
     const totalSales = newSales + secondSales + continuousSales
     const payers = newCount + secondCount + continuousCount
-    const normalReward = totalSales * (cp.normalRewardRate ?? 1 / 3)
+    const normalReward = totalSales * (blend?.normalRewardRate ?? (cp.normalRewardRate ?? 1 / 3))
     const regBonusCost = installs * (cp.registrationBonusPt ?? 7000) * bonusPtCost * (cp.registrationBonusConsume ?? 0.7)
     const normalBonusCost = payers * (cp.credixRepPlan ?? 11000) * (cp.avgBonusGrantRate ?? 0.0364) * bonusPtCost
     const firstBonusCost = newCount * (cp.firstBonusPt ?? 300) * bonusPtCost * (cp.firstBonusConsume ?? 1.0)
@@ -157,7 +160,7 @@ function computeCohortMonthly(cp: CohortParams) {
       const { year, month: calMonth } = monthInfo(cp.startYear ?? 2026, cp.startMonth ?? 6, i)
       const factor = campaignFactor(year, calMonth, cp.campaignStart, cp.campaignEnd)
       if (factor > 0) {
-        const PPR = 3 * 150 + 400 * 9
+        const PPR = blend?.uPtPerReading ?? (3 * 150 + 400 * 9)
         const addPerReading = 3 * (cp.campaignAddMsgBonusPt ?? 0) + 400 * (cp.campaignAddCharBonusPt ?? 0)
         let pt = 0
         if (cp.campaignApplyBonus ?? true) pt += installs * (cp.registrationBonusPt ?? 7000) * (cp.registrationBonusConsume ?? 0.7)

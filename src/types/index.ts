@@ -113,6 +113,22 @@ export interface CohortParams {
   // 予測カレンダー起点（コホート表の月表示）
   startYear?: number                // 例:2026
   startMonth?: number               // 例:6（2026年6月始まり）
+
+  // ランク別構成比による精密計算
+  rankMixEnabled?: boolean          // ランク別構成比による精密計算ON/OFF
+  rankMix?: RankMixRow[]            // ランク別の構成比と単価
+}
+
+// ランク別 構成比＋単価（報酬原価の精密計算用）
+export interface RankMixRow {
+  label: string          // ランク名
+  share: number          // 構成比（0〜1）
+  uMsgPt: number         // U消費 pt/通
+  uCharPt: number        // U消費 pt/字
+  pMsgNormalPt: number   // P獲得(通) pt/通
+  pMsgBonusPt: number    // P獲得(ボ) pt/通
+  pCharNormalPt: number  // P獲得(通) pt/字
+  pCharBonusPt: number   // P獲得(ボ) pt/字
 }
 
 // 代理店
