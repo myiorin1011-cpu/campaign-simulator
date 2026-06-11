@@ -66,6 +66,13 @@ const TABS = [
   { id: 'budget',    label: '予算P/L',              icon: '▥', sub: 'Budget P/L' },
 ]
 
+const CATEGORIES = [
+  { label: 'ポイント設定', ids: ['point', 'performer'] },
+  { label: 'シミュレーション', ids: ['simulator', 'cohort', 'income', 'budget', 'agency'] },
+  { label: 'キャンペーン', ids: ['campaign', 'banner'] },
+  { label: '実績', ids: ['report'] },
+]
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('point')
   const [unlocked, setUnlocked] = useState(!CORRECT_PASSWORD)
@@ -120,7 +127,8 @@ export default function App() {
         className="shrink-0 flex flex-col min-h-screen sticky top-0 h-screen"
         style={{
           width: 220,
-          background: 'var(--bg-card)',
+          background: 'var(--glass-bg)',
+          backdropFilter: 'blur(14px) saturate(140%)',
           borderRight: '1px solid var(--border)',
         }}
       >
@@ -148,41 +156,46 @@ export default function App() {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-2">
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.id
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className="w-full text-left transition-all duration-150"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '9px 16px',
-                  borderLeft: `2px solid ${isActive ? 'var(--accent)' : 'transparent'}`,
-                  background: isActive ? 'var(--accent-dim)' : 'transparent',
-                  color: isActive ? 'var(--accent-light)' : 'var(--text-muted)',
-                  fontSize: 13,
-                }}
-                onMouseEnter={e => {
-                  if (!isActive) {
-                    (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'
-                    ;(e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!isActive) {
-                    (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'
-                    ;(e.currentTarget as HTMLElement).style.background = 'transparent'
-                  }
-                }}
-              >
-                <span style={{ fontSize: 14, opacity: 0.7 }}>{tab.icon}</span>
-                <span style={{ fontWeight: isActive ? 500 : 400 }}>{tab.label}</span>
-              </button>
-            )
-          })}
+          {CATEGORIES.map((cat) => (
+            <div key={cat.label}>
+              <div className="nav-cat">{cat.label}</div>
+              {TABS.filter(t => cat.ids.includes(t.id)).map((tab) => {
+                const isActive = activeTab === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className="w-full text-left transition-all duration-150"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '9px 16px',
+                      borderLeft: `2px solid ${isActive ? 'var(--accent)' : 'transparent'}`,
+                      background: isActive ? 'var(--accent-dim)' : 'transparent',
+                      color: isActive ? 'var(--accent-light)' : 'var(--text-muted)',
+                      fontSize: 13,
+                    }}
+                    onMouseEnter={e => {
+                      if (!isActive) {
+                        (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'
+                        ;(e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!isActive) {
+                        (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)'
+                        ;(e.currentTarget as HTMLElement).style.background = 'transparent'
+                      }
+                    }}
+                  >
+                    <span style={{ fontSize: 14, opacity: 0.7 }}>{tab.icon}</span>
+                    <span style={{ fontWeight: isActive ? 500 : 400 }}>{tab.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          ))}
         </nav>
 
         {/* Footer */}
@@ -236,7 +249,7 @@ export default function App() {
         <div
           className="sticky top-0 z-10 px-8 py-3 flex items-center gap-3"
           style={{
-            background: 'rgba(13,17,23,0.85)',
+            background: 'var(--glass-bg-strong)',
             backdropFilter: 'blur(12px)',
             borderBottom: '1px solid var(--border)',
           }}
