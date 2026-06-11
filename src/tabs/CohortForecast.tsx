@@ -70,8 +70,8 @@ export function CohortForecast() {
       const payers = newCount + secondCount + continuousCount
       // ① 通常報酬原価 = 売上 × 1/3（0.67円/pt 相当）
       const normalReward = totalSales * (blend?.normalRewardRate ?? (cp.normalRewardRate ?? 1 / 3))
-      // ② 登録特典原価 = 新規集客数 × 7000pt × 0.22円 × 消化率0.7
-      const regBonusCost = installs * (cp.registrationBonusPt ?? 7000) * bonusPtCost * (cp.registrationBonusConsume ?? 0.7)
+      // ② 登録特典原価 = 新規集客数 × 5000pt × 0.22円 × 消化率0.7
+      const regBonusCost = installs * (cp.registrationBonusPt ?? 5000) * bonusPtCost * (cp.registrationBonusConsume ?? 0.7)
       // ③ 通常ボーナス原価 = 課金者数 ×（代表プラン11000 × 付与率3.64%）× 0.22円
       const normalBonusCost = payers * (cp.credixRepPlan ?? 11000) * (cp.avgBonusGrantRate ?? 0.0364) * bonusPtCost
       // ④ 初回ボーナス原価 = 新規PU × 300pt × 0.22円 × 消化率
@@ -89,7 +89,7 @@ export function CohortForecast() {
         if (factor > 0) {
           const addPerReading = 3 * (cp.campaignAddMsgBonusPt ?? 0) + 400 * (cp.campaignAddCharBonusPt ?? 0)
           const k = (addPerReading / PT_PER_READING) * factor
-          if (cp.campaignApplyBonus ?? true) campaignBonus = installs * (cp.registrationBonusPt ?? 7000) * (cp.registrationBonusConsume ?? 0.7) * k
+          if (cp.campaignApplyBonus ?? true) campaignBonus = installs * (cp.registrationBonusPt ?? 5000) * (cp.registrationBonusConsume ?? 0.7) * k
           if (cp.campaignApplyNormal ?? false) campaignNormal = (totalSales / 2) * k
         }
       }
@@ -244,7 +244,7 @@ export function CohortForecast() {
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap text-sm" style={{ color: 'var(--text-secondary)' }}>
             <span className="section-title" style={{ margin: 0 }}>パフォーマー報酬原価 パラメータ（親データ）</span>
-            <span className="chip-summary">登録特典{(cp.registrationBonusPt ?? 7000).toLocaleString()}pt×{((cp.registrationBonusConsume ?? 0.7) * 100).toFixed(0)}%</span>
+            <span className="chip-summary">登録特典{(cp.registrationBonusPt ?? 5000).toLocaleString()}pt×{((cp.registrationBonusConsume ?? 0.7) * 100).toFixed(0)}%</span>
             <span className="chip-summary">ボ原価¥{cp.bonusPtCost ?? 0.22}</span>
             <span className="chip-summary">通常原価率{((cp.normalRewardRate ?? 1 / 3) * 100).toFixed(1)}%</span>
           </div>
@@ -281,7 +281,7 @@ export function CohortForecast() {
         <div className="text-[11px] mt-3 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
           <div style={{ fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>パフォーマー報酬原価計 ＝ ①＋②＋③＋④</div>
           ① 通常報酬原価 ＝ 合計売上 × {((cp.normalRewardRate ?? 1/3) * 100).toFixed(1)}%（0.67円/pt 相当・売上の1/3）<br />
-          ② 登録特典原価 ＝ 新規集客数 × {cp.registrationBonusPt ?? 7000}pt × {cp.bonusPtCost ?? 0.22}円 × 消化率{((cp.registrationBonusConsume ?? 0.7) * 100).toFixed(0)}%<br />
+          ② 登録特典原価 ＝ 新規集客数 × {cp.registrationBonusPt ?? 5000}pt × {cp.bonusPtCost ?? 0.22}円 × 消化率{((cp.registrationBonusConsume ?? 0.7) * 100).toFixed(0)}%<br />
           ③ 通常ボーナス原価 ＝ 課金者数(新規+継続候補+継続) ×（{(cp.credixRepPlan ?? 11000).toLocaleString()}円 × 付与率{((cp.avgBonusGrantRate ?? 0.0364) * 100).toFixed(2)}%）× {cp.bonusPtCost ?? 0.22}円<br />
           ④ 初回ボーナス原価 ＝ 新規PU × {cp.firstBonusPt ?? 300}pt × {cp.bonusPtCost ?? 0.22}円 × 消化率{((cp.firstBonusConsume ?? 1.0) * 100).toFixed(0)}%
         </div>

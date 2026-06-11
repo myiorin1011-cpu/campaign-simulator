@@ -144,7 +144,7 @@ const baseData: Omit<AppData, 'purchasePlans1' | 'purchasePlans2' | 'performerRa
     conversionRate: 0.10,
     monthlyAdBudgets: Array.from({ length: 12 }, (_, i) => 4000000 + i * 2000000),
     // パフォーマー報酬原価 親パラメータ
-    registrationBonusPt: 7000,
+    registrationBonusPt: 5000,
     registrationBonusConsume: 0.70,
     credixRepPlan: 11000,
     avgBonusGrantRate: 0.0364,

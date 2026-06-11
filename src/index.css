@@ -402,9 +402,7 @@ select.input-dark option {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.55);
   z-index: 50;
   display: flex;
   align-items: center;
@@ -413,12 +411,10 @@ select.input-dark option {
 }
 
 .glass-modal {
-  background: var(--glass-bg-strong);
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  box-shadow: var(--glass-shadow);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
   width: min(760px, 94vw);
   max-height: 85vh;
   overflow-y: auto;
