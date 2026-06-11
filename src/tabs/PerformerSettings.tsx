@@ -5,6 +5,7 @@ import { CampaignPolicyCard } from '../components/CampaignPolicyCard'
 import { InfoDot } from '../components/Tooltip'
 import { calcDapDistribution } from '../utils/calculations'
 import { blendReading } from '../utils/rankMix'
+import { rankColor, rankRowBg } from '../utils/rankColors'
 import type { ActionType, RankMixRow } from '../types'
 
 const ACTION_LABELS: Record<ActionType, string> = {
@@ -203,8 +204,8 @@ export function PerformerSettings() {
                 </thead>
                 <tbody>
                   {mix.map((row, idx) => (
-                    <tr key={row.label}>
-                      <td className="text-left font-medium" style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{row.label}</td>
+                    <tr key={row.label} style={{ background: rankRowBg(row.label) }}>
+                      <td className="text-left font-medium" style={{ color: rankColor(row.label) ?? 'var(--text-secondary)', whiteSpace: 'nowrap', borderLeft: `3px solid ${rankColor(row.label) ?? 'transparent'}` }}>{row.label}</td>
                       <td className="text-right">
                         <input
                           type="number" min={0} step={0.1}
@@ -284,9 +285,9 @@ export function PerformerSettings() {
                   return (
                     <tr key={rank.stage} style={{
                       borderBottom: '1px solid var(--border-subtle)',
-                      background: rankIdx % 2 === 1 ? 'var(--bg-elevated)' : 'transparent',
+                      background: rankRowBg(rank.name),
                     }}>
-                      <td className="font-medium" style={{ padding: '0.3rem 0.4rem', fontSize: '0.875rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                      <td className="font-medium" style={{ padding: '0.3rem 0.4rem', fontSize: '0.875rem', color: rankColor(rank.name) ?? 'var(--text-secondary)', whiteSpace: 'nowrap', borderLeft: `3px solid ${rankColor(rank.name) ?? 'transparent'}` }}>
                         {rank.name}
                       </td>
                       <td className="text-right font-mono-num" style={{ padding: '0.3rem 0.4rem', fontSize: '0.9rem' }}>
@@ -399,8 +400,8 @@ export function PerformerSettings() {
             </thead>
             <tbody>
               {simRows.map(({ rank, normalPt, bonusPt, cpBonusPt, normalIncome, bonusIncome, cpBonusIncome, addIncome, addRate }) => (
-                <tr key={rank.stage}>
-                  <td className="font-medium" style={{ color: 'var(--text-secondary)' }}>{rank.name}</td>
+                <tr key={rank.stage} style={{ background: rankRowBg(rank.name) }}>
+                  <td className="font-medium" style={{ color: rankColor(rank.name) ?? 'var(--text-secondary)', borderLeft: `3px solid ${rankColor(rank.name) ?? 'transparent'}` }}>{rank.name}</td>
                   <td className="text-right tabular-nums" style={{ color: 'var(--text-muted)' }}>{Math.round(normalPt).toLocaleString()} pt</td>
                   <td className="text-right tabular-nums">{Math.round(bonusPt).toLocaleString()} pt</td>
                   <td className="text-right tabular-nums font-medium" style={{ background: 'var(--warning-bg)' }}>{Math.round(cpBonusPt).toLocaleString()} pt</td>
@@ -447,8 +448,8 @@ export function PerformerSettings() {
             </thead>
             <tbody>
               {econRows.map((r) => (
-                <tr key={r.rank.stage}>
-                  <td className="text-left font-medium" style={{ color: 'var(--text-secondary)' }}>{r.rank.name}</td>
+                <tr key={r.rank.stage} style={{ background: rankRowBg(r.rank.name) }}>
+                  <td className="text-left font-medium" style={{ color: rankColor(r.rank.name) ?? 'var(--text-secondary)', borderLeft: `3px solid ${rankColor(r.rank.name) ?? 'transparent'}` }}>{r.rank.name}</td>
                   <td>{Math.round(r.userPt).toLocaleString()} pt</td>
                   <td style={{ color: 'var(--accent-light)' }}>{yen(r.revenue)}</td>
                   <td style={{ color: 'var(--text-muted)' }}>{Math.round(r.pNormalPt).toLocaleString()} pt</td>
