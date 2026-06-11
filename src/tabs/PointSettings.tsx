@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { calcBonusPtEqualizationLoss } from '../utils/calculations'
 import { useAppContext } from '../context/AppContext'
 import { EditableCell } from '../components/EditableCell'
+import { InfoDot } from '../components/Tooltip'
 import type { PaymentMethod, PurchasePlan } from '../types'
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
@@ -173,8 +174,8 @@ export function PointSettings() {
                 <th className="text-right" style={{ background: 'var(--accent-dim)' }}>合計付与PT(初回)</th>
                 {hasMulti && <th className="text-right" style={{ background: 'var(--accent-dim)' }}>合計付与PT(2回目)</th>}
                 {hasMulti && <th className="text-right" style={{ background: 'var(--accent-dim)' }}>合計付与PT(3回目)</th>}
-                <th className="text-right">還元率</th>
-                <th className="text-right">粗利率</th>
+                <th className="text-right">還元率{orderIdx === 0 && <InfoDot text="=（通常pt+ボーナスpt[+初回]）×2円 ÷ 税込価格" />}</th>
+                <th className="text-right">粗利率{orderIdx === 0 && <InfoDot text={'=（税込価格 − 決済手数料 − 報酬原価）÷ 税込価格\n報酬原価 = 通常pt×0.67円 + ボーナスpt×0.22円'} />}</th>
                 {hasFirst && <th className="text-right" style={{ background: 'var(--purple-bg)' }}>還元率(初回)</th>}
                 {hasFirst && <th className="text-right" style={{ background: 'var(--purple-bg)' }}>粗利率(初回)</th>}
               </tr>

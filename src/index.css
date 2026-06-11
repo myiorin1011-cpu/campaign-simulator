@@ -257,6 +257,19 @@ body {
   color: var(--text-primary);
 }
 
+/* ─── Summary chip (collapsed setting panels) ─────────── */
+.chip-summary {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
 /* ─── Scenario Tabs ───────────────────────────────────── */
 .scenario-tabs {
   display: flex;

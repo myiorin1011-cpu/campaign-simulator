@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { EditableCell } from '../components/EditableCell'
+import { CampaignPolicyCard } from '../components/CampaignPolicyCard'
+import { InfoDot } from '../components/Tooltip'
 import { calcDapDistribution } from '../utils/calculations'
 import { blendReading } from '../utils/rankMix'
 import type { ActionType, RankMixRow } from '../types'
@@ -157,61 +159,9 @@ export function PerformerSettings() {
       <h2 className="page-title" style={{ marginBottom: '1rem' }}>パフォーマーランク別獲得ポイント</h2>
 
       {/* キャンペーン登録：無償消化分ボーナスpt上乗せ */}
-      <section className="card" style={{ marginBottom: '1rem' }}>
-        <div className="flex items-center gap-3 mb-3">
-          <h3 className="section-title" style={{ margin: 0 }}>キャンペーン登録（pt上乗せ・期間指定）</h3>
-          <label className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
-            <input type="checkbox" checked={!!cp.campaignEnabled}
-              onChange={(e) => updateCohortParams({ campaignEnabled: e.target.checked })} />
-            有効
-          </label>
-          <label className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
-            <input type="checkbox" checked={cp.campaignApplyBonus ?? true}
-              onChange={(e) => updateCohortParams({ campaignApplyBonus: e.target.checked })} />
-            ボ（無償）に付与
-          </label>
-          <label className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
-            <input type="checkbox" checked={cp.campaignApplyNormal ?? false}
-              onChange={(e) => updateCohortParams({ campaignApplyNormal: e.target.checked })} />
-            通（有償）に付与
-          </label>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div>
-            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>開始日</label>
-            <input type="date" value={cp.campaignStart ?? ''}
-              onChange={(e) => updateCohortParams({ campaignStart: e.target.value })}
-              className="input-dark w-full" />
-          </div>
-          <div>
-            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>終了日</label>
-            <input type="date" value={cp.campaignEnd ?? ''}
-              onChange={(e) => updateCohortParams({ campaignEnd: e.target.value })}
-              className="input-dark w-full" />
-          </div>
-          <div>
-            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>+pt/通</label>
-            <input type="number" min={0} step={1} value={cp.campaignAddMsgBonusPt ?? 0}
-              onChange={(e) => updateCohortParams({ campaignAddMsgBonusPt: parseFloat(e.target.value) || 0 })}
-              className="input-dark w-full" />
-          </div>
-          <div>
-            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>+pt/字</label>
-            <input type="number" min={0} step={1} value={cp.campaignAddCharBonusPt ?? 0}
-              onChange={(e) => updateCohortParams({ campaignAddCharBonusPt: parseFloat(e.target.value) || 0 })}
-              className="input-dark w-full" />
-          </div>
-          <div className="flex flex-col justify-end">
-            <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>1鑑定あたり上乗せ</span>
-            <span className="font-bold font-mono-num" style={{ color: 'var(--purple)', fontSize: '1.05rem' }}>
-              +{3 * (cp.campaignAddMsgBonusPt ?? 0) + 400 * (cp.campaignAddCharBonusPt ?? 0)} pt / +¥{(3 * (cp.campaignAddMsgBonusPt ?? 0) + 400 * (cp.campaignAddCharBonusPt ?? 0)).toLocaleString()}
-            </span>
-          </div>
-        </div>
-        <p className="text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>
-          ※ ゴールド基準・1鑑定＝3通＋400字。付与先は上のチェック（ボ＝無償／通＝有償）で選択。開始〜終了日を各月で日割り按分。月次の施策原価・採算は「コホート予測」「予算P/L」に反映されます。
-        </p>
-      </section>
+      <div style={{ marginBottom: '1rem' }}>
+        <CampaignPolicyCard />
+      </div>
 
       {/* ランク別 構成比（報酬原価の精密計算・任意） */}
       {(() => {
@@ -406,7 +356,7 @@ export function PerformerSettings() {
 
       {/* 1鑑定シミュレーター（基本 vs キャンペーン比較） */}
       <section className="card" style={{ marginTop: '2rem' }}>
-        <h3 className="section-title" style={{ marginBottom: '0.25rem' }}>1鑑定シミュレーター（基本 vs キャンペーン比較）</h3>
+        <h3 className="section-title" style={{ marginBottom: '0.25rem' }}>1鑑定シミュレーター（基本 vs キャンペーン比較）<InfoDot text="1鑑定 = メッセージ3通 + 有料鑑定400字 を想定" /></h3>
         <p className="text-xs" style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
           1鑑定あたりの通数・文字数を入力し、キャンペーンの上乗せpt（+pt/通・+pt/字）が各ランクの獲得pt・報酬にどう効くかを比較します。何ptアップが適正かの判断にお使いください。※通話など他の機能は含みません。
         </p>

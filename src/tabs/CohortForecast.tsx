@@ -2,11 +2,16 @@ import { useMemo, useState } from 'react'
 import { useAppContext } from '../context/AppContext'
 import { monthLabel, monthInfo, campaignFactor } from '../utils/campaign'
 import { blendReading } from '../utils/rankMix'
+import { Modal } from '../components/Modal'
+import { InfoDot } from '../components/Tooltip'
+import { CampaignPolicyCard } from '../components/CampaignPolicyCard'
 
 export function CohortForecast() {
   const { data, updateCohortParams, updateSimulatorParams } = useAppContext()
   const { simulatorParams: sp, cohortParams: cp } = data
   const [orient, setOrient] = useState<'vertical' | 'horizontal'>('horizontal')
+  const [cohortModalOpen, setCohortModalOpen] = useState(false)
+  const [performerModalOpen, setPerformerModalOpen] = useState(false)
 
   // 月数分の広告費（不足分は末尾値で補完）
   const budgets = useMemo(
@@ -102,10 +107,24 @@ export function CohortForecast() {
     <div className="space-y-6">
       <h2 className="page-title">ユーザーコホート売上予測</h2>
 
-      {/* パラメータ */}
+      {/* コホート設定 サマリー */}
       <section className="card">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="section-title" style={{ margin: 0 }}>コホート設定</h3>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <span className="section-title" style={{ margin: 0 }}>コホート設定</span>
+            <span className="chip-summary">予測{cp.months}ヶ月</span>
+            <span className="chip-summary">起点{cp.startYear ?? 2026}/{cp.startMonth ?? 6}</span>
+            <span className="chip-summary">CPI ¥{cp.cpi.toLocaleString()}</span>
+            <span className="chip-summary">課金率{(cp.conversionRate * 100).toFixed(1)}%</span>
+            <span className="chip-summary">ARPPU {Math.round(cp.newUserArppu / 1000)}k/{Math.round(cp.secondMonthArppu / 1000)}k/{Math.round(cp.continuousArppu / 1000)}k</span>
+            <span className="chip-summary">継続率{(cp.secondMonthRetention * 100).toFixed(0)}%/{(cp.continuousRetention * 100).toFixed(0)}%</span>
+          </div>
+          <button className="btn-ghost px-3 py-1 text-sm" onClick={() => setCohortModalOpen(true)}>編集</button>
+        </div>
+      </section>
+
+      <Modal open={cohortModalOpen} onClose={() => setCohortModalOpen(false)} title="コホート設定">
+        <div className="flex items-center justify-end mb-4">
           <button
             onClick={() => {
               updateCohortParams({
@@ -218,11 +237,22 @@ export function CohortForecast() {
             </div>
           </div>
         </div>
+      </Modal>
+
+      {/* パフォーマー報酬原価 親パラメータ サマリー */}
+      <section className="card">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <span className="section-title" style={{ margin: 0 }}>パフォーマー報酬原価 パラメータ（親データ）</span>
+            <span className="chip-summary">登録特典{(cp.registrationBonusPt ?? 7000).toLocaleString()}pt×{((cp.registrationBonusConsume ?? 0.7) * 100).toFixed(0)}%</span>
+            <span className="chip-summary">ボ原価¥{cp.bonusPtCost ?? 0.22}</span>
+            <span className="chip-summary">通常原価率{((cp.normalRewardRate ?? 1 / 3) * 100).toFixed(1)}%</span>
+          </div>
+          <button className="btn-ghost px-3 py-1 text-sm" onClick={() => setPerformerModalOpen(true)}>編集</button>
+        </div>
       </section>
 
-      {/* パフォーマー報酬原価 親パラメータ */}
-      <section className="card">
-        <h3 className="section-title" style={{ marginTop: 0 }}>パフォーマー報酬原価 パラメータ（親データ）</h3>
+      <Modal open={performerModalOpen} onClose={() => setPerformerModalOpen(false)} title="パフォーマー報酬原価 パラメータ（親データ）">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           {([
             { label: '登録特典 (pt)', key: 'registrationBonusPt' as const, step: 100 },
@@ -255,66 +285,10 @@ export function CohortForecast() {
           ③ 通常ボーナス原価 ＝ 課金者数(新規+継続候補+継続) ×（{(cp.credixRepPlan ?? 11000).toLocaleString()}円 × 付与率{((cp.avgBonusGrantRate ?? 0.0364) * 100).toFixed(2)}%）× {cp.bonusPtCost ?? 0.22}円<br />
           ④ 初回ボーナス原価 ＝ 新規PU × {cp.firstBonusPt ?? 300}pt × {cp.bonusPtCost ?? 0.22}円 × 消化率{((cp.firstBonusConsume ?? 1.0) * 100).toFixed(0)}%
         </div>
-      </section>
+      </Modal>
 
       {/* キャンペーン施策（無償消化分ボーナスpt上乗せ） */}
-      <section className="card">
-        <div className="flex items-center gap-3 mb-3">
-          <h3 className="section-title" style={{ margin: 0 }}>キャンペーン施策（pt上乗せ・期間指定）</h3>
-          <label className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
-            <input type="checkbox" checked={!!cp.campaignEnabled}
-              onChange={(e) => updateCohortParams({ campaignEnabled: e.target.checked })} />
-            有効
-          </label>
-          <label className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
-            <input type="checkbox" checked={cp.campaignApplyBonus ?? true}
-              onChange={(e) => updateCohortParams({ campaignApplyBonus: e.target.checked })} />
-            ボ（無償）に付与
-          </label>
-          <label className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--text-secondary)', cursor: 'pointer' }}>
-            <input type="checkbox" checked={cp.campaignApplyNormal ?? false}
-              onChange={(e) => updateCohortParams({ campaignApplyNormal: e.target.checked })} />
-            通（有償）に付与
-          </label>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div>
-            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>開始日</label>
-            <input type="date" value={cp.campaignStart ?? ''}
-              onChange={(e) => updateCohortParams({ campaignStart: e.target.value })}
-              className="input-dark w-full" />
-          </div>
-          <div>
-            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>終了日</label>
-            <input type="date" value={cp.campaignEnd ?? ''}
-              onChange={(e) => updateCohortParams({ campaignEnd: e.target.value })}
-              className="input-dark w-full" />
-          </div>
-          <div>
-            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>+pt/通</label>
-            <input type="number" min={0} step={1} value={cp.campaignAddMsgBonusPt ?? 0}
-              onChange={(e) => updateCohortParams({ campaignAddMsgBonusPt: parseFloat(e.target.value) || 0 })}
-              className="input-dark w-full" />
-          </div>
-          <div>
-            <label className="block text-sm" style={{ color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>+pt/字</label>
-            <input type="number" min={0} step={1} value={cp.campaignAddCharBonusPt ?? 0}
-              onChange={(e) => updateCohortParams({ campaignAddCharBonusPt: parseFloat(e.target.value) || 0 })}
-              className="input-dark w-full" />
-          </div>
-        </div>
-        <div className="flex items-center gap-2 mt-3">
-          <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>期間中の施策原価合計</span>
-          <span className="font-bold font-mono-num" style={{ color: 'var(--purple)', fontSize: '1.15rem' }}>
-            {fmt(rows.reduce((s, r) => s + r.campaignCost, 0))}
-          </span>
-        </div>
-        <p className="text-[11px] mt-2" style={{ color: 'var(--text-muted)' }}>
-          ※ 開始〜終了日を各月で日割り按分。付与先は上のチェック（ボ＝無償／通＝有償）で選択。
-          1鑑定＝3通＋400字、ゴールド基準 U消費 通150pt・字9pt（＝4,050pt/鑑定）。<br />
-          施策原価 ＝（対象消化pt ÷ 4,050）×（3×+pt/通 ＋ 400×+pt/字）×（実施日数÷その月の日数）。
-        </p>
-      </section>
+      <CampaignPolicyCard periodTotal={rows.reduce((s, r) => s + r.campaignCost, 0)} />
 
       {/* 表示切替 */}
       <div className="flex items-center gap-2">
@@ -343,32 +317,34 @@ export function CohortForecast() {
           <table className="table-dark w-full text-sm">
             <thead>
               <tr>
-                <th className="text-left">項目</th>
+                <th className="text-left" style={{ position: 'sticky', left: 0, background: 'var(--bg-card)', zIndex: 1 }}>項目</th>
                 {rows.map((r) => <th key={r.month} className="text-right">{r.label}</th>)}
                 <th className="text-right">合計</th>
               </tr>
             </thead>
             <tbody>
               {([
-                { label: '広告費', get: (r: typeof rows[0]) => fmt(r.adBudget), total: () => fmt(rows.reduce((s, r) => s + r.adBudget, 0)), color: 'var(--text-secondary)', input: true },
-                { label: '新規集客数', get: (r: typeof rows[0]) => `${r.installs.toLocaleString()}人`, total: () => `${rows.reduce((s, r) => s + r.installs, 0).toLocaleString()}人`, color: 'var(--text-secondary)' },
-                { label: 'PU（課金）', get: (r: typeof rows[0]) => `${r.newCount.toLocaleString()}人`, total: () => `${rows.reduce((s, r) => s + r.newCount, 0).toLocaleString()}人`, color: 'var(--accent-light)' },
-                { label: '新規 売上', get: (r: typeof rows[0]) => fmt(r.newSales), total: () => fmt(rows.reduce((s, r) => s + r.newSales, 0)), color: 'var(--accent-light)' },
-                { label: '継続候補 人数', get: (r: typeof rows[0]) => r.secondCount > 0 ? `${r.secondCount.toLocaleString()}人` : '-', total: () => `${rows.reduce((s, r) => s + r.secondCount, 0).toLocaleString()}人`, color: 'var(--text-secondary)' },
-                { label: '継続候補 売上', get: (r: typeof rows[0]) => r.secondCount > 0 ? fmt(r.secondSales) : '-', total: () => fmt(rows.reduce((s, r) => s + r.secondSales, 0)), color: 'var(--purple)' },
-                { label: '継続 人数', get: (r: typeof rows[0]) => r.continuousCount > 0 ? `${r.continuousCount.toLocaleString()}人` : '-', total: () => `${rows.reduce((s, r) => s + r.continuousCount, 0).toLocaleString()}人`, color: 'var(--text-secondary)' },
-                { label: '継続 売上', get: (r: typeof rows[0]) => r.continuousCount > 0 ? fmt(r.continuousSales) : '-', total: () => fmt(rows.reduce((s, r) => s + r.continuousSales, 0)), color: 'var(--positive)' },
-                { label: '合計売上', get: (r: typeof rows[0]) => fmt(r.totalSales), total: () => fmt(rows.reduce((s, r) => s + r.totalSales, 0)), color: 'var(--text-primary)', bold: true },
-                { label: '　└ ① 通常報酬原価', get: (r: typeof rows[0]) => fmt(r.normalReward), total: () => fmt(rows.reduce((s, r) => s + r.normalReward, 0)), color: 'var(--text-secondary)' },
-                { label: '　└ ② 登録特典原価', get: (r: typeof rows[0]) => fmt(r.regBonusCost), total: () => fmt(rows.reduce((s, r) => s + r.regBonusCost, 0)), color: 'var(--text-secondary)' },
-                { label: '　└ ③ 通常ボーナス原価', get: (r: typeof rows[0]) => fmt(r.normalBonusCost), total: () => fmt(rows.reduce((s, r) => s + r.normalBonusCost, 0)), color: 'var(--text-secondary)' },
-                { label: '　└ ④ 初回ボーナス原価', get: (r: typeof rows[0]) => fmt(r.firstBonusCost), total: () => fmt(rows.reduce((s, r) => s + r.firstBonusCost, 0)), color: 'var(--text-secondary)' },
-                { label: '　└ ⑤ キャンペーン施策(ボ)', get: (r: typeof rows[0]) => r.campaignBonus > 0 ? fmt(r.campaignBonus) : '-', total: () => fmt(rows.reduce((s, r) => s + r.campaignBonus, 0)), color: 'var(--purple)' },
-                { label: '　└ ⑤ キャンペーン施策(通)', get: (r: typeof rows[0]) => r.campaignNormal > 0 ? fmt(r.campaignNormal) : '-', total: () => fmt(rows.reduce((s, r) => s + r.campaignNormal, 0)), color: 'var(--purple)' },
-                { label: 'パフォーマー報酬原価計', get: (r: typeof rows[0]) => fmt(r.performerCost), total: () => fmt(rows.reduce((s, r) => s + r.performerCost, 0)), color: 'var(--negative)', bold: true },
-              ]).map((m) => (
+                { label: '広告費', hint: '月別の広告予算（手動入力）', get: (r: typeof rows[0]) => fmt(r.adBudget), total: () => fmt(rows.reduce((s, r) => s + r.adBudget, 0)), color: 'var(--text-secondary)', input: true },
+                { label: '新規集客数', hint: '= 広告費 ÷ CPI', get: (r: typeof rows[0]) => `${r.installs.toLocaleString()}人`, total: () => `${rows.reduce((s, r) => s + r.installs, 0).toLocaleString()}人`, color: 'var(--text-secondary)' },
+                { label: 'PU（課金）', hint: '= 新規集客数 × 課金率', get: (r: typeof rows[0]) => `${r.newCount.toLocaleString()}人`, total: () => `${rows.reduce((s, r) => s + r.newCount, 0).toLocaleString()}人`, color: 'var(--accent-light)' },
+                { label: '新規 売上', hint: '= PU × 新規ARPPU', get: (r: typeof rows[0]) => fmt(r.newSales), total: () => fmt(rows.reduce((s, r) => s + r.newSales, 0)), color: 'var(--accent-light)' },
+                { label: '継続候補 人数', hint: '= 前月PU × 2ヶ月目継続率', get: (r: typeof rows[0]) => r.secondCount > 0 ? `${r.secondCount.toLocaleString()}人` : '-', total: () => `${rows.reduce((s, r) => s + r.secondCount, 0).toLocaleString()}人`, color: 'var(--text-secondary)' },
+                { label: '継続候補 売上', hint: '= 継続候補人数 × 継続候補ARPPU', get: (r: typeof rows[0]) => r.secondCount > 0 ? fmt(r.secondSales) : '-', total: () => fmt(rows.reduce((s, r) => s + r.secondSales, 0)), color: 'var(--purple)' },
+                { label: '継続 人数', hint: '= 過去コホート残存（3ヶ月目以降継続率）', get: (r: typeof rows[0]) => r.continuousCount > 0 ? `${r.continuousCount.toLocaleString()}人` : '-', total: () => `${rows.reduce((s, r) => s + r.continuousCount, 0).toLocaleString()}人`, color: 'var(--text-secondary)' },
+                { label: '継続 売上', hint: '= 継続人数 × 継続ARPPU', get: (r: typeof rows[0]) => r.continuousCount > 0 ? fmt(r.continuousSales) : '-', total: () => fmt(rows.reduce((s, r) => s + r.continuousSales, 0)), color: 'var(--positive)' },
+                { label: '合計売上', hint: '= 新規 + 継続候補 + 継続', get: (r: typeof rows[0]) => fmt(r.totalSales), total: () => fmt(rows.reduce((s, r) => s + r.totalSales, 0)), color: 'var(--text-primary)', bold: true },
+                { label: '　└ ① 通常報酬原価', hint: '① 合計売上 × 通常報酬原価率', get: (r: typeof rows[0]) => fmt(r.normalReward), total: () => fmt(rows.reduce((s, r) => s + r.normalReward, 0)), color: 'var(--text-secondary)' },
+                { label: '　└ ② 登録特典原価', hint: '② 新規集客数 × 登録特典pt × 0.22円 × 消化率', get: (r: typeof rows[0]) => fmt(r.regBonusCost), total: () => fmt(rows.reduce((s, r) => s + r.regBonusCost, 0)), color: 'var(--text-secondary)' },
+                { label: '　└ ③ 通常ボーナス原価', hint: '③ 課金者数 ×（代表プラン × 付与率）× 0.22円', get: (r: typeof rows[0]) => fmt(r.normalBonusCost), total: () => fmt(rows.reduce((s, r) => s + r.normalBonusCost, 0)), color: 'var(--text-secondary)' },
+                { label: '　└ ④ 初回ボーナス原価', hint: '④ 新規PU × 初回ボーナスpt × 0.22円 × 消化率', get: (r: typeof rows[0]) => fmt(r.firstBonusCost), total: () => fmt(rows.reduce((s, r) => s + r.firstBonusCost, 0)), color: 'var(--text-secondary)' },
+                { label: '　└ ⑤ キャンペーン施策(ボ)', hint: '⑤（対象消化pt ÷ pt/鑑定）×（3×+pt/通 + 400×+pt/字）× 日割り', get: (r: typeof rows[0]) => r.campaignBonus > 0 ? fmt(r.campaignBonus) : '-', total: () => fmt(rows.reduce((s, r) => s + r.campaignBonus, 0)), color: 'var(--purple)' },
+                { label: '　└ ⑤ キャンペーン施策(通)', hint: '⑤（対象消化pt ÷ pt/鑑定）×（3×+pt/通 + 400×+pt/字）× 日割り', get: (r: typeof rows[0]) => r.campaignNormal > 0 ? fmt(r.campaignNormal) : '-', total: () => fmt(rows.reduce((s, r) => s + r.campaignNormal, 0)), color: 'var(--purple)' },
+                { label: 'パフォーマー報酬原価計', hint: '= ①+②+③+④+⑤', get: (r: typeof rows[0]) => fmt(r.performerCost), total: () => fmt(rows.reduce((s, r) => s + r.performerCost, 0)), color: 'var(--negative)', bold: true },
+              ] as { label: string; hint?: string; get: (r: typeof rows[0]) => string; total: () => string; color: string; bold?: boolean; input?: boolean }[]).map((m) => (
                 <tr key={m.label} className="text-right" style={m.bold ? { background: 'var(--bg-elevated)', borderTop: '2px solid var(--border)' } : undefined}>
-                  <td className="text-left font-medium" style={{ color: 'var(--text-secondary)' }}>{m.label}</td>
+                  <td className="text-left font-medium" style={{ color: 'var(--text-secondary)', position: 'sticky', left: 0, zIndex: 1, background: m.bold ? 'var(--bg-elevated)' : 'var(--bg-card)' }}>
+                    {m.label}{m.hint && <InfoDot text={m.hint} />}
+                  </td>
                   {rows.map((r) => (
                     <td key={r.month} style={{ color: m.color, fontWeight: m.bold ? 700 : undefined }}>
                       {'input' in m && m.input ? (

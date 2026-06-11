@@ -3,6 +3,7 @@ import { useAppContext } from '../context/AppContext'
 import type { CohortParams } from '../types'
 import { monthInfo, campaignFactor } from '../utils/campaign'
 import { blendReading } from '../utils/rankMix'
+import { InfoDot } from '../components/Tooltip'
 
 // ───────────────────────────────────────────────
 // 2026年 想定予算（P/L）データ  期間: 2026年4月 〜 2027年3月
@@ -305,13 +306,13 @@ export function BudgetPL() {
       {/* サマリーKPI */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: '売上合計（12ヶ月）', value: total(revenue), color: 'var(--accent-light)' },
-          { label: '費用合計（12ヶ月）', value: total(costTotal), color: 'var(--negative)' },
-          { label: '通期損益', value: total(monthlyProfit), color: total(monthlyProfit) >= 0 ? 'var(--positive)' : 'var(--negative)' },
-          { label: '期末累計損益', value: cumulative[N - 1], color: cumulative[N - 1] >= 0 ? 'var(--positive)' : 'var(--negative)' },
+          { label: '売上合計（12ヶ月）', value: total(revenue), color: 'var(--accent-light)', hint: '12ヶ月の売上（新規+継続候補+継続）合計' },
+          { label: '費用合計（12ヶ月）', value: total(costTotal), color: 'var(--negative)', hint: '12ヶ月の費用（システム+原価+販管費）合計' },
+          { label: '通期損益', value: total(monthlyProfit), color: total(monthlyProfit) >= 0 ? 'var(--positive)' : 'var(--negative)', hint: '= 売上合計 − 費用合計' },
+          { label: '期末累計損益', value: cumulative[N - 1], color: cumulative[N - 1] >= 0 ? 'var(--positive)' : 'var(--negative)', hint: '= 単月損益を期末まで累積した値' },
         ].map((k) => (
           <div key={k.label} className="card" style={{ padding: '14px 16px' }}>
-            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{k.label}</div>
+            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{k.label}<InfoDot text={k.hint} /></div>
             <div className="font-bold font-mono-num" style={{ fontSize: '1.25rem', color: k.color, marginTop: 4 }}>
               {k.value < 0 ? '▲' : ''}¥{Math.abs(Math.round(k.value)).toLocaleString()}
             </div>
@@ -352,11 +353,11 @@ export function BudgetPL() {
 
             {/* 損益 */}
             <tr style={{ fontWeight: 700, borderTop: '2px solid var(--border)' }}>
-              <td style={{ paddingLeft: 8, whiteSpace: 'nowrap', position: 'sticky', left: 0, background: 'var(--bg-card)' }}>単月損益</td>
+              <td style={{ paddingLeft: 8, whiteSpace: 'nowrap', position: 'sticky', left: 0, background: 'var(--bg-card)' }}>単月損益<InfoDot text="= 売上 − 費用合計" /></td>
               <Cells arr={monthlyProfit} bold />
             </tr>
             <tr style={{ fontWeight: 700 }}>
-              <td style={{ paddingLeft: 8, whiteSpace: 'nowrap', position: 'sticky', left: 0, background: 'var(--bg-card)' }}>累計損益</td>
+              <td style={{ paddingLeft: 8, whiteSpace: 'nowrap', position: 'sticky', left: 0, background: 'var(--bg-card)' }}>累計損益<InfoDot text="= 単月損益の累積" /></td>
               {cumulative.map((v, i) => (
                 <td key={i} className="text-right" style={{ fontWeight: 700 }}>{fmt(v)}</td>
               ))}
