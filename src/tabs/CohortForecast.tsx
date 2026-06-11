@@ -75,21 +75,21 @@ export function CohortForecast() {
       const PT_PER_READING = 3 * 150 + 400 * 9   // = 4050
       const { year: calYear, month: calMonth } = monthInfo(cp.startYear ?? 2026, cp.startMonth ?? 6, i)
       const label = monthLabel(cp.startYear ?? 2026, cp.startMonth ?? 6, i)
-      let campaignCost = 0
+      let campaignBonus = 0, campaignNormal = 0
       if (cp.campaignEnabled) {
         const factor = campaignFactor(calYear, calMonth, cp.campaignStart, cp.campaignEnd) // 日割り係数(0〜1)
         if (factor > 0) {
           const addPerReading = 3 * (cp.campaignAddMsgBonusPt ?? 0) + 400 * (cp.campaignAddCharBonusPt ?? 0)
-          let pt = 0
-          if (cp.campaignApplyBonus ?? true) pt += installs * (cp.registrationBonusPt ?? 7000) * (cp.registrationBonusConsume ?? 0.7)
-          if (cp.campaignApplyNormal ?? false) pt += totalSales / 2
-          campaignCost = (pt / PT_PER_READING) * addPerReading * factor
+          const k = (addPerReading / PT_PER_READING) * factor
+          if (cp.campaignApplyBonus ?? true) campaignBonus = installs * (cp.registrationBonusPt ?? 7000) * (cp.registrationBonusConsume ?? 0.7) * k
+          if (cp.campaignApplyNormal ?? false) campaignNormal = (totalSales / 2) * k
         }
       }
+      const campaignCost = campaignBonus + campaignNormal
       const performerCost = performerCostBase + campaignCost
 
       return { month, label, adBudget, installs, newCount, newSales, secondCount, secondSales, continuousCount, continuousSales, totalSales,
-        normalReward, regBonusCost, normalBonusCost, firstBonusCost, performerCostBase, campaignCost, performerCost }
+        normalReward, regBonusCost, normalBonusCost, firstBonusCost, performerCostBase, campaignBonus, campaignNormal, campaignCost, performerCost }
     })
   }, [cp, budgets])
 
@@ -356,8 +356,13 @@ export function CohortForecast() {
                 { label: '継続 人数', get: (r: typeof rows[0]) => r.continuousCount > 0 ? `${r.continuousCount.toLocaleString()}人` : '-', total: () => `${rows.reduce((s, r) => s + r.continuousCount, 0).toLocaleString()}人`, color: 'var(--text-secondary)' },
                 { label: '継続 売上', get: (r: typeof rows[0]) => r.continuousCount > 0 ? fmt(r.continuousSales) : '-', total: () => fmt(rows.reduce((s, r) => s + r.continuousSales, 0)), color: 'var(--positive)' },
                 { label: '合計売上', get: (r: typeof rows[0]) => fmt(r.totalSales), total: () => fmt(rows.reduce((s, r) => s + r.totalSales, 0)), color: 'var(--text-primary)', bold: true },
+                { label: '　└ ① 通常報酬原価', get: (r: typeof rows[0]) => fmt(r.normalReward), total: () => fmt(rows.reduce((s, r) => s + r.normalReward, 0)), color: 'var(--text-secondary)' },
+                { label: '　└ ② 登録特典原価', get: (r: typeof rows[0]) => fmt(r.regBonusCost), total: () => fmt(rows.reduce((s, r) => s + r.regBonusCost, 0)), color: 'var(--text-secondary)' },
+                { label: '　└ ③ 通常ボーナス原価', get: (r: typeof rows[0]) => fmt(r.normalBonusCost), total: () => fmt(rows.reduce((s, r) => s + r.normalBonusCost, 0)), color: 'var(--text-secondary)' },
+                { label: '　└ ④ 初回ボーナス原価', get: (r: typeof rows[0]) => fmt(r.firstBonusCost), total: () => fmt(rows.reduce((s, r) => s + r.firstBonusCost, 0)), color: 'var(--text-secondary)' },
+                { label: '　└ ⑤ キャンペーン施策(ボ)', get: (r: typeof rows[0]) => r.campaignBonus > 0 ? fmt(r.campaignBonus) : '-', total: () => fmt(rows.reduce((s, r) => s + r.campaignBonus, 0)), color: 'var(--purple)' },
+                { label: '　└ ⑤ キャンペーン施策(通)', get: (r: typeof rows[0]) => r.campaignNormal > 0 ? fmt(r.campaignNormal) : '-', total: () => fmt(rows.reduce((s, r) => s + r.campaignNormal, 0)), color: 'var(--purple)' },
                 { label: 'パフォーマー報酬原価計', get: (r: typeof rows[0]) => fmt(r.performerCost), total: () => fmt(rows.reduce((s, r) => s + r.performerCost, 0)), color: 'var(--negative)', bold: true },
-                { label: '　└ うちキャンペーン施策', get: (r: typeof rows[0]) => r.campaignCost > 0 ? fmt(r.campaignCost) : '-', total: () => fmt(rows.reduce((s, r) => s + r.campaignCost, 0)), color: 'var(--purple)' },
               ]).map((m) => (
                 <tr key={m.label} className="text-right" style={m.bold ? { background: 'var(--bg-elevated)', borderTop: '2px solid var(--border)' } : undefined}>
                   <td className="text-left font-medium" style={{ color: 'var(--text-secondary)' }}>{m.label}</td>
