@@ -152,7 +152,7 @@ function computeCohortMonthly(cp: CohortParams) {
     const totalSales = newSales + secondSales + continuousSales
     const payers = newCount + secondCount + continuousCount
     const normalReward = totalSales * (blend?.normalRewardRate ?? (cp.normalRewardRate ?? 1 / 3))
-    const regBonusCost = installs * (cp.registrationBonusPt ?? 5000) * bonusPtCost * (cp.registrationBonusConsume ?? 0.7)
+    const regBonusCost = installs * (cp.registrationBonusPt ?? 3000) * bonusPtCost * (cp.registrationBonusConsume ?? 0.7)
     const normalBonusCost = payers * (cp.credixRepPlan ?? 11000) * (cp.avgBonusGrantRate ?? 0.0364) * bonusPtCost
     const firstBonusCost = newCount * (cp.firstBonusPt ?? 300) * bonusPtCost * (cp.firstBonusConsume ?? 1.0)
     // キャンペーン施策原価（期間日割り・1鑑定=3通+400字, ゴールド U消費 通150/字9 → 4050pt/鑑定）
@@ -164,7 +164,7 @@ function computeCohortMonthly(cp: CohortParams) {
         const PPR = blend?.uPtPerReading ?? (3 * 150 + 400 * 9)
         const addPerReading = 3 * (cp.campaignAddMsgBonusPt ?? 0) + 400 * (cp.campaignAddCharBonusPt ?? 0)
         let pt = 0
-        if (cp.campaignApplyBonus ?? true) pt += installs * (cp.registrationBonusPt ?? 5000) * (cp.registrationBonusConsume ?? 0.7)
+        if (cp.campaignApplyBonus ?? true) pt += installs * (cp.registrationBonusPt ?? 3000) * (cp.registrationBonusConsume ?? 0.7)
         if (cp.campaignApplyNormal ?? false) pt += totalSales / 2
         campaignCost = (pt / PPR) * addPerReading * factor
       }
