@@ -79,7 +79,26 @@ export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
     (localStorage.getItem('paigner-theme') as 'dark' | 'light') ?? 'dark'
   )
-  const { data, setData, resetToInitial } = useAppContext()
+  const {
+    data, setData, resetToInitial,
+    syncStatus, lastUpdatedAt, lastUpdatedBy, userName, setUserName, syncNow,
+  } = useAppContext()
+
+  const syncLabel =
+    syncStatus === 'off'    ? '⚪ ローカルのみ' :
+    syncStatus === 'saving' ? '🔵 保存中…' :
+    syncStatus === 'error'  ? '🔴 同期エラー' :
+                              '🟢 共有中'
+  const syncColor =
+    syncStatus === 'off'    ? 'var(--text-muted)' :
+    syncStatus === 'error'  ? 'var(--negative)' :
+                              'var(--text-secondary)'
+  const updatedAtLabel = (() => {
+    if (!lastUpdatedAt) return ''
+    const d = new Date(lastUpdatedAt)
+    if (Number.isNaN(d.getTime())) return ''
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  })()
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -216,6 +235,44 @@ export default function App() {
             <span style={{ fontSize: 14 }}>{theme === 'dark' ? '☀️' : '🌙'}</span>
             <span>{theme === 'dark' ? 'ライトモード' : 'ダークモード'}</span>
           </button>
+          {/* 共有同期ステータス */}
+          <div
+            style={{
+              padding: '5px 8px', borderRadius: 6,
+              background: 'var(--bg-elevated)', border: '1px solid var(--border)',
+            }}
+          >
+            <div
+              onClick={syncStatus === 'error' ? syncNow : undefined}
+              title={syncStatus === 'error' ? 'クリックで再同期' : undefined}
+              style={{
+                fontSize: 11, color: syncColor,
+                cursor: syncStatus === 'error' ? 'pointer' : 'default',
+              }}
+            >
+              {syncLabel}
+            </div>
+            {syncStatus === 'idle' && (
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
+                最終更新: {lastUpdatedBy || '—'}{updatedAtLabel && ` ${updatedAtLabel}`}
+              </div>
+            )}
+            <button
+              onClick={() => {
+                const n = prompt('表示名を入力してください', userName)
+                if (n !== null) setUserName(n.trim())
+              }}
+              style={{
+                marginTop: 4, fontSize: 11, color: 'var(--text-secondary)',
+                background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent-light)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
+              title="共有時に表示される名前"
+            >
+              👤 {userName || '名前未設定'}
+            </button>
+          </div>
           <div className="flex gap-2">
             <button
               onClick={exportData}
