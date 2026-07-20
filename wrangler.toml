@@ -8,7 +8,7 @@ directory = "./dist"
 not_found_handling = "single-page-application"
 binding = "ASSETS"
 
-# 共有データ用KV（Cloudflareダッシュボードで作成後、id を設定してコメントを外す）
-# [[kv_namespaces]]
-# binding = "PAIGNER_KV"
-# id = "<ここにKV namespace IDを貼る>"
+# 共有データ用KV
+[[kv_namespaces]]
+binding = "PAIGNER_KV"
+id = "a5dd76ce06bc42029cc8964c664abcd3"
